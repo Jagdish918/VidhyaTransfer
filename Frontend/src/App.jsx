@@ -1,0 +1,27 @@
+import { Route, Routes } from "react-router-dom";
+import Footer from "./Components/Footer/Footer";
+import Login from "./Pages/Login/Login";
+import Header from "./Components/Navbar/Navbar";
+import LandingPage from "./Pages/LandingPage/LandingPage";
+import AboutUs from "./Pages/AboutUs/AboutUs";
+import NotFound from "./Pages/NotFound/NotFound";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+const App = () => {
+  return (
+    <>
+      <Header />
+      <ToastContainer position="top-right" />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/about_us" element={<AboutUs />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Footer />
+    </>
+  );
+};
+
+export default App;
