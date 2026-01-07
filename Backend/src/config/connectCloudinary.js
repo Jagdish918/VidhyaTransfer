@@ -29,3 +29,6 @@ const uploadOnCloudinary = async (localFilePath) => {
 };
 
 export { uploadOnCloudinary };
+
+
+// use envalid (package) to validate env variables

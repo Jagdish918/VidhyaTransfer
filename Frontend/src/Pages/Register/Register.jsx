@@ -394,7 +394,8 @@ const Register = () => {
         const { data } = await axios.post("/user/registerUser", form);
         toast.success("Registration Successful");
         console.log("Data: ", data.data);
-        navigate("/discover");
+        // Redirect newly registered users to onboarding start
+        navigate("/onboarding/personal-info");
       } catch (error) {
         console.log(error);
         if (error?.response?.data?.message) {

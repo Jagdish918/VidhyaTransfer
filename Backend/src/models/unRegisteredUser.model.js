@@ -38,16 +38,84 @@ const unRegisteredUserSchema = new Schema(
     },
     skillsProficientAt: [
       {
+        name: {
+          type: String,
+          required: true,
+        },
+        category: {
+          type: String,
+          default: "General",
+        },
+        proficiency: {
         type: String,
-        default: "",
+          enum: ["Beginner", "Intermediate", "Advanced", "Expert"],
+          default: "Intermediate",
+        },
       },
     ],
     skillsToLearn: [
       {
+        name: {
+          type: String,
+          required: true,
+        },
+        proficiency: {
+          type: String,
+          enum: ["Beginner", "Intermediate", "Advanced", "Expert"],
+          default: "Beginner",
+        },
+        autoMatchTutors: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
+    phone: {
+      type: String,
+      default: "",
+    },
+    personalInfo: {
+      age: {
+        type: Number,
+        default: null,
+      },
+      country: {
         type: String,
         default: "",
       },
+    },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    onboardingStep: {
+      type: Number,
+      default: 0, // 0: Personal Info, 1: Skill Profile, 2: Preferences
+    },
+    preferences: {
+      notifications: {
+        type: Boolean,
+        default: true,
+      },
+      autoMatch: {
+        type: Boolean,
+        default: false,
+      },
+      availability: {
+        type: Number,
+        default: 0, // hours per week
+      },
+      mode: {
+        type: String,
+        enum: ["Online", "Instant Help", "Events"],
+        default: "Online",
+      },
+      skillsInterestedInLearning: [
+        {
+          type: String,
+        },
     ],
+    },
     education: [
       {
         institution: {

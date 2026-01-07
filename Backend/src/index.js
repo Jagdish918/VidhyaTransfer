@@ -49,12 +49,19 @@ connectDB()
         });
       });
 
-      socket.off("setup", () => {
+      // Real-time feed updates
+      socket.on("join feed", () => {
+        socket.join("feed");
+        console.log("Joined feed room");
+      });
+
+      socket.on("disconnect", () => {
         console.log("Disconnected from socket");
-        console.log("Disconnected from socket");
-        socket.leave(userData._id);
       });
     });
+
+    // Make io available globally for controllers
+    app.set("io", io);
   })
   .catch((err) => {
     console.log(err);

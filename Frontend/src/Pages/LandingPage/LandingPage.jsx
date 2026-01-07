@@ -6,11 +6,11 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    navigate('/register');
+    navigate('/login');
   };
 
   const handleStartLearning = () => {
-    navigate('/register');
+    navigate('/login');
   };
 
   const handleExploreSkills = () => {

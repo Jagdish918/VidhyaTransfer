@@ -15,4 +15,6 @@ const connectDB = async () => {
     }
 };
 
+// use pooling to optimize connections
+
 export default connectDB;

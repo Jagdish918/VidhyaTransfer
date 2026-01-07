@@ -36,8 +36,52 @@ const Login = () => {
           localStorage.setItem("userInfo", JSON.stringify(userInfo));
           setUser(userInfo);
           
-          // Always redirect to home page
-          navigate("/");
+          // Check onboarding status and redirect accordingly
+          try {
+            let onboardingStatus;
+            try {
+              // move the api logic to api folder
+              const onboardingRes = await axios.get("/onboarding/registered/status");
+              onboardingStatus = onboardingRes.data;
+            } catch (err) {
+              // Try unregistered endpoint
+              try {
+                const onboardingRes = await axios.get("/onboarding/status");
+                onboardingStatus = onboardingRes.data;
+              } catch (unregErr) {
+                console.error("Error checking onboarding:", unregErr);
+                // Default to landing page if can't check
+                navigate("/");
+                return;
+              }
+            }
+            
+            if (onboardingStatus?.success) {
+              const { completed, step } = onboardingStatus.data;
+              if (!completed) {
+                // Redirect to appropriate onboarding step
+                if (step === 0) {
+                  navigate("/onboarding/personal-info");
+                } else if (step === 1) {
+                  navigate("/onboarding/skills");
+                } else if (step === 2) {
+                  navigate("/onboarding/preferences");
+                } else {
+                  navigate("/onboarding/personal-info");
+                }
+              } else {
+                // Onboarding completed, go to landing page
+                navigate("/");
+              }
+            } else {
+              // If can't check status, default to landing page
+              navigate("/");
+            }
+          } catch (error) {
+            console.error("Error checking onboarding:", error);
+            // On error, default to landing page
+            navigate("/");
+          }
         }
       } else {
         // Register logic
@@ -62,8 +106,8 @@ const Login = () => {
           localStorage.setItem("userInfo", JSON.stringify(userInfo));
           setUser(userInfo);
           
-          // Redirect to home page
-          navigate("/");
+          // New users should start onboarding
+          navigate("/onboarding/personal-info");
         }
       }
     } catch (error) {

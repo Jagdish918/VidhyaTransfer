@@ -19,11 +19,15 @@ const ProfileCard = ({ profileImageUrl, bio, name, skills, rating, username }) =
       <div className="profskills">
         <h6>Skills</h6>
         <div className="profskill-boxes">
-          {skills.map((skill, index) => (
-            <div key={index} className="profskill-box">
-              <span className="skill">{skill}</span>
-            </div>
-          ))}
+          {skills && skills.length > 0 ? (
+            skills.map((skill, index) => (
+              <div key={index} className="profskill-box">
+                <span className="skill">{typeof skill === 'string' ? skill : skill.name}</span>
+              </div>
+            ))
+          ) : (
+            <span className="skill" style={{ color: "var(--light-grey)" }}>No skills listed</span>
+          )}
         </div>
       </div>
     </div>

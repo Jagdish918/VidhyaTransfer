@@ -42,7 +42,12 @@ export const handleGoogleLoginCallback = asyncHandler(async (req, res) => {
     const jwtToken = generateJWTToken_username(existingUser);
     const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
     res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
-    return res.redirect(`http://localhost:5173/`);
+    // Check if onboarding is completed
+    if (existingUser.onboardingCompleted) {
+      return res.redirect(`http://localhost:5173/feed`);
+    } else {
+      return res.redirect(`http://localhost:5173/onboarding/personal-info`);
+    }
   }
 
   let unregisteredUser = await UnRegisteredUser.findOne({ email: req.user._json.email });
@@ -57,7 +62,8 @@ export const handleGoogleLoginCallback = asyncHandler(async (req, res) => {
   const jwtToken = generateJWTToken_email(unregisteredUser);
   const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
   res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
-  return res.redirect("http://localhost:5173/");
+  // New users should go to onboarding
+  return res.redirect("http://localhost:5173/onboarding/personal-info");
 });
 
 // Email/Password Registration

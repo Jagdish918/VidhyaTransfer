@@ -20,54 +20,59 @@ const UserContextProvider = ({ children }) => {
           const userInfo = JSON.parse(userInfoString);
           setUser(userInfo);
           setLoading(false);
+          return;
         } catch (error) {
           console.error("Error parsing userInfo:", error);
-          setLoading(false);
+          // If parsing fails, try to fetch from backend
         }
-      } else {
-        // Try to fetch user data from backend (for Google OAuth or cookie-based auth)
+      }
+      
+      // Try to fetch user data from backend (for Google OAuth or cookie-based auth)
+      try {
+        // Try registered user first
         try {
-          // Try registered user first
+          const { data } = await axios.get("/user/registered/getDetails");
+          if (data.success && data.data) {
+            localStorage.setItem("userInfo", JSON.stringify(data.data));
+            setUser(data.data);
+            setLoading(false);
+            return;
+          }
+        } catch (regError) {
+          // If registered user fails, try unregistered user
           try {
-            const { data } = await axios.get("/user/registered/getDetails");
+            const { data } = await axios.get("/user/unregistered/getDetails");
             if (data.success && data.data) {
               localStorage.setItem("userInfo", JSON.stringify(data.data));
               setUser(data.data);
               setLoading(false);
               return;
             }
-          } catch (regError) {
-            // If registered user fails, try unregistered user
-            try {
-              const { data } = await axios.get("/user/unregistered/getDetails");
-              if (data.success && data.data) {
-                localStorage.setItem("userInfo", JSON.stringify(data.data));
-                setUser(data.data);
-                setLoading(false);
-                return;
-              }
-            } catch (unregError) {
-              // No user found, continue to check URL
-            }
+          } catch (unregError) {
+            // No user found, continue to check URL
           }
-        } catch (error) {
-          console.log("No user session found");
         }
-        
-        setLoading(false);
-        const temp = window.location.href.split("/");
-        const url = temp.pop();
-        if (url !== "about_us" && url !== "#why-skill-swap" && url !== "" && url !== "login") {
-          // Don't redirect if already on login page
-          if (url !== "login") {
-            navigate("/login");
-          }
+      } catch (error) {
+        console.log("No user session found");
+      }
+      
+      setLoading(false);
+      // Don't redirect logged-in users away from any page
+      // Only redirect to login if on a protected route AND no user found
+      const currentPath = window.location.pathname;
+      const protectedRoutes = ["feed", "profile", "edit_profile", "peer-swap", "skill-gain", "resources", "utilisation", "onboarding"];
+      
+      // Only redirect if we're on a protected route and have no user
+      if (protectedRoutes.some(route => currentPath.includes(route))) {
+        const userInfo = localStorage.getItem("userInfo");
+        if (currentPath !== "/login" && !user && !userInfo) {
+          navigate("/login", { replace: true });
         }
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [navigate]);
 
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;

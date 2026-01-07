@@ -1,0 +1,43 @@
+.settings-container {
+  min-height: calc(100vh - 200px);
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--grey);
+}
+
+.settings-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.settings-card h1 {
+  font-family: var(--secfont);
+  color: var(--cyan);
+  margin-bottom: 1rem;
+}
+
+.settings-card p {
+  color: var(--light-grey);
+  margin-bottom: 1.5rem;
+}
+
+.settings-card button {
+  padding: 10px 20px;
+  background: var(--cyan);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--secfont);
+}
+
+.settings-card button:hover {
+  opacity: 0.9;
+}
+

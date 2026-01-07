@@ -35,6 +35,9 @@ import messageRouter from "./routes/message.routes.js";
 import requestRouter from "./routes/request.routes.js";
 import reportRouter from "./routes/report.routes.js";
 import ratingRouter from "./routes/rating.routes.js";
+import onboardingRouter from "./routes/onboarding.routes.js";
+import skillRouter from "./routes/skill.routes.js";
+import postRouter from "./routes/post.routes.js";
 
 // Using routes
 app.use("/user", userRouter);
@@ -44,5 +47,8 @@ app.use("/message", messageRouter);
 app.use("/request", requestRouter);
 app.use("/report", reportRouter);
 app.use("/rating", ratingRouter);
+app.use("/onboarding", onboardingRouter);
+app.use("/skill", skillRouter);
+app.use("/post", postRouter);
 
 export { app };

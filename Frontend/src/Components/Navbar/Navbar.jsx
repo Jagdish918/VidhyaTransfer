@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { FaGraduationCap, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { FaGraduationCap, FaUser, FaSignOutAlt, FaCog } from "react-icons/fa";
 import { useUser } from "../../util/UserContext";
 import axios from "axios";
 
@@ -102,6 +102,63 @@ const Navbar = () => {
 
           {/* Navigation Links */}
           <div style={styles.navLinks} className="navbar-nav-links">
+            {user ? (
+              // Logged in navigation
+              <>
+                <Link 
+                  to="/feed" 
+                  className="navbar-link"
+                  style={{
+                    ...styles.navLink,
+                    ...(isActive('/feed') ? styles.activeNavLink : {})
+                  }}
+                >
+                  Feed
+                </Link>
+                <Link 
+                  to="/peer-swap" 
+                  className="navbar-link"
+                  style={{
+                    ...styles.navLink,
+                    ...(isActive('/peer-swap') ? styles.activeNavLink : {})
+                  }}
+                >
+                  Peer Swap
+                </Link>
+                <Link 
+                  to="/skill-gain" 
+                  className="navbar-link"
+                  style={{
+                    ...styles.navLink,
+                    ...(isActive('/skill-gain') ? styles.activeNavLink : {})
+                  }}
+                >
+                  Skill Gain
+                </Link>
+                <Link 
+                  to="/resources" 
+                  className="navbar-link"
+                  style={{
+                    ...styles.navLink,
+                    ...(isActive('/resources') ? styles.activeNavLink : {})
+                  }}
+                >
+                  Resources
+                </Link>
+                <Link 
+                  to="/utilisation" 
+                  className="navbar-link"
+                  style={{
+                    ...styles.navLink,
+                    ...(isActive('/utilisation') ? styles.activeNavLink : {})
+                  }}
+                >
+                  Utilisation
+                </Link>
+              </>
+            ) : (
+              // Not logged in navigation
+              <>
             <Link 
               to="/" 
               className="navbar-link"
@@ -138,6 +195,8 @@ const Navbar = () => {
             >
               How It Works
             </a>
+              </>
+            )}
           </div>
 
           {/* Action Buttons / Profile Dropdown */}
@@ -168,11 +227,23 @@ const Navbar = () => {
                         Profile
                       </Link>
                     ) : (
-                      <div style={{ ...styles.dropdownItem, color: '#9CA3AF', cursor: 'default' }}>
+                      <Link
+                        to="/profile"
+                        style={styles.dropdownItem}
+                        onClick={() => setShowDropdown(false)}
+                      >
                         <FaUser style={{ marginRight: '8px' }} />
-                        Profile (Complete registration)
-                      </div>
+                        Profile
+                      </Link>
                     )}
+                    <Link
+                      to="/settings"
+                      style={styles.dropdownItem}
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <FaCog style={{ marginRight: '8px' }} />
+                      Settings
+                    </Link>
                     <button
                       onClick={handleLogout}
                       style={styles.dropdownItem}

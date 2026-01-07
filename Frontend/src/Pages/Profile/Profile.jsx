@@ -20,10 +20,40 @@ const Profile = () => {
   useEffect(() => {
     const getUser = async () => {
       setLoading(true);
+
       try {
-        const { data } = await axios.get(`/user/registered/getDetails/${username}`);
-        console.log(data.data);
-        setProfileUser(data.data);
+        // If no username param, show current user's profile
+        if (!username) {
+          // Try registered user first
+          try {
+            const { data } = await axios.get("/user/registered/getDetails");
+            if (data.success) {
+              setProfileUser(data.data);
+              setLoading(false);
+              return;
+            }
+          } catch (regError) {
+            // Try unregistered user
+            try {
+              const { data } = await axios.get("/user/unregistered/getDetails");
+              if (data.success) {
+                setProfileUser(data.data);
+                setLoading(false);
+                return;
+              }
+            } catch (unregError) {
+              toast.error("Failed to load profile");
+              setLoading(false);
+              return;
+            }
+          }
+        } else {
+          // Viewing another user's profile
+          const { data } = await axios.get(`/user/registered/getDetails/${username}`);
+          if (data.success) {
+            setProfileUser(data.data);
+          }
+        }
       } catch (error) {
         console.log(error);
         if (error?.response?.data?.message) {
@@ -40,7 +70,7 @@ const Profile = () => {
       }
     };
     getUser();
-  }, []);
+  }, [username, user, navigate, setUser]);
 
   const convertDate = (dateTimeString) => {
     const date = new Date(dateTimeString);
@@ -114,7 +144,7 @@ const Profile = () => {
                   {/* Connect and Report Buttons */}
                   {
                     // If the user is the same as the logged in user, don't show the connect and report buttons
-                    user?.username !== username && (
+                    username && user?.username !== username && (
                       <div className="buttons">
                         <button
                           className="connect-button"
@@ -140,11 +170,11 @@ const Profile = () => {
                 </div>
               </div>
               <div className="edit-links">
-                {user.username === username && (
+                {(user && user.username && user.username === username) || (!username && user && (user.username || user.email)) ? (
                   <Link to="/edit_profile">
                     <button className="edit-button">Edit Profile ✎</button>
                   </Link>
-                )}
+                ) : null}
 
                 {/* Portfolio Links */}
                 <div className="portfolio-links">
@@ -173,22 +203,64 @@ const Profile = () => {
               </div>
             </div>
 
+            {/* Personal Information */}
+            {profileUser?.name && (
+              <div style={{ marginBottom: "2rem" }}>
+                <h2>Personal Information</h2>
+                <p><strong>Name:</strong> {profileUser.name}</p>
+                {profileUser.email && <p><strong>Email:</strong> {profileUser.email}</p>}
+                {profileUser.phone && <p><strong>Phone:</strong> {profileUser.phone}</p>}
+              </div>
+            )}
+
             {/* Bio */}
-            <h2>Bio</h2>
-            <p className="bio">{profileUser?.bio}</p>
+            {profileUser?.bio && (
+              <div style={{ marginBottom: "2rem" }}>
+                <h2>Bio</h2>
+                <p className="bio">{profileUser.bio}</p>
+              </div>
+            )}
 
             {/* Skills */}
             <div className="skills">
               <h2>Skills Proficient At</h2>
               {/* Render skill boxes here */}
               <div className="skill-boxes">
-                {profileUser?.skillsProficientAt.map((skill, index) => (
-                  <div className="skill-box" style={{ fontSize: "16px" }} key={index}>
-                    {skill}
-                  </div>
-                ))}
+                {profileUser?.skillsProficientAt && profileUser.skillsProficientAt.length > 0 ? (
+                  profileUser.skillsProficientAt.map((skill, index) => (
+                    <div className="skill-box" style={{ fontSize: "16px" }} key={index}>
+                      {typeof skill === 'string' ? skill : skill.name}
+                      {typeof skill === 'object' && skill.proficiency && (
+                        <span style={{ fontSize: "12px", marginLeft: "8px", color: "#8adfd1" }}>
+                          ({skill.proficiency})
+                        </span>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ color: "var(--light-grey)" }}>No skills added yet</p>
+                )}
               </div>
             </div>
+            
+            {/* Skills To Learn */}
+            {profileUser?.skillsToLearn && profileUser.skillsToLearn.length > 0 && (
+              <div className="skills" style={{ marginTop: "2rem" }}>
+                <h2>Skills To Learn</h2>
+                <div className="skill-boxes">
+                  {profileUser.skillsToLearn.map((skill, index) => (
+                    <div className="skill-box" style={{ fontSize: "16px" }} key={index}>
+                      {typeof skill === 'string' ? skill : skill.name}
+                      {typeof skill === 'object' && skill.proficiency && (
+                        <span style={{ fontSize: "12px", marginLeft: "8px", color: "#8adfd1" }}>
+                          ({skill.proficiency})
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Education */}
             <div className="education">
