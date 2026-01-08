@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { UserDetails } from "../controllers/user.controllers.js";
+import { UserDetails } from "../controllers/user/user.controllers.js";
 import { verifyJWT_email, verifyJWT_username } from "../middlewares/verifyJWT.middleware.js";
 import {
   UnRegisteredUserDetails,
@@ -14,7 +14,7 @@ import {
   uploadPic,
   discoverUsers,
   sendScheduleMeet,
-} from "../controllers/user.controllers.js";
+} from "../controllers/user/user.controllers.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();

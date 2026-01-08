@@ -1,12 +1,12 @@
-import { generateJWTToken_email, generateJWTToken_username } from "../utils/generateJWTToken.js";
+import { generateJWTToken_email, generateJWTToken_username } from "../../utils/generateJWTToken.js";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { User } from "../models/user.model.js";
-import { UnRegisteredUser } from "../models/unRegisteredUser.model.js";
+import { User } from "../../models/user.model.js";
+import { UnRegisteredUser } from "../../models/unRegisteredUser.model.js";
 import dotenv from "dotenv";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
 import crypto from "crypto";
 
 dotenv.config();

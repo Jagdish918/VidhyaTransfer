@@ -1,9 +1,9 @@
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { User } from "../models/user.model.js";
-import { Chat } from "../models/chat.model.js";
-import { Rating } from "../models/rating.model.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { User } from "../../models/user.model.js";
+import { Chat } from "../../models/chat.model.js";
+import { Rating } from "../../models/rating.model.js";
 
 export const rateUser = asyncHandler(async (req, res) => {
   console.log("\n******** Inside rateUser Controller function ********");

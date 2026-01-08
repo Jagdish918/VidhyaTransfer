@@ -7,7 +7,7 @@ import {
   addComment,
   deletePost,
   reportPost,
-} from "../controllers/post.controllers.js";
+} from "../controllers/user/post.controllers.js";
 
 const router = Router();
 

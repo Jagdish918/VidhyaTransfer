@@ -5,7 +5,7 @@ import {
   updateSkillProfile,
   updatePreferences,
   getOnboardingStatus,
-} from "../controllers/onboarding.controllers.js";
+} from "../controllers/onboarding/onboarding.controllers.js";
 
 const router = Router();
 

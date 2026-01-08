@@ -1,8 +1,8 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { User } from "../models/user.model.js";
-import { UnRegisteredUser } from "../models/unRegisteredUser.model.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
+import { User } from "../../models/user.model.js";
+import { UnRegisteredUser } from "../../models/unRegisteredUser.model.js";
 
 // Step 1: Personal Info
 export const updatePersonalInfo = asyncHandler(async (req, res) => {

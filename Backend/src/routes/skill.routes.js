@@ -6,7 +6,7 @@ import {
   removeCurrentSkill,
   addDesiredSkill,
   removeDesiredSkill,
-} from "../controllers/skill.controllers.js";
+} from "../controllers/user/skill.controllers.js";
 
 const router = Router();
 

@@ -1,9 +1,9 @@
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { Chat } from "../models/chat.model.js";
-import { UnRegisteredUser } from "../models/unRegisteredUser.model.js";
-import { generateJWTToken_username } from "../utils/generateJWTToken.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { Chat } from "../../models/chat.model.js";
+import { UnRegisteredUser } from "../../models/unRegisteredUser.model.js";
+import { generateJWTToken_username } from "../../utils/generateJWTToken.js";
 
 export const createChat = asyncHandler(async (req, res) => {
   console.log("\n******** Inside createChat Controller function ********");

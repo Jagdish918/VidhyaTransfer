@@ -1,11 +1,11 @@
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { User } from "../models/user.model.js";
-import { UnRegisteredUser } from "../models/unRegisteredUser.model.js";
-import { generateJWTToken_username } from "../utils/generateJWTToken.js";
-import { Message } from "../models/message.model.js";
-import { Chat } from "../models/chat.model.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { User } from "../../models/user.model.js";
+import { UnRegisteredUser } from "../../models/unRegisteredUser.model.js";
+import { generateJWTToken_username } from "../../utils/generateJWTToken.js";
+import { Message } from "../../models/message.model.js";
+import { Chat } from "../../models/chat.model.js";
 
 export const sendMessage = asyncHandler(async (req, res) => {
   console.log("\n******** Inside sendMessage Controller function ********");

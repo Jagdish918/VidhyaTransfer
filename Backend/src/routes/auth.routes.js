@@ -6,7 +6,7 @@ import {
   handleLogout,
   registerWithEmailPassword,
   loginWithEmailPassword,
-} from "../controllers/auth.controllers.js";
+} from "../controllers/auth/auth.controllers.js";
 
 const router = Router();
 

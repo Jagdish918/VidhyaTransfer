@@ -1,5 +1,5 @@
 import express from "express";
-import { rateUser } from "../controllers/rating.controllers.js";
+import { rateUser } from "../controllers/user/rating.controllers.js";
 import { verifyJWT_username } from "../middlewares/verifyJWT.middleware.js";
 
 const router = express.Router();
