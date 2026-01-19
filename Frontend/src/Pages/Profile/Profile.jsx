@@ -10,7 +10,7 @@ import { storeSanitizedUserData } from "../../util/sanitizeUserData";
 const Profile = () => {
   const { user, setUser } = useUser();
   const [profileUser, setProfileUser] = useState(null);
-  const { username } = useParams();
+  const { id } = useParams(); // Changed from username to id as per App.jsx
   const [loading, setLoading] = useState(true);
   const [connectLoading, setConnectLoading] = useState(false);
   const navigate = useNavigate();
@@ -19,8 +19,8 @@ const Profile = () => {
     const getUser = async () => {
       setLoading(true);
       try {
-        // If no username param, identify the current user
-        if (!username) {
+        // If no id param, identify the current user
+        if (!id) {
           // 1. Try fetching as Registered User (most common/desired)
           try {
             const { data } = await axios.get("/user/registered/getDetails");
@@ -49,9 +49,9 @@ const Profile = () => {
             }
           }
         } else {
-          // Viewing another user's profile
+          // Viewing another user's profile (by ID or username)
           try {
-            const { data } = await axios.get(`/user/registered/getDetails/${username}`);
+            const { data } = await axios.get(`/user/registered/getDetails/${id}`);
             if (data.success) {
               setProfileUser(data.data);
             }
@@ -67,7 +67,7 @@ const Profile = () => {
       }
     };
     getUser();
-  }, [username, setUser]);
+  }, [id, setUser]);
 
   const convertDate = (dateTimeString) => {
     if (!dateTimeString) return "";
@@ -109,7 +109,7 @@ const Profile = () => {
     )
   }
 
-  const isOwnProfile = (user && user.username === username) || (!username && user);
+  const isOwnProfile = (user && (user.username === id || user._id === id)) || (!id && user);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -144,7 +144,7 @@ const Profile = () => {
                 )}
 
                 {/* Connect/Follow Actions for Other Users */}
-                {!isOwnProfile && username && (
+                {!isOwnProfile && id && (
                   <div className="grid grid-cols-2 gap-3 w-full mt-6">
                     <button
                       onClick={profileUser.status === "Connect" ? connectHandler : undefined}

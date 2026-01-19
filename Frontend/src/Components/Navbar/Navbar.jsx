@@ -82,7 +82,9 @@ const Navbar = () => {
     { path: '/peer-swap', label: 'Peer Swap' },
     { path: '/skill-gain', label: 'Skill Gain' },
     { path: '/resources', label: 'Resources' },
-    { path: '/utilisation', label: 'Utilisation' }
+    { path: '/utilisation', label: 'Utilisation' },
+    { path: '/chat', label: 'Chat' },
+    { path: '/notifications', label: 'Notification' }
   ] : [
     { path: '/', label: 'Home' },
     { path: '/about_us', label: 'About' },
@@ -91,7 +93,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200 py-4 sticky top-0 z-[1000] shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+    <nav className="bg-white border-b border-gray-200 py-3 sticky top-0 z-40 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
       <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 no-underline cursor-pointer group">
@@ -101,9 +103,9 @@ const Navbar = () => {
           <span className="text-2xl font-bold text-gray-800 font-sans">SkillSwap</span>
         </Link>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Navigation Links - Notification removed */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((item) => (
+          {navLinks.filter(item => item.path !== '/notifications').map((item) => (
             item.isAnchor ? (
               <a
                 key={item.path}
@@ -127,20 +129,33 @@ const Navbar = () => {
         </div>
 
         {/* Action Buttons / Profile / Hamburger */}
-        <div className="flex items-center gap-3 relative">
+        <div className="flex items-center gap-4 relative">
           {user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
+              {/* Notification Icon */}
+              <Link to="/notifications" className="relative text-gray-500 hover:text-blue-500 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+                {/* Notification Red Dot */}
+                <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white transform translate-x-1/4 -translate-y-1/4"></span>
+              </Link>
+
+              <div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block"></div>
+
               <div className="relative profile-dropdown-container">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center gap-2 px-3 py-2 bg-transparent border border-gray-200 rounded-3xl hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+                  className="flex items-center gap-2 bg-transparent border-none cursor-pointer focus:outline-none"
                 >
                   <img
                     src={user.picture || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcToK4qEfbnd-RN82wdL2awn_PMviy_pelocqQ"}
                     alt="Profile"
-                    className="w-8 h-8 rounded-full object-cover"
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
                   />
-                  <span className="hidden sm:inline text-sm font-medium text-gray-800">{user.name || user.username || "Profile"}</span>
+                  <svg className={`w-4 h-4 text-gray-500 transition-transform ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
                 </button>
                 {showDropdown && (
                   <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl min-w-[200px] z-[1001] overflow-hidden">

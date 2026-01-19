@@ -24,6 +24,11 @@ const postSchema = new Schema(
         ref: "User",
       },
     ],
+    attachments: [
+      {
+        type: String, // URLs or Base64 strings
+      }
+    ],
     comments: [
       {
         user: {

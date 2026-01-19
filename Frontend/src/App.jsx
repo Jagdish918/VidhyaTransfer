@@ -1,4 +1,4 @@
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 import Footer from "./Components/Footer/Footer";
 import Login from "./Pages/Login/Login";
 import Header from "./Components/Navbar/Navbar";
@@ -16,6 +16,8 @@ import PeerSwap from "./Pages/PeerSwap/PeerSwap";
 import SkillGain from "./Pages/SkillGain/SkillGain";
 import Resources from "./Pages/Resources/Resources";
 import Utilisation from "./Pages/Utilisation/Utilisation";
+import Chat from "./Pages/Chat/Chat";
+import Notifications from "./Pages/Notifications/Notifications";
 import PrivateRoutes from "./util/PrivateRoutes";
 import OnboardingGuard from "./util/OnboardingGuard";
 import { ToastContainer } from "react-toastify";
@@ -25,6 +27,8 @@ import ForgotPassword from "./Pages/Login/ForgotPassword";
 import ResetPassword from "./Pages/Login/ResetPassword";
 
 const App = () => {
+  const location = useLocation();
+
   return (
     <>
       <Header />
@@ -57,9 +61,12 @@ const App = () => {
           <Route path="/skill-gain" element={<SkillGain />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/utilisation" element={<Utilisation />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/notifications" element={<Notifications />} />
 
           {/* Profile Routes */}
-          <Route path="/profile/:username" element={<Profile />} />
+          {/* Profile Routes - allow both :id and :username implicitly by using just :id and handling in component */}
+          <Route path="/profile/:id" element={<Profile />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/edit_profile" element={<EditProfile />} />
           <Route path="/settings" element={<Settings />} />
@@ -67,7 +74,7 @@ const App = () => {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Footer />
+      {location.pathname !== '/chat' && <Footer />}
     </>
   );
 };

@@ -19,9 +19,17 @@ export const userDetailsWithoutID = asyncHandler(async (req, res) => {
 
 export const UserDetails = asyncHandler(async (req, res) => {
   console.log("\n******** Inside UserDetails Controller function ********");
-  const username = req.params.username;
+  const param = req.params.username;
 
-  const user = await User.findOne({ username: username })
+  let query = {};
+  // Check if param is a valid MongoDB ObjectId
+  if (param.match(/^[0-9a-fA-F]{24}$/)) {
+    query = { _id: param };
+  } else {
+    query = { username: param };
+  }
+
+  const user = await User.findOne(query)
     .select('-password -resetPasswordToken -resetPasswordExpires -__v');
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -525,73 +533,51 @@ export const uploadPic = asyncHandler(async (req, res) => {
 export const discoverUsers = asyncHandler(async (req, res) => {
   console.log("******** Inside discoverUsers Function *******");
 
-  const webDevSkills = [
-    "HTML",
-    "CSS",
-    "JavaScript",
-    "React",
-    "Angular",
-    "Vue",
-    "Node.js",
-    "Express",
-    "MongoDB",
-    "SQL",
-    "NoSQL",
-  ];
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const search = req.query.search || "";
+  const skip = (page - 1) * limit;
 
-  const machineLearningSkills = [
-    "Python",
-    "Natural Language Processing",
-    "Deep Learning",
-    "PyTorch",
-    "Machine Learning",
-  ];
+  const query = { username: { $ne: req.user.username } };
 
-  // Find all the users except the current users who are proficient in the skills that the current user wants to learn and also the the users who are proficient in the web development skills and machine learning skills in the array above
-  //
+  if (search) {
+    const searchRegex = new RegExp(search, "i");
+    query.$or = [
+      { name: searchRegex },
+      { username: searchRegex },
+      { "skillsProficientAt.name": searchRegex }
+    ];
+  }
 
-  //  fetch all users except the current user
+  // Fetch users excluding current user
+  const users = await User.find(query)
+    .select("-password -phone -personalInfo -resetPasswordToken -resetPasswordExpires -__v")
+    .skip(skip)
+    .limit(limit);
 
-  const users = await User.find({ username: { $ne: req.user.username } })
-    .select("-password -phone -personalInfo -resetPasswordToken -resetPasswordExpires -__v");
-
-  // now make three seperate list of the users who are proficient in the skills that the current user wants to learn, the users who are proficient in the web development skills and the users who are proficient in the machine learning skills and others also limit the size of the array to 5;
-
-  // const users = await User.find({
-  //   skillsProficientAt: { $in: req.user.skillsToLearn },
-  //   username: { $ne: req.user.username },
-  // });
+  const total = await User.countDocuments(query);
 
   if (!users) {
     throw new ApiError(500, "Error in fetching users");
   }
-  const usersToLearn = [];
-  const webDevUsers = [];
-  const mlUsers = [];
-  const otherUsers = [];
 
-  // randomly suffle the users array
-
-  users.sort(() => Math.random() - 0.5);
-
-  users.forEach((user) => {
-    if (user.skillsProficientAt.some((skill) => req.user.skillsToLearn.includes(skill)) && usersToLearn.length < 5) {
-      usersToLearn.push(user);
-    } else if (user.skillsProficientAt.some((skill) => webDevSkills.includes(skill)) && webDevUsers.length < 5) {
-      webDevUsers.push(user);
-    } else if (user.skillsProficientAt.some((skill) => machineLearningSkills.includes(skill)) && mlUsers.length < 5) {
-      mlUsers.push(user);
-    } else {
-      if (otherUsers.length < 5) otherUsers.push(user);
-    }
-  });
+  // Optional: Simple randomization or relevance sorting could be added here, 
+  // but standard pagination conflicts with random shuffling unless seeded.
+  // For now, we return valid paginated data.
 
   return res
     .status(200)
     .json(
       new ApiResponse(
         200,
-        { forYou: usersToLearn, webDev: webDevUsers, ml: mlUsers, others: otherUsers },
+        {
+          users,
+          pagination: {
+            current: page,
+            pages: Math.ceil(total / limit),
+            total
+          }
+        },
         "Users fetched successfully"
       )
     );

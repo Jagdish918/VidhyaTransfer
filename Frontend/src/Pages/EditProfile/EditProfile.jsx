@@ -1,23 +1,19 @@
-import Tab from "react-bootstrap/Tab";
-import Tabs from "react-bootstrap/Tabs";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Spinner from "react-bootstrap/Spinner";
-import Form from "react-bootstrap/Form";
-import { skills } from "./Skills";
 import axios from "axios";
-import "./EditProfile.css";
-import Badge from "react-bootstrap/Badge";
 import { v4 as uuidv4 } from "uuid";
 import { useUser } from "../../util/UserContext";
+import { skills as availableSkills } from "./Skills";
+import { FaPlus, FaTrash, FaSave, FaArrowRight, FaCamera } from "react-icons/fa";
 
 const EditProfile = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [saveLoading, setSaveLoading] = useState(false);
   const { user, setUser } = useUser();
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("registration");
 
+  // Form State
   const [form, setForm] = useState({
     profilePhoto: null,
     name: "",
@@ -40,1133 +36,493 @@ const EditProfile = () => {
       },
     ],
     bio: "",
-    projects: [],
+    projects: [
+      {
+        id: uuidv4(),
+        title: "",
+        description: "",
+        projectLink: "",
+        techStack: [],
+        startDate: "",
+        endDate: ""
+      }
+    ],
   });
-  const [skillsProficientAt, setSkillsProficientAt] = useState("Select some skill");
-  const [skillsToLearn, setSkillsToLearn] = useState("Select some skill");
-  const [techStack, setTechStack] = useState([]);
 
-  const [activeKey, setActiveKey] = useState("registration");
+  // Helper states for selects
+  const [skillProficientInput, setSkillProficientInput] = useState("");
+  const [skillLearnInput, setSkillLearnInput] = useState("");
+  const [projectTechInput, setProjectTechInput] = useState({}); // Map by project index
 
   useEffect(() => {
     if (user) {
-      setForm((prevState) => ({
-        ...prevState,
-        name: user?.name,
-        email: user?.email,
-        username: user?.username,
-        skillsProficientAt: user?.skillsProficientAt,
-        skillsToLearn: user?.skillsToLearn,
-        portfolioLink: user?.portfolioLink,
-        githubLink: user?.githubLink,
-        linkedinLink: user?.linkedinLink,
-        education: user?.education,
-        bio: user?.bio,
-        projects: user?.projects,
+      setForm((prev) => ({
+        ...prev,
+        ...user,
+        // Ensure arrays are initialized
+        skillsProficientAt: user.skillsProficientAt || [],
+        skillsToLearn: user.skillsToLearn || [],
+        education: user.education?.length ? user.education : prev.education,
+        projects: user.projects?.length ? user.projects : prev.projects,
       }));
-      setTechStack(user?.projects.map((project) => "Select some Tech Stack"));
     }
-  }, []);
+  }, [user]);
 
-  const handleNext = () => {
-    const tabs = ["registration", "education", "longer-tab", "Preview"];
-    const currentIndex = tabs.indexOf(activeKey);
-    if (currentIndex < tabs.length - 1) {
-      setActiveKey(tabs[currentIndex + 1]);
-    }
+  // --- Handlers ---
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
     const data = new FormData();
-    data.append("picture", e.target.files[0]);
-    console.log("Data: ", data);
+    data.append("picture", file);
+
     try {
-      toast.info("Uploading your pic please wait upload confirmation..");
+      toast.info("Uploading picture...");
       const response = await axios.post("/user/uploadPicture", data);
-      toast.success("Pic uploaded successfully");
-      // setPic(response.data.data.url);
-      console.log("Pic url:", response.data);
-      setForm(() => {
-        return {
-          ...form,
-          picture: response.data.data.url,
-        };
-      });
+      toast.success("Picture uploaded successfully");
+      setForm(prev => ({ ...prev, picture: response.data.data.url }));
+      // Update global user context immediately if needed, or wait for save
+      setUser(prev => ({ ...prev, picture: response.data.data.url }));
     } catch (error) {
-      console.log(error);
-      if (error?.response?.data?.message) {
-        toast.error(error.response.data.message);
-        if (error.response.data.message === "Please Login") {
-          localStorage.removeItem("userInfo");
-          setUser(null);
-          await axios.get("/auth/logout");
-          navigate("/login");
-        }
-      }
+      console.error(error);
+      toast.error(error.response?.data?.message || "Error uploading picture");
     }
-    // console.log(file);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  // Skill Handlers
+  const addSkill = (type, skill) => {
+    if (!skill || skill === "Select skill") return;
 
-    if (type === "checkbox") {
-      setForm((prevState) => ({
-        ...prevState,
-        [name]: checked ? [...prevState[name], value] : prevState[name].filter((item) => item !== value),
-      }));
+    // Check duplicates
+    if (form.skillsProficientAt.includes(skill) || form.skillsToLearn.includes(skill)) {
+      toast.warning("Skill already selected in one of the lists");
+      return;
+    }
+
+    if (type === "proficient") {
+      setForm(prev => ({ ...prev, skillsProficientAt: [...prev.skillsProficientAt, skill] }));
+      setSkillProficientInput("");
     } else {
-      if (name === "bio" && value.length > 500) {
-        toast.error("Bio should be less than 500 characters");
-        return;
-      }
-      setForm((prevState) => ({
-        ...prevState,
-        [name]: value,
-      }));
+      setForm(prev => ({ ...prev, skillsToLearn: [...prev.skillsToLearn, skill] }));
+      setSkillLearnInput("");
     }
-    // console.log("Form: ", form);
   };
 
-  const handleAddSkill = (e) => {
-    const { name } = e.target;
-    if (name === "skill_to_learn") {
-      if (skillsToLearn === "Select some skill") {
-        toast.error("Select a skill to add");
-        return;
-      }
-      if (form.skillsToLearn.includes(skillsToLearn)) {
-        toast.error("Skill already added");
-        return;
-      }
-      if (form.skillsProficientAt.includes(skillsToLearn)) {
-        toast.error("Skill already added in skills proficient at");
-        return;
-      }
-      setForm((prevState) => ({
-        ...prevState,
-        skillsToLearn: [...prevState.skillsToLearn, skillsToLearn],
-      }));
+  const removeSkill = (type, skill) => {
+    if (type === "proficient") {
+      setForm(prev => ({ ...prev, skillsProficientAt: prev.skillsProficientAt.filter(s => s !== skill && s.name !== skill) }));
     } else {
-      if (skillsProficientAt === "Select some skill") {
-        toast.error("Select a skill to add");
-        return;
-      }
-      if (form.skillsProficientAt.includes(skillsProficientAt)) {
-        toast.error("Skill already added");
-        return;
-      }
-      if (form.skillsToLearn.includes(skillsProficientAt)) {
-        toast.error("Skill already added in skills to learn");
-        return;
-      }
-      setForm((prevState) => ({
-        ...prevState,
-        skillsProficientAt: [...prevState.skillsProficientAt, skillsProficientAt],
-      }));
+      setForm(prev => ({ ...prev, skillsToLearn: prev.skillsToLearn.filter(s => s !== skill && s.name !== skill) }));
     }
-    // console.log("Form: ", form);
   };
 
-  const handleRemoveSkill = (e, temp) => {
-    const skill = e.target.innerText.split(" ")[0];
-    if (temp === "skills_proficient_at") {
-      setForm((prevState) => ({
-        ...prevState,
-        skillsProficientAt: prevState.skillsProficientAt.filter((item) => item !== skill),
-      }));
-    } else {
-      setForm((prevState) => ({
-        ...prevState,
-        skillsToLearn: prevState.skillsToLearn.filter((item) => item !== skill),
-      }));
-    }
-    console.log("Form: ", form);
+  // Education Handlers
+  const handleEducationChange = (index, field, value) => {
+    const newEdu = [...form.education];
+    newEdu[index][field] = value;
+    setForm(prev => ({ ...prev, education: newEdu }));
   };
 
-  const handleRemoveEducation = (e, tid) => {
-    const updatedEducation = form.education.filter((item, i) => item._id !== tid);
-    console.log("Updated Education: ", updatedEducation);
-    setForm((prevState) => ({
-      ...prevState,
-      education: updatedEducation,
+  const addEducation = () => {
+    setForm(prev => ({
+      ...prev,
+      education: [...prev.education, { id: uuidv4(), institution: "", degree: "", startDate: "", endDate: "", score: "", description: "" }]
     }));
   };
 
-  const handleEducationChange = (e, index) => {
-    const { name, value } = e.target;
-    setForm((prevState) => ({
-      ...prevState,
-      education: prevState.education.map((item, i) => (i === index ? { ...item, [name]: value } : item)),
-    }));
-    console.log("Form: ", form);
+  const removeEducation = (index) => {
+    setForm(prev => ({ ...prev, education: prev.education.filter((_, i) => i !== index) }));
   };
 
-  const handleAdditionalChange = (e, index) => {
-    const { name, value } = e.target;
-    console.log("Name", name);
-    console.log("Value", value);
-    setForm((prevState) => ({
-      ...prevState,
-      projects: prevState.projects.map((item, i) => (i === index ? { ...item, [name]: value } : item)),
-    }));
-    console.log("Form: ", form);
+  // Project Handlers
+  const handleProjectChange = (index, field, value) => {
+    const newProj = [...form.projects];
+    newProj[index][field] = value;
+    setForm(prev => ({ ...prev, projects: newProj }));
   };
 
-  const validateRegForm = () => {
-    if (!form.username) {
-      toast.error("Username is empty");
-      return false;
+  const addProject = () => {
+    setForm(prev => ({
+      ...prev,
+      projects: [...prev.projects, { id: uuidv4(), title: "", description: "", projectLink: "", techStack: [], startDate: "", endDate: "" }]
+    }));
+  };
+
+  const removeProject = (index) => {
+    setForm(prev => ({ ...prev, projects: prev.projects.filter((_, i) => i !== index) }));
+  };
+
+  const addTechStack = (index, skill) => {
+    if (!skill) return;
+    const newProj = [...form.projects];
+    if (!newProj[index].techStack.includes(skill)) {
+      newProj[index].techStack.push(skill);
+      setForm(prev => ({ ...prev, projects: newProj }));
     }
-    if (!form.skillsProficientAt.length) {
-      toast.error("Enter atleast one Skill you are proficient at");
-      return false;
-    }
-    if (!form.skillsToLearn.length) {
-      toast.error("Enter atleast one Skill you want to learn");
-      return false;
-    }
-    if (!form.portfolioLink && !form.githubLink && !form.linkedinLink) {
-      toast.error("Enter atleast one link among portfolio, github and linkedin");
-      return false;
-    }
-    const githubRegex = /^(?:http(?:s)?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_-]+(?:\/)?$/;
-    if (form.githubLink && githubRegex.test(form.githubLink) === false) {
-      toast.error("Enter a valid github link");
-      return false;
-    }
-    const linkedinRegex = /^(?:http(?:s)?:\/\/)?(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+(?:\/)?$/;
-    if (form.linkedinLink && linkedinRegex.test(form.linkedinLink) === false) {
-      toast.error("Enter a valid linkedin link");
-      return false;
-    }
-    if (form.portfolioLink && form.portfolioLink.includes("http") === false) {
-      toast.error("Enter a valid portfolio link");
-      return false;
-    }
+  };
+
+  const removeTechStack = (pIndex, skill) => {
+    const newProj = [...form.projects];
+    newProj[pIndex].techStack = newProj[pIndex].techStack.filter(s => s !== skill);
+    setForm(prev => ({ ...prev, projects: newProj }));
+  };
+
+
+  // Validation & Save
+  const validateReg = () => {
+    if (!form.username) return toast.error("Username is required");
+    if (!form.skillsProficientAt.length) return toast.error("Add at least one proficient skill");
+    // Relaxing link requirements slightly or keeping strict? Keeping strict as per original
+    if (!form.portfolioLink && !form.githubLink && !form.linkedinLink) return toast.error("Add at least one social link");
     return true;
   };
-  const validateEduForm = () => {
-    form.education.forEach((edu, index) => {
-      if (!edu.institution) {
-        toast.error(`Institution name is empty in education field ${index + 1}`);
-        return false;
-      }
-      if (!edu.degree) {
-        toast.error("Degree is empty");
-        return false;
-      }
-      if (!edu.startDate) {
-        toast.error("Start date is empty");
-        return false;
-      }
-      if (!edu.endDate) {
-        toast.error("End date is empty");
-        return false;
-      }
-      if (!edu.score) {
-        toast.error("Score is empty");
-        return false;
-      }
-    });
-    return true;
-  };
-  const validateAddForm = () => {
-    if (!form.bio) {
-      toast.error("Bio is empty");
-      return false;
-    }
-    if (form.bio.length > 500) {
-      toast.error("Bio should be less than 500 characters");
-      return false;
-    }
-    var flag = true;
-    form.projects.forEach((project, index) => {
-      if (!project.title) {
-        toast.error(`Title is empty in project ${index + 1}`);
-        flag = false;
-      }
-      if (!project.techStack.length) {
-        toast.error(`Tech Stack is empty in project ${index + 1}`);
-        flag = false;
-      }
-      if (!project.startDate) {
-        toast.error(`Start Date is empty in project ${index + 1}`);
-        flag = false;
-      }
-      if (!project.endDate) {
-        toast.error(`End Date is empty in project ${index + 1}`);
-        flag = false;
-      }
-      if (!project.projectLink) {
-        toast.error(`Project Link is empty in project ${index + 1}`);
-        flag = false;
-      }
-      if (!project.description) {
-        toast.error(`Description is empty in project ${index + 1}`);
-        flag = false;
-      }
-      if (project.startDate > project.endDate) {
-        toast.error(`Start Date should be less than End Date in project ${index + 1}`);
-        flag = false;
-      }
-      if (!project.projectLink.match(/^(http|https):\/\/[^ "]+$/)) {
-        console.log("Valid URL");
-        toast.error(`Please provide valid project link in project ${index + 1}`);
-        flag = false;
-      }
-    });
-    return flag;
-  };
-  const handleSaveRegistration = async () => {
-    const check = validateRegForm();
-    if (check) {
-      setSaveLoading(true);
-      try {
-        console.log("form:", form);
-        const { data } = await axios.post("/user/registered/saveRegDetails", form);
-        toast.success("Details saved successfully");
-      } catch (error) {
-        console.log(error);
-        if (error?.response?.data?.message) {
-          toast.error(error.response.data.message);
-        } else {
-          toast.error("Some error occurred");
-        }
-      } finally {
-        setSaveLoading(false);
-      }
-    }
-  };
-  const handleSaveEducation = async () => {
-    const check1 = validateRegForm();
-    const check2 = validateEduForm();
-    if (check1 && check2) {
-      setSaveLoading(true);
-      try {
-        const { data } = await axios.post("/user/registered/saveEduDetail", form);
-        toast.success("Details saved successfully");
-      } catch (error) {
-        console.log(error);
-        if (error?.response?.data?.message) {
-          toast.error(error.response.data.message);
-        } else {
-          toast.error("Some error occurred");
-        }
-      } finally {
-        setSaveLoading(false);
-      }
-    }
-  };
-  const handleSaveAdditional = async () => {
-    const check1 = validateRegForm();
-    const check2 = validateEduForm();
-    const check3 = await validateAddForm();
-    console.log(check1, check2, check3);
-    if (check1 && check2 && check3) {
-      setSaveLoading(true);
-      try {
-        const { data } = await axios.post("/user/registered/saveAddDetail", form);
-        toast.success("Details saved successfully");
-      } catch (error) {
-        console.log(error);
-        if (error?.response?.data?.message) {
-          toast.error(error.response.data.message);
-        } else {
-          toast.error("Some error occurred");
-        }
-      } finally {
-        setSaveLoading(false);
-      }
-    }
-  };
 
-  // const handleSubmit = async () => {
-  //   const check1 = validateRegForm();
-  //   const check2 = validateEduForm();
-  //   const check3 = validateAddForm();
-  //   if (check1 && check2 && check3) {
-  //     setSaveLoading(true);
-  //     try {
-  //       const { data } = await axios.post("/user/registered/updateDetails", form);
-  //       toast.success("Registration Successful");
-  //       console.log("Data: ", data.data);
-  //       navigate("/discover");
-  //     } catch (error) {
-  //       console.log(error);
-  //       if (error?.response?.data?.message) {
-  //         toast.error(error.response.data.message);
-  //       } else {
-  //         toast.error("Some error occurred");
-  //       }
-  //     } finally {
-  //       setSaveLoading(false);
-  //     }
-  //   }
-  // };
+  const saveDetails = async (endpoint, successMsg) => {
+    setLoading(true);
+    try {
+      await axios.post(endpoint, form);
+      toast.success(successMsg);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Save failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="register_page ">
-      <h1 className="m-4" style={{ fontFamily: "Oswald", color: "#3BB4A1" }}>
-        Update Profile Details
-      </h1>
-      {loading ? (
-        <div className="row m-auto w-100 d-flex justify-content-center align-items-center" style={{ height: "80.8vh" }}>
-          <Spinner animation="border" variant="primary" />
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 font-sans">Edit Profile</h1>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 mb-6 bg-white rounded-t-xl shadow-sm overflow-hidden">
+          {["registration", "education", "additional"].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-4 text-sm font-medium transition-colors capitalize ${activeTab === tab
+                ? "bg-blue-600 text-white"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
-      ) : (
-        <div className="register_section mb-3">
-          <Tabs
-            defaultActiveKey="registration"
-            id="justify-tab-example"
-            className="mb-3"
-            activeKey={activeKey}
-            onSelect={(k) => setActiveKey(k)}
-          >
-            <Tab eventKey="registration" title="Registration">
-              {/* Name */}
-              <div>
-                <label style={{ color: "#3BB4A1" }}>Name</label>
-                <br />
-                <input
-                  type="text"
-                  name="username"
-                  onChange={handleInputChange}
-                  style={{
-                    borderRadius: "5px",
-                    border: "1px solid #3BB4A1",
-                    padding: "5px",
-                    width: "100%",
-                  }}
-                  value={form.name}
-                  disabled
-                />
-              </div>
-              <div className="mt-3">
-                <label style={{ color: "#3BB4A1" }}>Profile Photo</label>
-                <br />
-                <input type="file" accept="image/*" onChange={handleFileChange} />
-              </div>
-              {/* Email */}
-              <div>
-                <label className="mt-3" style={{ color: "#3BB4A1" }}>
-                  Email
-                </label>
-                <br />
-                <input
-                  type="text"
-                  name="username"
-                  onChange={handleInputChange}
-                  style={{
-                    borderRadius: "5px",
-                    border: "1px solid #3BB4A1",
-                    padding: "5px",
-                    width: "100%",
-                  }}
-                  value={form.email}
-                  disabled
-                />
-              </div>
-              {/* Username */}
-              <div>
-                <label className="mt-3" style={{ color: "#3BB4A1" }}>
-                  Username
-                </label>
-                <br />
-                <input
-                  type="text"
-                  name="username"
-                  onChange={handleInputChange}
-                  value={form.username}
-                  style={{
-                    borderRadius: "5px",
-                    border: "1px solid #3BB4A1",
-                    padding: "5px",
-                    width: "100%",
-                  }}
-                  placeholder="Enter your username"
-                />
-              </div>
-              {/* Linkedin Profile Link*/}
-              <div>
-                <label className="mt-3" style={{ color: "#3BB4A1" }}>
-                  Linkedin Link
-                </label>
-                <br />
-                <input
-                  type="text"
-                  name="linkedinLink"
-                  value={form.linkedinLink}
-                  onChange={handleInputChange}
-                  style={{
-                    borderRadius: "5px",
-                    border: "1px solid #3BB4A1",
-                    padding: "5px",
-                    width: "100%",
-                  }}
-                  placeholder="Enter your Linkedin link"
-                />
-              </div>
-              {/* Github Profile Link*/}
-              <div>
-                <label className="mt-3" style={{ color: "#3BB4A1" }}>
-                  Github Link
-                </label>
-                <br />
-                <input
-                  type="text"
-                  name="githubLink"
-                  value={form.githubLink}
-                  onChange={handleInputChange}
-                  style={{
-                    borderRadius: "5px",
-                    border: "1px solid #3BB4A1",
-                    padding: "5px",
-                    width: "100%",
-                  }}
-                  placeholder="Enter your Github link"
-                />
-              </div>
-              {/* Portfolio Link */}
-              <div>
-                <label className="mt-3" style={{ color: "#3BB4A1" }}>
-                  Portfolio Link
-                </label>
-                <br />
-                <input
-                  type="text"
-                  name="portfolioLink"
-                  value={form.portfolioLink}
-                  onChange={handleInputChange}
-                  style={{
-                    borderRadius: "5px",
-                    border: "1px solid #3BB4A1",
-                    padding: "5px",
-                    width: "100%",
-                  }}
-                  placeholder="Enter your portfolio link"
-                />
-              </div>
-              {/* Skills Proficient At */}
-              <div>
-                <label className="mt-3" style={{ color: "#3BB4A1" }}>
-                  Skills Proficient At
-                </label>
-                <br />
-                <Form.Select
-                  aria-label="Default select example"
-                  value={skillsProficientAt}
-                  onChange={(e) => setSkillsProficientAt(e.target.value)}
-                >
-                  <option>Select some skill</option>
-                  {skills.map((skill, index) => (
-                    <option key={index} value={skill}>
-                      {skill}
-                    </option>
-                  ))}
-                </Form.Select>
-                {form?.skillsProficientAt?.length > 0 && (
-                  <div>
-                    {form.skillsProficientAt.map((skill, index) => (
-                      <Badge
-                        key={index}
-                        bg="secondary"
-                        className="ms-2 mt-2"
-                        style={{ cursor: "pointer" }}
-                        onClick={(event) => handleRemoveSkill(event, "skills_proficient_at")}
-                      >
-                        <div className="span d-flex p-1 fs-7 ">{skill} &#10005;</div>
-                      </Badge>
-                    ))}
+
+        {/* Content */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+
+          {/* REGISTRATION TAB */}
+          {activeTab === "registration" && (
+            <div className="space-y-6">
+              {/* Photo & Basic Info */}
+              <div className="flex flex-col sm:flex-row gap-6 items-start">
+                <div className="relative group">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
+                    <img src={form.picture || "https://cdn-icons-png.flaticon.com/512/149/149071.png"} alt="Profile" className="w-full h-full object-cover" />
                   </div>
-                )}
-                <button className="btn btn-primary mt-3 ms-1" name="skill_proficient_at" onClick={handleAddSkill}>
-                  Add Skill
-                </button>
-              </div>
-              {/* Skills to learn */}
-              <div>
-                <label style={{ color: "#3BB4A1", marginTop: "20px" }}>Skills To Learn</label>
-                <br />
-                <Form.Select
-                  aria-label="Default select example"
-                  value={skillsToLearn}
-                  onChange={(e) => setSkillsToLearn(e.target.value)}
-                >
-                  <option>Select some skill</option>
-                  {skills.map((skill, index) => (
-                    <option key={index} value={skill}>
-                      {skill}
-                    </option>
-                  ))}
-                </Form.Select>
-                {form?.skillsToLearn?.length > 0 && (
-                  <div>
-                    {form.skillsToLearn.map((skill, index) => (
-                      <Badge
-                        key={index}
-                        bg="secondary"
-                        className="ms-2 mt-2 "
-                        style={{ cursor: "pointer" }}
-                        onClick={(event) => handleRemoveSkill(event, "skills_to_learn")}
-                      >
-                        <div className="span d-flex p-1 fs-7 ">{skill} &#10005;</div>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                <button className="btn btn-primary mt-3 ms-1" name="skill_to_learn" onClick={handleAddSkill}>
-                  Add Skill
-                </button>
-              </div>
-              <div className="row m-auto d-flex justify-content-center mt-3">
-                <button className="btn btn-warning" onClick={handleSaveRegistration} disabled={saveLoading}>
-                  {saveLoading ? <Spinner animation="border" variant="primary" /> : "Save"}
-                </button>
-                <button onClick={handleNext} className="mt-2 btn btn-primary">
-                  Next
-                </button>
-              </div>
-            </Tab>
-            <Tab eventKey="education" title="Education">
-              {form?.education?.map((edu, index) => (
-                <div className="border border-dark rounded-1 p-3 m-1" key={edu?._id}>
-                  {index !== 0 && (
-                    <span className="w-100 d-flex justify-content-end">
-                      <button className="w-25" onClick={(e) => handleRemoveEducation(e, edu?._id)}>
-                        cross
-                      </button>
-                    </span>
-                  )}
-                  <label style={{ color: "#3BB4A1" }}>Institution Name</label>
-                  <br />
-                  <input
-                    type="text"
-                    name="institution"
-                    value={edu.institution}
-                    onChange={(e) => handleEducationChange(e, index)}
-                    style={{
-                      borderRadius: "5px",
-                      border: "1px solid #3BB4A1",
-                      padding: "5px",
-                      width: "100%",
-                    }}
-                    placeholder="Enter your institution name"
-                  />
-                  <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                    Degree
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
+                    <FaCamera />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                   </label>
-                  <br />
-                  <input
-                    type="text"
-                    name="degree"
-                    value={edu.degree}
-                    onChange={(e) => handleEducationChange(e, index)}
-                    style={{
-                      borderRadius: "5px",
-                      border: "1px solid #3BB4A1",
-                      padding: "5px",
-                      width: "100%",
-                    }}
-                    placeholder="Enter your degree"
-                  />
-                  <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                    Grade/Percentage
-                  </label>
-                  <br />
-                  <input
-                    type="number"
-                    name="score"
-                    value={edu.score}
-                    onChange={(e) => handleEducationChange(e, index)}
-                    style={{
-                      borderRadius: "5px",
-                      border: "1px solid #3BB4A1",
-                      padding: "5px",
-                      width: "100%",
-                    }}
-                    placeholder="Enter your grade/percentage"
-                  />
-                  <div className="row w-100">
-                    <div className="col-md-6">
-                      <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                        Start Date
-                      </label>
-                      <br />
-                      <input
-                        type="date"
-                        name="startDate"
-                        value={edu.startDate ? new Date(edu.startDate).toISOString().split("T")[0] : ""}
-                        onChange={(e) => handleEducationChange(e, index)}
-                        style={{
-                          borderRadius: "5px",
-                          border: "1px solid #3BB4A1",
-                          padding: "5px",
-                          width: "100%",
-                        }}
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                        End Date
-                      </label>
-                      <br />
-                      <input
-                        type="date"
-                        name="endDate"
-                        value={edu.endDate ? new Date(edu.endDate).toISOString().split("T")[0] : ""}
-                        onChange={(e) => handleEducationChange(e, index)}
-                        style={{
-                          borderRadius: "5px",
-                          border: "1px solid #3BB4A1",
-                          padding: "5px",
-                          width: "100%",
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                    Description
-                  </label>
-                  <br />
-                  <input
-                    type="text"
-                    name="description"
-                    value={edu.description}
-                    onChange={(e) => handleEducationChange(e, index)}
-                    style={{
-                      borderRadius: "5px",
-                      border: "1px solid #3BB4A1",
-                      padding: "5px",
-                      width: "100%",
-                    }}
-                    placeholder="Enter your exp or achievements"
-                  />
                 </div>
-              ))}
-              <div className="row my-2 d-flex justify-content-center">
-                <button
-                  className="btn btn-primary w-50"
-                  onClick={() => {
-                    setForm((prevState) => ({
-                      ...prevState,
-                      education: [
-                        ...prevState.education,
-                        {
-                          id: uuidv4(),
-                          institution: "",
-                          degree: "",
-                          startDate: "",
-                          endDate: "",
-                          score: "",
-                          description: "",
-                        },
-                      ],
-                    }));
-                  }}
-                >
-                  Add Education
-                </button>
-              </div>
-              <div className="row m-auto d-flex justify-content-center mt-3">
-                <button className="btn btn-warning" onClick={handleSaveEducation} disabled={saveLoading}>
-                  {saveLoading ? <Spinner animation="border" variant="primary" /> : "Save"}
-                </button>
-                <button onClick={handleNext} className="mt-2 btn btn-primary">
-                  Next
-                </button>
-              </div>
-            </Tab>
-            <Tab eventKey="longer-tab" title="Additional">
-              <div>
-                <label style={{ color: "#3BB4A1", marginTop: "20px" }}>Bio (Max 500 Character)</label>
-                <br />
-                <textarea
-                  name="bio"
-                  value={form.bio}
-                  onChange={handleInputChange}
-                  style={{
-                    borderRadius: "5px",
-                    border: "1px solid #3BB4A1",
-                    padding: "5px",
-                    width: "100%",
-                    marginBottom: "10px",
-                  }}
-                  placeholder="Enter your bio"
-                ></textarea>
-              </div>
-              <div className="">
-                <label style={{ color: "#3BB4A1" }}>Projects</label>
-
-                {form?.projects?.map((project, index) => (
-                  <div className="border border-dark rounded-1 p-3 m-1" key={project?._id}>
-                    <span className="w-100 d-flex justify-content-end">
-                      <button
-                        className="w-25"
-                        onClick={() => {
-                          setForm((prevState) => ({
-                            ...prevState,
-                            projects: prevState.projects.filter((item) => item?._id !== project?._id),
-                          }));
-                        }}
-                      >
-                        cross
-                      </button>
-                    </span>
-                    <label style={{ color: "#3BB4A1" }}>Title</label>
-                    <br />
-                    <input
-                      type="text"
-                      name="title"
-                      value={project.title}
-                      onChange={(e) => handleAdditionalChange(e, index)}
-                      style={{
-                        borderRadius: "5px",
-                        border: "1px solid #3BB4A1",
-                        padding: "5px",
-                        width: "100%",
-                      }}
-                      placeholder="Enter your project title"
-                    />
-                    <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                      Tech Stack
-                    </label>
-                    <br />
-                    <Form.Select
-                      aria-label="Default select example"
-                      value={techStack[index]}
-                      onChange={(e) => {
-                        setTechStack((prevState) => prevState.map((item, i) => (i === index ? e.target.value : item)));
-                      }}
-                    >
-                      <option>Select some Tech Stack</option>
-                      {skills.map((skill, index) => (
-                        <option key={index} value={skill}>
-                          {skill}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {techStack[index].length > 0 && (
-                      <div>
-                        {form?.projects[index]?.techStack.map((skill, i) => (
-                          <Badge
-                            key={i}
-                            bg="secondary"
-                            className="ms-2 mt-2"
-                            style={{ cursor: "pointer" }}
-                            onClick={(e) => {
-                              setForm((prevState) => ({
-                                ...prevState,
-                                projects: prevState.projects.map((item, i) =>
-                                  i === index
-                                    ? { ...item, techStack: item.techStack.filter((item) => item !== skill) }
-                                    : item
-                                ),
-                              }));
-                            }}
-                          >
-                            <div className="span d-flex p-1 fs-7 ">{skill} &#10005;</div>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      className="btn btn-primary mt-3 ms-1"
-                      name="tech_stack"
-                      onClick={(e) => {
-                        if (techStack[index] === "Select some Tech Stack") {
-                          toast.error("Select a tech stack to add");
-                          return;
-                        }
-                        if (form.projects[index].techStack.includes(techStack[index])) {
-                          toast.error("Tech Stack already added");
-                          return;
-                        }
-                        setForm((prevState) => ({
-                          ...prevState,
-                          projects: prevState.projects.map((item, i) =>
-                            i === index ? { ...item, techStack: [...item.techStack, techStack[index]] } : item
-                          ),
-                        }));
-                      }}
-                    >
-                      Add Tech Stack
-                    </button>
-                    <div className="row">
-                      <div className="col-md-6">
-                        <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                          Start Date
-                        </label>
-                        <br />
-                        <input
-                          type="date"
-                          name="startDate"
-                          value={project.startDate ? new Date(project.startDate).toISOString().split("T")[0] : ""}
-                          onChange={(e) => handleAdditionalChange(e, index)}
-                          style={{
-                            borderRadius: "5px",
-                            border: "1px solid #3BB4A1",
-                            padding: "5px",
-                            width: "100%",
-                          }}
-                        />
-                      </div>
-                      <div className="col-md-6">
-                        <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                          End Date
-                        </label>
-                        <br />
-                        <input
-                          type="date"
-                          name="endDate"
-                          value={project.endDate ? new Date(project.endDate).toISOString().split("T")[0] : ""}
-                          onChange={(e) => handleAdditionalChange(e, index)}
-                          style={{
-                            borderRadius: "5px",
-                            border: "1px solid #3BB4A1",
-                            padding: "5px",
-                            width: "100%",
-                          }}
-                        />
-                      </div>
+                <div className="flex-1 w-full space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <input type="text" value={form.name} disabled className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed" />
                     </div>
-                    <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                      Project Link
-                    </label>
-                    <br />
-                    <input
-                      type="text"
-                      name="projectLink"
-                      value={project.projectLink}
-                      onChange={(e) => handleAdditionalChange(e, index)}
-                      style={{
-                        borderRadius: "5px",
-                        border: "1px solid #3BB4A1",
-                        padding: "5px",
-                        width: "100%",
-                      }}
-                      placeholder="Enter your project link"
-                    />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                      <input type="text" name="username" value={form.username} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Username" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="text" value={form.email} disabled className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed" />
+                  </div>
+                </div>
+              </div>
 
-                    <label className="mt-2" style={{ color: "#3BB4A1" }}>
-                      Description
-                    </label>
-                    <br />
+              <hr className="border-gray-100" />
+
+              {/* Social Links */}
+              <div className="grid grid-cols-1 gap-4">
+                {["linkedinLink", "githubLink", "portfolioLink"].map((linkField) => (
+                  <div key={linkField}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">{linkField.replace('Link', '')} URL</label>
                     <input
                       type="text"
-                      name="description"
-                      value={project.description}
-                      onChange={(e) => handleAdditionalChange(e, index)}
-                      style={{
-                        borderRadius: "5px",
-                        border: "1px solid #3BB4A1",
-                        padding: "5px",
-                        width: "100%",
-                      }}
-                      placeholder="Enter your project description"
+                      name={linkField}
+                      value={form[linkField]}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder={`https://${linkField.replace('Link', '').toLowerCase()}.com/...`}
                     />
                   </div>
                 ))}
+              </div>
 
-                <div className="row my-2 d-flex justify-content-center">
-                  <button
-                    className="btn btn-primary w-50"
-                    onClick={() => {
-                      setTechStack((prevState) => {
-                        return [...prevState, "Select some Tech Stack"];
-                      });
-                      setForm((prevState) => ({
-                        ...prevState,
-                        projects: [
-                          ...prevState.projects,
-                          {
-                            id: uuidv4(),
-                            title: "",
-                            techStack: [],
-                            startDate: "",
-                            endDate: "",
-                            projectLink: "",
-                            description: "",
-                          },
-                        ],
-                      }));
-                    }}
-                  >
-                    Add Project
-                  </button>
-                </div>
-              </div>
-              <div className="row m-auto d-flex justify-content-center mt-3">
-                <button className="btn btn-warning" onClick={handleSaveAdditional} disabled={saveLoading}>
-                  {saveLoading ? <Spinner animation="border" variant="primary" /> : "Save"}
-                </button>
-                {/* <button onClick={handleNext} className="mt-2 btn btn-primary">
-                  Next
-                </button> */}
-              </div>
-            </Tab>
-            {/* <Tab eventKey="Preview" title="Confirm Details">
-              <div>
-                <h3 style={{ color: "#3BB4A1", marginBottom: "20px" }} className="link w-100 text-center">
-                  Preview of the Form
-                </h3>
-                <div
-                  className="previewForm"
-                  style={{ fontFamily: "Montserrat, sans-serif", color: "#2d2d2d", marginBottom: "20px" }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1.5rem",
-                    }}
-                    className="link m-sm-0"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Name:</span>
-                    <span style={{ flex: 2 }}>{form.name || "Yet to be filled"}</span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1.5rem",
-                    }}
-                    className="link"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Email ID:</span>
-                    <span style={{ flex: 2 }}>{form.email || "Yet to be filled"}</span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1.5rem",
-                    }}
-                    className="link"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Username:</span>
-                    <span style={{ flex: 2 }}>{form.username || "Yet to be filled"}</span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1.5rem",
-                    }}
-                    className="link"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Portfolio Link:</span>
-                    <span style={{ flex: 2 }}>{form.portfolioLink || "Yet to be filled"}</span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1.5rem",
-                    }}
-                    className="link"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Github Link:</span>
-                    <span style={{ flex: 2 }}>{form.githubLink || "Yet to be filled"}</span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      flexWrap: "wrap",
-                      marginBottom: "10px",
-                    }}
-                    className="link"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Linkedin Link:</span>
-                    <span
-                      style={{
-                        width: "70vw",
-                        alignItems: "center",
-                        flex: 2,
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                        textOverflow: "ellipsis",
-                        marginBottom: "1.5rem",
-                      }}
+              <hr className="border-gray-100" />
+
+              {/* Skills */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Proficient */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">My Skills (Proficient)</label>
+                  <div className="flex gap-2 mb-2">
+                    <select
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg outline-none"
+                      value={skillProficientInput}
+                      onChange={(e) => setSkillProficientInput(e.target.value)}
                     >
-                      {form.linkedinLink || "Yet to be filled"}
-                    </span>
+                      <option>Select skill</option>
+                      {availableSkills.map((s, i) => <option key={i} value={s}>{s}</option>)}
+                    </select>
+                    <button
+                      onClick={() => addSkill('proficient', skillProficientInput)}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      <FaPlus />
+                    </button>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1.5rem",
-                    }}
-                    className="link"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Skills Proficient At:</span>
-                    <span style={{ flex: 2 }}>{form?.skillsProficientAt?.join(", ") || "Yet to be filled"}</span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1.5rem",
-                    }}
-                    className="link"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Skills To Learn:</span>
-                    <span style={{ flex: 2 }}>{form?.skillsToLearn?.join(", ") || "Yet to be filled"}</span>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "70vw",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1.5rem",
-                    }}
-                    className="link"
-                  >
-                    <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Bio:</span>
-                    <span style={{ flex: 2 }}>{form?.bio || "Yet to be filled"}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {form.skillsProficientAt.map((skill, idx) => (
+                      <span key={idx} className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded text-sm border border-green-200">
+                        {typeof skill === 'string' ? skill : skill.name}
+                        <FaTrash className="ml-2 text-xs cursor-pointer hover:text-green-900" onClick={() => removeSkill('proficient', skill)} />
+                      </span>
+                    ))}
                   </div>
                 </div>
-                <div className="row">
+
+                {/* To Learn */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Want to Learn</label>
+                  <div className="flex gap-2 mb-2">
+                    <select
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg outline-none"
+                      value={skillLearnInput}
+                      onChange={(e) => setSkillLearnInput(e.target.value)}
+                    >
+                      <option>Select skill</option>
+                      {availableSkills.map((s, i) => <option key={i} value={s}>{s}</option>)}
+                    </select>
+                    <button
+                      onClick={() => addSkill('learn', skillLearnInput)}
+                      className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    >
+                      <FaPlus />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {form.skillsToLearn.map((skill, idx) => (
+                      <span key={idx} className="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm border border-purple-200">
+                        {typeof skill === 'string' ? skill : skill.name}
+                        <FaTrash className="ml-2 text-xs cursor-pointer hover:text-purple-900" onClick={() => removeSkill('learn', skill)} />
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-between items-center pt-4">
+                <button
+                  onClick={() => { if (validateReg()) saveDetails("/user/registered/saveRegDetails", "Basic info saved!"); }}
+                  className="px-6 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 flex items-center gap-2"
+                  disabled={loading}
+                >
+                  {loading ? "Saving..." : <><FaSave /> Save Changes</>}
+                </button>
+                <button
+                  onClick={() => setActiveTab('education')}
+                  className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                >
+                  Next: Education <FaArrowRight />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* EDUCATION TAB */}
+          {activeTab === "education" && (
+            <div className="space-y-6">
+              {form.education.map((edu, index) => (
+                <div key={edu.id || index} className="p-4 border border-gray-200 rounded-xl bg-gray-50 relative group">
                   <button
-                    onClick={handleSubmit}
-                    style={{
-                      backgroundColor: "#3BB4A1",
-                      color: "white",
-                      padding: "10px 20px",
-                      border: "none",
-                      borderRadius: "5px",
-                      cursor: "pointer",
-                    }}
-                    className="w-50 d-flex m-auto text-center align-content-center justify-content-center"
+                    onClick={() => removeEducation(index)}
+                    className="absolute top-4 right-4 text-red-400 hover:text-red-600 p-1"
+                    title="Remove"
                   >
-                    {saveLoading ? <Spinner animation="border" variant="primary" /> : "Submit"}
+                    <FaTrash />
+                  </button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Institution</label>
+                      <input type="text" value={edu.institution} onChange={(e) => handleEducationChange(index, "institution", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500" placeholder="University/School" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Degree</label>
+                      <input type="text" value={edu.degree} onChange={(e) => handleEducationChange(index, "degree", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500" placeholder="B.Tech, MBA..." />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Start Date</label>
+                      <input type="date" value={edu.startDate ? new Date(edu.startDate).toISOString().split('T')[0] : ''} onChange={(e) => handleEducationChange(index, "startDate", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">End Date</label>
+                      <input type="date" value={edu.endDate ? new Date(edu.endDate).toISOString().split('T')[0] : ''} onChange={(e) => handleEducationChange(index, "endDate", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Score / GPA</label>
+                      <input type="number" value={edu.score} onChange={(e) => handleEducationChange(index, "score", e.target.value)} className="w-full px-3 py-2 border rounded-lg" placeholder="8.5" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Description</label>
+                    <textarea value={edu.description} onChange={(e) => handleEducationChange(index, "description", e.target.value)} className="w-full px-3 py-2 border rounded-lg" rows="2" placeholder="Major projects, achievements..." />
+                  </div>
+                </div>
+              ))}
+
+              <button onClick={addEducation} className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-2">
+                <FaPlus /> Add Education
+              </button>
+
+              <div className="flex justify-between items-center pt-4">
+                <button onClick={() => setActiveTab('registration')} className="text-gray-500 font-medium hover:text-gray-900">Back</button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => saveDetails("/user/registered/saveEduDetail", "Education saved!")}
+                    className="px-6 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 flex items-center gap-2"
+                    disabled={loading}
+                  >
+                    {loading ? "Saving..." : <><FaSave /> Save Changes</>}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('additional')}
+                    className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  >
+                    Next: Portfolio <FaArrowRight />
                   </button>
                 </div>
               </div>
-            </Tab> */}
-          </Tabs>
+            </div>
+          )}
+
+          {/* ADDITIONAL TAB */}
+          {activeTab === "additional" && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                <textarea
+                  value={form.bio}
+                  onChange={handleInputChange}
+                  name="bio"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  rows="4"
+                  placeholder="Tell us about yourself..."
+                />
+                <p className="text-xs text-right text-gray-400 mt-1">{form.bio.length}/500</p>
+              </div>
+
+              <hr className="border-gray-100" />
+
+              <h3 className="text-lg font-bold text-gray-900">Projects</h3>
+              {form.projects.map((proj, index) => (
+                <div key={proj.id || index} className="p-4 border border-gray-200 rounded-xl bg-gray-50 relative group">
+                  <button
+                    onClick={() => removeProject(index)}
+                    className="absolute top-4 right-4 text-red-400 hover:text-red-600 p-1"
+                    title="Remove"
+                  >
+                    <FaTrash />
+                  </button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Project Title</label>
+                      <input type="text" value={proj.title} onChange={(e) => handleProjectChange(index, "title", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Link</label>
+                      <input type="text" value={proj.projectLink} onChange={(e) => handleProjectChange(index, "projectLink", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-blue-500" placeholder="https://..." />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Description</label>
+                    <textarea value={proj.description} onChange={(e) => handleProjectChange(index, "description", e.target.value)} className="w-full px-3 py-2 border rounded-lg" rows="2" />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Start Date</label>
+                      <input type="date" value={proj.startDate ? new Date(proj.startDate).toISOString().split('T')[0] : ''} onChange={(e) => handleProjectChange(index, "startDate", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">End Date</label>
+                      <input type="date" value={proj.endDate ? new Date(proj.endDate).toISOString().split('T')[0] : ''} onChange={(e) => handleProjectChange(index, "endDate", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    </div>
+                  </div>
+
+                  {/* Tech Stack */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tech Stack</label>
+                    <div className="flex gap-2 mb-2">
+                      <select
+                        className="w-full md:w-1/2 px-3 py-2 border rounded-lg"
+                        onChange={(e) => addTechStack(index, e.target.value)}
+                        value=""
+                      >
+                        <option value="">Add Tech</option>
+                        {availableSkills.map((s, i) => <option key={i} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {proj.techStack?.map((t, ti) => (
+                        <span key={ti} className="inline-flex items-center px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs">
+                          {t} <FaTrash className="ml-1 cursor-pointer hover:text-red-600" onClick={() => removeTechStack(index, t)} />
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button onClick={addProject} className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-2">
+                <FaPlus /> Add Project
+              </button>
+
+              <div className="flex justify-between items-center pt-4">
+                <button onClick={() => setActiveTab('education')} className="text-gray-500 font-medium hover:text-gray-900">Back</button>
+                <button
+                  onClick={() => saveDetails("/user/registered/saveAddDetail", "Bio & Projects saved!")}
+                  className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  disabled={loading}
+                >
+                  {loading ? "Saving..." : <><FaSave /> Save All Changes</>}
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
-      )}
+      </div>
     </div>
   );
 };

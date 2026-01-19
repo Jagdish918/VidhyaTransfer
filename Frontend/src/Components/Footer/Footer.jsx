@@ -2,7 +2,7 @@ import React from "react";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-auto">
+    <footer className="bg-gray-50 border-t border-gray-200 py-4 mt-auto">
       <div className="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0">
         <div className="text-sm text-gray-400 font-sans text-center md:text-left">
           © 2025 SkillSwap. All rights reserved.

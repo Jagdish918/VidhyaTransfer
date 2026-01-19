@@ -13,7 +13,7 @@ const moderateContent = (content) => {
 
 // Create post
 export const createPost = asyncHandler(async (req, res) => {
-  const { content, skills } = req.body;
+  const { content, skills, attachments } = req.body;
   const userId = req.user._id || req.user.id;
   const io = req.app.get("io");
 
@@ -32,6 +32,7 @@ export const createPost = asyncHandler(async (req, res) => {
     author: userId,
     content: content.trim(),
     skills: skills || [],
+    attachments: attachments || [],
     isModerated: hasInappropriateContent,
   });
 
