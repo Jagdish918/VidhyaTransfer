@@ -12,6 +12,7 @@ import {
   saveEduRegisteredUser,
   saveAddRegisteredUser,
   uploadPic,
+  removePic,
   discoverUsers,
   sendScheduleMeet,
 } from "../controllers/user/user.controllers.js";
@@ -32,8 +33,9 @@ router.route("/registered/saveEduDetail").post(verifyJWT_username, saveEduRegist
 router.route("/registered/saveAddDetail").post(verifyJWT_username, saveAddRegisteredUser);
 // router.route("/registered/updateDetails").post(verifyJWT_username, updateRegisteredUser);
 
-// Upload Picture
+// Upload and Remove Picture
 router.route("/uploadPicture").post(verifyJWT_username, upload.fields([{ name: "picture", maxCount: 1 }]), uploadPic);
+router.route("/removePicture").delete(verifyJWT_username, removePic);
 
 // get user details
 router.route("/registered/getDetails/:username").get(verifyJWT_username, UserDetails);

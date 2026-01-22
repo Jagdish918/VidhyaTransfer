@@ -17,7 +17,7 @@ const Preferences = () => {
     notifications: onboardingData.preferences.notifications ?? true,
     autoMatch: onboardingData.preferences.autoMatch ?? false,
     availability: onboardingData.preferences.availability ?? 0,
-    mode: onboardingData.preferences.mode ?? "Online",
+    mode: onboardingData.preferences.mode ?? "",
     skillsInterestedInLearning: onboardingData.preferences.skillsInterestedInLearning ?? [], // This seems redundant with "Desired Skills" but keeping it to match existing backend
   });
   const [newSkill, setNewSkill] = useState("");
@@ -64,35 +64,50 @@ const Preferences = () => {
         return;
       }
 
+      if (!preferences.mode) {
+        toast.error("Please select a learning mode");
+        setLoading(false);
+        return;
+      }
+
       updatePreferences(preferences);
 
       // Backend sync
+      let success = false;
       try {
         const { data } = await axios.post("/onboarding/registered/preferences", { preferences });
         if (data && data.data && data.data.user) {
-          // Update user context with migrated user data
           setUser(data.data.user);
           storeSanitizedUserData(data.data.user);
+          success = true;
         }
       } catch (err) {
         try {
+          // Fallback
           const { data } = await axios.post("/onboarding/preferences", { preferences });
           if (data && data.data && data.data.user) {
-            // Update user context with migrated user data
             setUser(data.data.user);
             storeSanitizedUserData(data.data.user);
+            success = true;
           }
         } catch (inner) {
           console.warn("Backend sync failed", inner);
+          const msg = inner.response?.data?.message || "Failed to save preferences";
+          toast.error(msg);
+          setLoading(false);
+          return;
         }
       }
 
-      // Mark as complete locally and redirect
-      completeOnboarding();
-      toast.success("All set! Redirecting to feed...");
-      navigate("/feed");
+      if (success) {
+        // Mark as complete locally and redirect
+        completeOnboarding();
+        toast.success("All set! Redirecting to feed...");
+        navigate("/feed");
+      }
 
     } catch (error) {
+      console.error(error);
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
@@ -177,6 +192,7 @@ const Preferences = () => {
                 onChange={handleChange}
                 className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
               >
+                <option value="" disabled>Select Mode</option>
                 <option value="Online">Online</option>
                 <option value="Instant Help">Instant Help</option>
                 <option value="Events">Events</option>

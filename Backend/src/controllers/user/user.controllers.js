@@ -308,16 +308,16 @@ export const saveRegRegisteredUser = asyncHandler(async (req, res) => {
 
   console.log("Body: ", req.body);
 
-  if (!name || !username || skillsProficientAt.length === 0 || skillsToLearn.length === 0) {
-    throw new ApiError(400, "Please provide all the details");
+  if (!name || !username || !skillsProficientAt || skillsProficientAt.length === 0) {
+    throw new ApiError(400, "Please provide name, username, and at least one proficient skill");
   }
 
   if (username.length < 3) {
     throw new ApiError(400, "Username should be atleast 3 characters long");
   }
 
-  if (githubLink === "" && linkedinLink === "" && portfolioLink === "") {
-    throw new ApiError(400, "Please provide atleast one link");
+  if ((!githubLink || githubLink === "") && (!linkedinLink || linkedinLink === "") && (!portfolioLink || portfolioLink === "")) {
+    throw new ApiError(400, "Please provide at least one social link");
   }
 
   const githubRegex = /^(?:http(?:s)?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_-]+(?:\/)?$/;
@@ -358,17 +358,14 @@ export const saveEduRegisteredUser = asyncHandler(async (req, res) => {
 
   education.forEach((edu) => {
     if (!edu.institution || !edu.degree) {
-      throw new ApiError(400, "Please provide all the details");
+      throw new ApiError(400, "Institution and degree are required for each education entry");
     }
-    if (
-      !edu.startDate ||
-      !edu.endDate ||
-      !edu.score ||
-      edu.score < 0 ||
-      edu.score > 100 ||
-      edu.startDate > edu.endDate
-    ) {
-      throw new ApiError(400, "Please provide valid score and dates");
+    // Optional validation for score and dates if provided
+    if (edu.score && (edu.score < 0 || edu.score > 100)) {
+      throw new ApiError(400, "Score must be between 0 and 100");
+    }
+    if (edu.startDate && edu.endDate && edu.startDate > edu.endDate) {
+      throw new ApiError(400, "Start date must be before end date");
     }
   });
 
@@ -386,24 +383,24 @@ export const saveAddRegisteredUser = asyncHandler(async (req, res) => {
 
   const { bio, projects } = req.body;
 
-  if (!bio) {
-    throw new ApiError(400, "Bio is required");
-  }
-
-  if (bio.length > 500) {
+  // Bio is optional but if provided, must be under 500 chars
+  if (bio && bio.length > 500) {
     throw new ApiError(400, "Bio should be less than 500 characters");
   }
 
-  if (projects.size > 0) {
+  // Validate projects if provided
+  if (projects && Array.isArray(projects) && projects.length > 0) {
     projects.forEach((project) => {
-      if (!project.title || !project.description || !project.projectLink || !project.startDate || !project.endDate) {
-        throw new ApiError(400, "Please provide all the details");
+      if (!project.title) {
+        throw new ApiError(400, "Project title is required");
       }
-      if (project.projectLink.match(/^(http|https):\/\/[^ "]+$/)) {
+      // Optional validation for project link if provided
+      if (project.projectLink && !project.projectLink.match(/^(http|https):\/\/[^ "]+$/)) {
         throw new ApiError(400, "Please provide valid project link");
       }
-      if (project.startDate > project.endDate) {
-        throw new ApiError(400, "Please provide valid dates");
+      // Optional validation for dates if both provided
+      if (project.startDate && project.endDate && project.startDate > project.endDate) {
+        throw new ApiError(400, "Project start date must be before end date");
       }
     });
   }
@@ -517,18 +514,104 @@ export const saveAddRegisteredUser = asyncHandler(async (req, res) => {
 // });
 
 export const uploadPic = asyncHandler(async (req, res) => {
+  console.log("\n******** Inside uploadPic Controller function ********");
+
   const LocalPath = req.files?.picture[0]?.path;
 
   if (!LocalPath) {
-    throw new ApiError(400, "Avatar file is required");
-  }
-  const picture = await uploadOnCloudinary(LocalPath);
-  if (!picture) {
-    throw new ApiError(500, "Error uploading picture");
+    throw new ApiError(400, "Picture file is required");
   }
 
-  res.status(200).json(new ApiResponse(200, { url: picture.url }, "Picture uploaded successfully"));
+  // Get current user to find old picture URL
+  const currentUser = await User.findOne({ username: req.user.username });
+
+  if (!currentUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Delete old picture from Cloudinary if it exists
+  if (currentUser.picture && currentUser.picture !== "") {
+    try {
+      const { deleteFromCloudinary } = await import("../../config/connectCloudinary.js");
+      const result = await deleteFromCloudinary(currentUser.picture);
+
+      if (result) {
+        console.log("Old profile picture deleted from Cloudinary");
+      } else {
+        console.log("Failed to delete old profile picture from Cloudinary");
+      }
+    } catch (error) {
+      console.error("Error deleting old profile picture:", error);
+      // Continue with upload even if deletion fails
+    }
+  }
+
+  // Upload new picture to Cloudinary
+  const picture = await uploadOnCloudinary(LocalPath);
+
+  if (!picture || !picture.url) {
+    throw new ApiError(500, "Error uploading picture to cloud storage");
+  }
+
+  // Update user's picture in database
+  const user = await User.findOneAndUpdate(
+    { username: req.user.username },
+    { picture: picture.url },
+    { new: true }
+  ).select('-password -resetPasswordToken -resetPasswordExpires -__v');
+
+  if (!user) {
+    throw new ApiError(500, "Failed to update user picture in database");
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, { url: picture.url, user }, "Picture uploaded successfully")
+  );
 });
+
+export const removePic = asyncHandler(async (req, res) => {
+  console.log("\n******** Inside removePic Controller function ********");
+
+  // Get current user to find old picture URL
+  const currentUser = await User.findOne({ username: req.user.username });
+
+  if (!currentUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Delete old picture from Cloudinary if it exists
+  if (currentUser.picture && currentUser.picture !== "") {
+    try {
+      const { deleteFromCloudinary } = await import("../../config/connectCloudinary.js");
+      const result = await deleteFromCloudinary(currentUser.picture);
+
+      if (result) {
+        console.log("Old profile picture deleted from Cloudinary");
+      } else {
+        console.log("Failed to delete old profile picture from Cloudinary");
+      }
+    } catch (error) {
+      console.error("Error deleting old profile picture:", error);
+      // Continue even if Cloudinary deletion fails
+    }
+  }
+
+  // Update user's picture to empty string in database
+  const user = await User.findOneAndUpdate(
+    { username: req.user.username },
+    { picture: "" },
+    { new: true }
+  ).select('-password -resetPasswordToken -resetPasswordExpires -__v');
+
+  if (!user) {
+    throw new ApiError(500, "Failed to remove user picture");
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, { user }, "Picture removed successfully")
+  );
+});
+
 
 export const discoverUsers = asyncHandler(async (req, res) => {
   console.log("******** Inside discoverUsers Function *******");
@@ -605,3 +688,5 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, null, "Email sent successfully"));
 });
+
+

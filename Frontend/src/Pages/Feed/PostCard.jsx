@@ -192,18 +192,24 @@ const PostCard = ({ post }) => {
         {post.attachments && post.attachments.length > 0 && (
           <div className={`grid gap-2 mt-3 ${post.attachments.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {post.attachments.map((att, idx) => {
-              // Simple check for image data URI or URL
-              const isImage = att.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(att);
+              const isImage = att.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i.test(att) || att.includes('/image/upload/');
+              const isVideo = /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(att) || att.includes('/video/upload/');
 
               if (isImage) {
                 return (
+                  <div key={idx} className="bg-gray-100 rounded-lg overflow-hidden border border-gray-100 shadow-sm cursor-pointer" onClick={() => window.open(att, '_blank')}>
+                    <img src={att} alt={`Attachment ${idx + 1}`} className="w-full h-auto" />
+                  </div>
+                );
+              } else if (isVideo) {
+                return (
                   <div key={idx} className="bg-gray-100 rounded-lg overflow-hidden border border-gray-100 shadow-sm">
-                    <img src={att} alt={`Attachment ${idx + 1}`} className="w-full h-auto max-h-96 object-cover" />
+                    <video src={att} controls className="w-full h-auto" />
                   </div>
                 );
               } else {
                 return (
-                  <a key={idx} href={att} download={`attachment-${idx}`} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                  <a key={idx} href={att} download={`attachment-${idx}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="bg-blue-100 text-blue-600 p-2 rounded-lg">
                       <FaShare />
                     </div>

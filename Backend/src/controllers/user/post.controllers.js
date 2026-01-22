@@ -3,6 +3,7 @@ import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { Post } from "../../models/post.model.js";
 import { User } from "../../models/user.model.js";
+import { uploadOnCloudinary } from "../../config/connectCloudinary.js";
 
 // Helper function for basic content moderation
 const moderateContent = (content) => {
@@ -13,16 +14,41 @@ const moderateContent = (content) => {
 
 // Create post
 export const createPost = asyncHandler(async (req, res) => {
-  const { content, skills, attachments } = req.body;
+  let { content, skills } = req.body;
   const userId = req.user._id || req.user.id;
   const io = req.app.get("io");
 
+  // Parse skills if it comes as a string (from FormData)
+  if (typeof skills === 'string') {
+    try {
+      skills = JSON.parse(skills);
+    } catch (e) {
+      skills = [];
+    }
+  }
+
   if (!content || content.trim().length === 0) {
-    throw new ApiError(400, "Post content is required");
+    if ((!req.files || req.files.length === 0)) {
+      throw new ApiError(400, "Post content is required");
+    }
+    // Allow empty content if there are attachments, but set content to empty string
+    content = "";
   }
 
   if (content.length > 1000) {
     throw new ApiError(400, "Post content should be less than 1000 characters");
+  }
+
+  // Handle Attachments Upload
+  const attachments = [];
+  if (req.files && req.files.length > 0) {
+    for (const file of req.files) {
+      const localPath = file.path;
+      const uploadResult = await uploadOnCloudinary(localPath);
+      if (uploadResult && uploadResult.url) {
+        attachments.push(uploadResult.url);
+      }
+    }
   }
 
   // Basic moderation
@@ -32,7 +58,7 @@ export const createPost = asyncHandler(async (req, res) => {
     author: userId,
     content: content.trim(),
     skills: skills || [],
-    attachments: attachments || [],
+    attachments: attachments,
     isModerated: hasInappropriateContent,
   });
 
@@ -183,11 +209,33 @@ export const deletePost = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Unauthorized to delete this post");
   }
 
+  // Delete all attached media from Cloudinary
+  if (post.attachments && post.attachments.length > 0) {
+    console.log(`Deleting ${post.attachments.length} media files from Cloudinary...`);
+
+    for (const fileUrl of post.attachments) {
+      try {
+        const { deleteFromCloudinary } = await import("../../config/connectCloudinary.js");
+        const result = await deleteFromCloudinary(fileUrl);
+
+        if (result) {
+          console.log(`Successfully deleted media: ${fileUrl}`);
+        } else {
+          console.log(`Failed to delete media: ${fileUrl}`);
+        }
+      } catch (error) {
+        console.error(`Error deleting media ${fileUrl}:`, error);
+        // Continue with other files even if one fails
+      }
+    }
+  }
+
+  // Mark post as deleted
   post.isDeleted = true;
   await post.save();
 
   return res.status(200).json(
-    new ApiResponse(200, null, "Post deleted successfully")
+    new ApiResponse(200, null, "Post and all media deleted successfully")
   );
 });
 

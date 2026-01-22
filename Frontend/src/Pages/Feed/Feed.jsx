@@ -137,7 +137,11 @@ const Feed = () => {
 
   const handleCreatePost = async (postData) => {
     try {
-      const { data } = await axios.post("/post", postData);
+      const { data } = await axios.post("/post", postData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       if (data.success) {
         toast.success("Post created successfully");
         setShowCreateModal(false);

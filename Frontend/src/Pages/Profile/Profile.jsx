@@ -66,8 +66,17 @@ const Profile = () => {
         setLoading(false);
       }
     };
-    getUser();
-  }, [id, setUser]);
+
+    // If viewing own profile and user context exists, use it immediately
+    if (!id && user?.username) {
+      setProfileUser(user);
+      setLoading(false);
+      // Still fetch fresh data in background
+      getUser();
+    } else {
+      getUser();
+    }
+  }, [id, user, setUser]);
 
   const convertDate = (dateTimeString) => {
     if (!dateTimeString) return "";

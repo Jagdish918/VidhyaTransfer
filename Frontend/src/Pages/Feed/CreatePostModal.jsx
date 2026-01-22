@@ -57,15 +57,6 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
     setAttachments([...attachments, ...files]);
   };
 
-  const convertFileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -81,20 +72,19 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
 
     setLoading(true);
     try {
-      // Convert all attachments to Base64 strings to simulate "upload" and store in DB for now
-      const base64Attachments = await Promise.all(
-        attachments.map(async (file) => {
-          // In a real production app, upload `file` to S3/Cloudinary here and return the URL
-          return await convertFileToBase64(file);
-        })
-      );
+      const formData = new FormData();
+      formData.append("content", content.trim());
+      formData.append("type", postType);
 
-      await onSubmit({
-        content: content.trim(),
-        skills: selectedSkills,
-        type: postType,
-        attachments: base64Attachments
+      // Skills need to be stringified for FormData if it's an array of objects
+      formData.append("skills", JSON.stringify(selectedSkills));
+
+      // Append files
+      attachments.forEach((file) => {
+        formData.append("attachments", file);
       });
+
+      await onSubmit(formData); // onSubmit (in Feed.jsx) will need to handle this being a FormData object
 
       setContent("");
       setSelectedSkills([]);
@@ -102,7 +92,7 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
       setPostType("Learning Progress");
     } catch (error) {
       console.error("Error creating post:", error);
-      toast.error("Failed to process attachments");
+      toast.error("Failed to create post");
     } finally {
       setLoading(false);
     }
@@ -158,6 +148,8 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
                     <div className="h-16 w-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
                       {file.type.startsWith('image/') ? (
                         <img src={URL.createObjectURL(file)} alt="preview" className="h-full w-full object-cover" />
+                      ) : file.type.startsWith('video/') ? (
+                        <video src={URL.createObjectURL(file)} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-xs text-center p-1 break-words">{file.name.slice(0, 10)}...</span>
                       )}
@@ -175,20 +167,24 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-3 border-t border-b border-gray-100 mb-4 text-gray-500 flex-shrink-0">
-            <span className="text-sm font-medium">Add to your post:</span>
-            <div className="flex gap-4">
-              <button type="button" onClick={() => cameraInputRef.current.click()} className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors tooltip" title="Camera">
-                <FaCamera size={20} />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4 border-t border-b border-gray-200 mb-4 bg-gray-50 px-4 rounded-lg flex-shrink-0">
+            <span className="text-sm font-semibold text-gray-700">Add to your post:</span>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current.click()}
+                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200 hover:border-red-300"
+              >
+                <FaCamera size={18} />
+                <span className="text-sm font-medium">Camera</span>
               </button>
-              <button type="button" onClick={() => fileInputRef.current.click()} className="text-green-500 hover:bg-green-50 p-2 rounded-full transition-colors tooltip" title="Gallery / Image">
-                <FaImage size={20} />
-              </button>
-              <button type="button" onClick={() => fileInputRef.current.click()} className="text-blue-500 hover:bg-blue-50 p-2 rounded-full transition-colors tooltip" title="Video">
-                <FaVideo size={20} />
-              </button>
-              <button type="button" onClick={() => fileInputRef.current.click()} className="text-gray-500 hover:bg-gray-100 p-2 rounded-full transition-colors tooltip" title="Document">
-                <FaPaperclip size={18} />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current.click()}
+                className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200 hover:border-blue-300"
+              >
+                <FaPaperclip size={16} />
+                <span className="text-sm font-medium">Files (Photos, Videos, Documents)</span>
               </button>
 
               <input
