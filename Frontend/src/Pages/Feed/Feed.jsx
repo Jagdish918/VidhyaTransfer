@@ -156,25 +156,25 @@ const Feed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-6 pb-12">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="h-[calc(100vh-80px)] bg-[#f0f2f5] font-['Montserrat'] overflow-hidden">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 h-full pt-6">
 
-        {/* Left Sidebar - Navigation & Filters */}
-        <div className="hidden lg:block lg:col-span-3">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sticky top-24 space-y-6">
+        {/* Left Sidebar - Fixed */}
+        <div className="hidden lg:block lg:col-span-3 h-full overflow-y-auto scrollbar-hide pb-10">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-8">
             <div>
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 px-2">Feeds</h3>
-              <div className="space-y-1">
+              <h3 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4 px-2 font-['Oswald']">Feeds</h3>
+              <div className="space-y-2">
                 {domains.map((domain) => (
                   <button
                     key={domain}
                     onClick={() => setSelectedDomain(domain)}
-                    className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${selectedDomain === domain
-                      ? "bg-blue-50 text-blue-600 border border-blue-100 shadow-sm"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-3 duration-200 group ${selectedDomain === domain
+                      ? "bg-[#3bb4a1] text-white shadow-md shadow-[#3bb4a1]/20"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-[#3bb4a1]"
                       } `}
                   >
-                    <span className={`${selectedDomain === domain ? 'text-blue-500' : 'text-gray-400'}`}>
+                    <span className={`text-lg ${selectedDomain === domain ? 'text-white' : 'text-gray-400 group-hover:text-[#3bb4a1] transition-colors'}`}>
                       {domain === 'All' ? '🏠' : '#'}
                     </span>
                     {domain}
@@ -183,13 +183,13 @@ const Feed = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 px-2 flex items-center gap-2">
+            <div className="pt-6 border-t border-gray-100">
+              <h3 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4 px-2 flex items-center gap-2 font-['Oswald']">
                 <FaFire className="text-orange-500" /> Trending Topics
               </h3>
               <div className="flex flex-wrap gap-2 px-1">
                 {trendingSkills.slice(0, 5).map(skill => (
-                  <span key={skill} className="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-200 cursor-pointer">
+                  <span key={skill} className="text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:border-[#3bb4a1] hover:text-[#3bb4a1] cursor-pointer transition-all">
                     #{skill}
                   </span>
                 ))}
@@ -199,15 +199,15 @@ const Feed = () => {
         </div>
 
         {/* Mobile Filter */}
-        <div className="lg:hidden col-span-1 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+        <div className="lg:hidden col-span-1 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide mb-4">
           <div className="flex space-x-2">
             {domains.map((domain) => (
               <button
                 key={domain}
                 onClick={() => setSelectedDomain(domain)}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border transition-all ${selectedDomain === domain
-                  ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold border transition-all ${selectedDomain === domain
+                  ? "bg-[#3bb4a1] text-white border-[#3bb4a1] shadow-lg shadow-[#3bb4a1]/20"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                   } `}
               >
                 {domain}
@@ -216,53 +216,56 @@ const Feed = () => {
           </div>
         </div>
 
-        {/* Main Feed */}
-        <div className="lg:col-span-6 space-y-6">
-          {/* Create Post Box */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-5">
-            <div className="flex gap-4 mb-4">
-              <img
-                src={user?.picture || "/default-avatar.png"}
-                alt="Profile"
-                className="w-12 h-12 rounded-full object-cover border border-gray-100 flex-shrink-0"
-              />
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex-1 bg-gray-50 hover:bg-gray-100 text-left text-gray-500 rounded-xl px-4 py-3 transition-all border border-gray-200 shadow-inner text-sm sm:text-base cursor-pointer"
-              >
-                <span className="font-medium text-gray-700 block mb-0.5">Start a post</span>
-                <span className="text-xs text-gray-400">Share your learning journey, ask questions, or offer help...</span>
-              </button>
-            </div>
-            <div className="flex justify-between items-center sm:px-2 pt-2">
-              <div className="flex gap-4">
-                <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 text-gray-500 hover:text-blue-600 text-sm font-medium transition-colors">
-                  <span className="text-green-500">🖼️</span> Media
-                </button>
-                <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 text-gray-500 hover:text-blue-600 text-sm font-medium transition-colors">
-                  <span className="text-purple-500">📅</span> Event
-                </button>
-                <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 text-gray-500 hover:text-blue-600 text-sm font-medium transition-colors">
-                  <span className="text-red-500">📝</span> Article
+        {/* Main Feed - Scrollable */}
+        <div className="lg:col-span-6 h-full overflow-y-scroll scrollbar-hide pb-20 px-1" id="feed-scroll-container">
+          <div className="space-y-6">
+            {/* Create Post Box */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 transition-shadow hover:shadow-md">
+              <div className="flex gap-4 mb-4">
+                <img
+                  src={user?.picture || "/default-avatar.png"}
+                  alt="Profile"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0"
+                />
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex-1 bg-gray-50 hover:bg-gray-100 text-left text-gray-500 rounded-2xl px-5 py-3 transition-all border border-gray-100 cursor-pointer group"
+                >
+                  <span className="font-semibold text-gray-700 block mb-1 group-hover:text-[#013e38] transition-colors">Start a post</span>
+                  <span className="text-xs text-gray-400">Share your learning journey, ask questions...</span>
                 </button>
               </div>
+              <div className="flex justify-between items-center sm:px-2 pt-2 border-t border-gray-50">
+                <div className="flex gap-6">
+                  <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 text-gray-500 hover:text-[#3bb4a1] text-sm font-semibold transition-colors py-2">
+                    <span className="text-green-500 text-lg">🖼️</span> Media
+                  </button>
+                  <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 text-gray-500 hover:text-[#3bb4a1] text-sm font-semibold transition-colors py-2">
+                    <span className="text-purple-500 text-lg">📅</span> Event
+                  </button>
+                  <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 text-gray-500 hover:text-[#3bb4a1] text-sm font-semibold transition-colors py-2">
+                    <span className="text-red-500 text-lg">📝</span> Article
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {newPostsCount > 0 && (
-            <button
-              onClick={() => { setNewPostsCount(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 shadow-sm border border-blue-100"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              {newPostsCount} New Posts
-            </button>
-          )}
+            {newPostsCount > 0 && (
+              <button
+                onClick={() => {
+                  setNewPostsCount(0);
+                  document.getElementById('feed-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="w-full py-3 bg-[#3bb4a1]/10 text-[#3bb4a1] rounded-xl text-sm font-bold hover:bg-[#3bb4a1]/20 transition-all flex items-center justify-center gap-3 backdrop-blur-sm sticky top-0 z-10 border border-[#3bb4a1]/20"
+              >
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3bb4a1] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#3bb4a1]"></span>
+                </span>
+                {newPostsCount} New Posts
+              </button>
+            )}
 
-          <div className="space-y-6">
             {/* Skeleton Loaders */}
             {initialLoading && (
               <>
@@ -284,19 +287,19 @@ const Feed = () => {
               return (
                 <>
                   {filteredPosts.length === 0 && !loading && (
-                    <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm border-dashed">
-                      <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                        <span className="text-2xl">📭</span>
+                    <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+                      <div className="mx-auto w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <span className="text-4xl grayscale opacity-50">📭</span>
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 font-['Oswald']">
                         No posts yet
                       </h3>
-                      <p className="text-gray-500 max-w-sm mx-auto mt-1 mb-4">
-                        Be the first to share your knowledge or ask a question in the {selectedDomain} domain!
+                      <p className="text-gray-500 max-w-sm mx-auto mb-6">
+                        Be the first to share your knowledge or ask a question in the <span className="font-semibold text-[#013e38]">{selectedDomain}</span> domain!
                       </p>
                       <button
                         onClick={() => setShowCreateModal(true)}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        className="px-8 py-3 bg-[#3bb4a1] text-white font-bold rounded-xl hover:bg-[#2fa08e] transition-all shadow-lg shadow-[#3bb4a1]/30 hover:-translate-y-0.5"
                       >
                         Create Post
                       </button>
@@ -317,63 +320,68 @@ const Feed = () => {
 
             {loading && (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-[#3bb4a1]"></div>
               </div>
             )}
 
             {!hasMore && posts.length > 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-400 text-sm">All caught up! 🎉</p>
+              <div className="text-center py-12">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 text-xl mb-3">🎉</div>
+                <p className="text-gray-400 text-sm font-medium">You're all caught up!</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Sidebar - Suggested & Trending */}
-        <div className="hidden lg:block lg:col-span-3 space-y-6">
+        {/* Right Sidebar - Fixed */}
+        <div className="hidden lg:block lg:col-span-3 h-full overflow-y-auto scrollbar-hide pb-10 space-y-6">
           {/* Suggested Connections */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sticky top-24">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-bold text-gray-900">Suggested For You</h3>
-              <button className="text-xs font-semibold text-blue-600 hover:text-blue-700">See All</button>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-extrabold text-gray-900 font-['Oswald'] tracking-wide">SUGGESTED FOR YOU</h3>
+              <button className="text-xs font-bold text-[#3bb4a1] hover:text-[#013e38] transition-colors">SEE ALL</button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {suggestedPeers.map(peer => (
-                <div key={peer.id} className="flex items-start gap-3">
-                  <img
-                    src={peer.avatar || `https://ui-avatars.com/api/?name=${peer.name}&background=random`}
-                    alt={peer.name}
-                    className="w-10 h-10 rounded-full object-cover border border-gray-100"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-900 truncate">{peer.name}</h4>
-                    <p className="text-xs text-gray-500 truncate">{peer.role}</p>
-                    <button className="mt-2 w-full py-1.5 flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-                      <FaUserPlus /> Connect
-                    </button>
+                <div key={peer.id} className="flex items-center gap-3 group">
+                  <div className="relative">
+                    <img
+                      src={peer.avatar || `https://ui-avatars.com/api/?name=${peer.name}&background=random`}
+                      alt={peer.name}
+                      className="w-10 h-10 rounded-full object-cover border border-gray-100 group-hover:border-[#3bb4a1] transition-colors"
+                    />
+                    <div className="absolute -bottom-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-white"></div>
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-gray-900 truncate group-hover:text-[#3bb4a1] transition-colors">{peer.name}</h4>
+                    <p className="text-xs text-gray-500 truncate">{peer.role}</p>
+                  </div>
+                  <button className="p-2 text-[#3bb4a1] hover:bg-[#3bb4a1]/10 rounded-full transition-colors" title="Connect">
+                    <FaUserPlus />
+                  </button>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Promo / Footer Links */}
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-md p-5 text-white">
-            <h3 className="font-bold text-lg mb-2">Premium Access</h3>
-            <p className="text-sm text-blue-100 mb-4">Unlock advanced analytics and unlimited peer connections.</p>
-            <button className="w-full py-2 bg-white text-blue-600 font-semibold rounded-lg text-sm hover:bg-blue-50 transition-colors">
-              Try Premium
+          <div className="bg-gradient-to-br from-[#013e38] to-[#3bb4a1] rounded-2xl shadow-lg p-6 text-white relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 bg-white/5 rounded-full -mr-4 -mt-4 transform group-hover:scale-110 transition-transform duration-700"></div>
+            <h3 className="font-extrabold text-lg mb-2 font-['Oswald'] tracking-wide relative z-10">PREMIUM ACCESS</h3>
+            <p className="text-sm text-blue-50/80 mb-6 leading-relaxed relative z-10">Unlock advanced analytics, unlimited peer connections, and exclusive content.</p>
+            <button className="w-full py-2.5 bg-white text-[#013e38] font-bold rounded-xl text-sm hover:bg-gray-50 transition-all shadow-lg relative z-10 transform hover:-translate-y-0.5">
+              Try Premium Free
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-400 px-2 justify-center">
-            <a href="#" className="hover:underline">About</a>
-            <a href="#" className="hover:underline">Privacy</a>
-            <a href="#" className="hover:underline">Terms</a>
-            <a href="#" className="hover:underline">Help</a>
-            <span>© 2026 SkillSwap</span>
-          </div>
+          {/* <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-400 px-4 justify-center font-medium">
+            <a href="#" className="hover:text-[#3bb4a1] transition-colors">About</a>
+            <a href="#" className="hover:text-[#3bb4a1] transition-colors">Privacy</a>
+            <a href="#" className="hover:text-[#3bb4a1] transition-colors">Terms</a>
+            <a href="#" className="hover:text-[#3bb4a1] transition-colors">Help</a>
+            <span className="opacity-50">© 2026 SkillSwap</span>
+          </div> */}
         </div>
       </div>
 

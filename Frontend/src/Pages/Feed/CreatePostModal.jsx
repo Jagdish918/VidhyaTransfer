@@ -103,61 +103,70 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#013e38]/80 backdrop-blur-sm p-4 transition-all duration-300" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fadeIn flex flex-col max-h-[90vh]"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fadeIn flex flex-col max-h-[90vh] border border-[#3bb4a1]/20"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
-          <h2 className="text-xl font-bold text-gray-800">Create Post</h2>
+        <div className="flex justify-between items-center px-8 py-5 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
+          <h2 className="text-xl font-bold text-gray-800 font-['Oswald'] tracking-wide uppercase">Create Post</h2>
           <button
-            className="text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none cursor-pointer"
+            className="text-gray-400 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer p-2 hover:bg-red-50 rounded-full"
             onClick={onClose}
           >
             <FaTimes size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 flex flex-col">
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Post Type</label>
-            <select
-              value={postType}
-              onChange={(e) => setPostType(e.target.value)}
-              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-            >
-              {postTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
+        <form onSubmit={handleSubmit} className="p-8 overflow-y-auto flex-1 flex flex-col custom-scrollbar">
+          <div className="mb-6">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 font-['Oswald']">Post Type</label>
+            <div className="relative">
+              <select
+                value={postType}
+                onChange={(e) => setPostType(e.target.value)}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-[#3bb4a1] focus:border-[#3bb4a1] outline-none transition-all appearance-none cursor-pointer hover:bg-white"
+              >
+                {postTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
           </div>
 
-          <div className="mb-4 relative">
+          <div className="mb-6 relative flex-1 min-h-[150px]">
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="What do you want to share or ask?"
               rows="5"
               maxLength={1000}
-              className="w-full text-base text-gray-700 placeholder-gray-400 bg-transparent border-none focus:ring-0 p-0 resize-none outline-none"
+              className="w-full text-base text-gray-700 placeholder-gray-400 bg-transparent border-none focus:ring-0 p-0 resize-none outline-none font-['Montserrat'] leading-relaxed"
             />
             {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-3 mt-4">
                 {attachments.map((file, idx) => (
                   <div key={idx} className="relative group">
-                    <div className="h-16 w-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+                    <div className="h-20 w-20 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                       {file.type.startsWith('image/') ? (
                         <img src={URL.createObjectURL(file)} alt="preview" className="h-full w-full object-cover" />
                       ) : file.type.startsWith('video/') ? (
                         <video src={URL.createObjectURL(file)} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="text-xs text-center p-1 break-words">{file.name.slice(0, 10)}...</span>
+                        <div className="p-2 text-center">
+                          <FaPaperclip className="mx-auto mb-1 text-gray-400" />
+                          <span className="text-[10px] text-gray-500 font-medium break-all line-clamp-2 leading-tight">{file.name}</span>
+                        </div>
                       )}
                     </div>
                     <button
                       type="button"
                       onClick={() => removeAttachment(idx)}
-                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100 hover:bg-red-600"
                     >
                       <FaTimes size={10} />
                     </button>
@@ -167,24 +176,24 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4 border-t border-b border-gray-200 mb-4 bg-gray-50 px-4 rounded-lg flex-shrink-0">
-            <span className="text-sm font-semibold text-gray-700">Add to your post:</span>
-            <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-5 border-t border-b border-gray-100 mb-6 bg-gray-50/50 -mx-8 px-8 flex-shrink-0">
+            <span className="text-sm font-bold text-gray-600 font-['Oswald'] uppercase tracking-wide">Add to your post:</span>
+            <div className="flex gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={() => cameraInputRef.current.click()}
-                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200 hover:border-red-300"
+                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-transparent hover:border-red-200 group"
               >
-                <FaCamera size={18} />
-                <span className="text-sm font-medium">Camera</span>
+                <FaCamera size={16} className="group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-bold">Camera</span>
               </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current.click()}
-                className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200 hover:border-blue-300"
+                className="flex items-center gap-2 px-4 py-2 text-[#3bb4a1] bg-[#3bb4a1]/10 hover:bg-[#3bb4a1]/20 rounded-xl transition-all border border-transparent hover:border-[#3bb4a1]/30 group"
               >
-                <FaPaperclip size={16} />
-                <span className="text-sm font-medium">Files (Photos, Videos, Documents)</span>
+                <FaImage size={16} className="group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-bold">Media</span>
               </button>
 
               <input
@@ -206,41 +215,47 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             </div>
           </div>
 
-          <div className="mb-6 flex-shrink-0">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Tags / Skills</label>
-            <div className="flex flex-col sm:flex-row gap-2 mb-3">
-              <select
-                value={selectedSkill}
-                onChange={(e) => setSelectedSkill(e.target.value)}
-                className="flex-1 p-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 outline-none"
-              >
-                <option>Select a skill</option>
-                {skills.map((skill) => (
-                  <option key={skill} value={skill}>
-                    {skill}
-                  </option>
-                ))}
-              </select>
+          <div className="mb-8 flex-shrink-0">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 font-['Oswald']">Tags / Skills</label>
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+              <div className="relative flex-1">
+                <select
+                  value={selectedSkill}
+                  onChange={(e) => setSelectedSkill(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-[#3bb4a1] outline-none appearance-none hover:bg-white transition-colors"
+                >
+                  <option>Select a skill</option>
+                  {skills.map((skill) => (
+                    <option key={skill} value={skill}>
+                      {skill}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={handleAddSkill}
-                className="px-4 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-black transition-colors text-sm"
+                className="px-6 py-3 bg-[#013e38] text-white font-bold rounded-xl hover:bg-[#012b27] transition-all text-sm shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
+                disabled={!selectedSkill || selectedSkill === "Select a skill"}
               >
                 Add Tag
               </button>
             </div>
 
             {selectedSkills.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-xl border border-gray-100 border-dashed">
                 {selectedSkills.map((skill, index) => (
-                  <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                  <span key={index} className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-[#3bb4a1]/10 text-[#013e38] border border-[#3bb4a1]/20">
                     #{skill.name}
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(index)}
-                      className="ml-2 text-blue-400 hover:text-red-500 transition-colors"
+                      className="ml-2 text-[#3bb4a1] hover:text-red-500 transition-colors bg-white rounded-full p-0.5 hover:bg-red-50"
                     >
-                      ×
+                      <FaTimes size={10} />
                     </button>
                   </span>
                 ))}
@@ -248,20 +263,25 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             )}
           </div>
 
-          <div className="flex justify-end gap-3 flex-shrink-0 mt-auto">
+          <div className="flex justify-end gap-4 flex-shrink-0 mt-auto pt-4 border-t border-gray-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-50 rounded-lg transition-colors"
+              className="px-6 py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition-all text-sm uppercase tracking-wide hover:text-gray-700"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+              className="px-8 py-3 bg-[#3bb4a1] text-white font-bold rounded-xl hover:bg-[#2fa08e] shadow-lg shadow-[#3bb4a1]/30 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm uppercase tracking-wide"
               disabled={loading}
             >
-              {loading ? "Posting..." : "Post"}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Posting...</span>
+                </div>
+              ) : "Post"}
             </button>
           </div>
         </form>

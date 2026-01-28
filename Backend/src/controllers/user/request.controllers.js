@@ -109,3 +109,32 @@ export const rejectRequest = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(new ApiResponse(200, null, "Request rejected successfully"));
 });
+
+export const getSentRequests = asyncHandler(async (req, res, next) => {
+  console.log("\n******** Inside getSentRequests Controller function ********");
+
+  const senderID = req.user._id;
+
+  const requests = await Request.find({ sender: senderID, status: "Pending" });
+
+  return res.status(200).json(new ApiResponse(200, requests, "Sent requests fetched successfully"));
+});
+
+export const cancelRequest = asyncHandler(async (req, res, next) => {
+  console.log("\n******** Inside cancelRequest Controller function ********");
+
+  const { receiverID } = req.body;
+  const senderID = req.user._id;
+
+  const deletedRequest = await Request.findOneAndDelete({
+    sender: senderID,
+    receiver: receiverID,
+    status: "Pending"
+  });
+
+  if (!deletedRequest) {
+    throw new ApiError(404, "Pending request not found to cancel");
+  }
+
+  res.status(200).json(new ApiResponse(200, null, "Request cancelled successfully"));
+});
