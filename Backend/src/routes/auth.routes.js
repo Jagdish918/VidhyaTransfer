@@ -8,6 +8,8 @@ import {
   loginWithEmailPassword,
   forgotPassword,
   resetPassword,
+  sendRegistrationOtp,
+  verifyRegistrationOtp
 } from "../controllers/auth/auth.controllers.js";
 
 const router = Router();
@@ -21,6 +23,8 @@ router.post("/register", registerWithEmailPassword);
 router.post("/login", loginWithEmailPassword);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/send-registration-otp", sendRegistrationOtp);
+router.post("/verify-registration-otp", verifyRegistrationOtp);
 
 // Logout
 router.get("/logout", handleLogout);

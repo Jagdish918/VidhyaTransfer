@@ -239,3 +239,91 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, null, "Password reset successful"));
 });
+
+export const sendRegistrationOtp = asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    throw new ApiError(400, "Name, email, and password are required");
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new ApiError(409, "User with this email already exists");
+  }
+
+  // Generate OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+  let unregisteredUser = await UnRegisteredUser.findOne({ email });
+  if (!unregisteredUser) {
+    unregisteredUser = await UnRegisteredUser.create({
+      name,
+      email,
+      password: hashPassword(password),
+      otp,
+      otpExpires
+    });
+  } else {
+    // Update existing unregistered user
+    unregisteredUser.name = name;
+    unregisteredUser.password = hashPassword(password);
+    unregisteredUser.otp = otp;
+    unregisteredUser.otpExpires = otpExpires;
+    await unregisteredUser.save();
+  }
+
+  const message = `
+    <h1>Registration OTP</h1>
+    <p>Your OTP for registration is: <strong>${otp}</strong></p>
+    <p>This OTP is valid for 10 minutes.</p>
+  `;
+
+  try {
+    await sendMail(email, "Registration OTP - SkillSwap", message);
+    return res.status(200).json(new ApiResponse(200, null, "OTP sent successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Failed to send OTP email");
+  }
+});
+
+export const verifyRegistrationOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    throw new ApiError(400, "Email and OTP are required");
+  }
+
+  const unregisteredUser = await UnRegisteredUser.findOne({ email });
+
+  if (!unregisteredUser) {
+    throw new ApiError(400, "User not found or registration session expired");
+  }
+
+  if (unregisteredUser.otp !== otp) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  if (unregisteredUser.otpExpires < Date.now()) {
+    throw new ApiError(400, "OTP expired");
+  }
+
+  unregisteredUser.otp = undefined;
+  unregisteredUser.otpExpires = undefined;
+  await unregisteredUser.save();
+
+  const jwtToken = generateJWTToken_email(unregisteredUser);
+  const expiryDate = new Date(Date.now() + 0.5 * 60 * 60 * 1000);
+  res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
+  res.cookie("hasSession", "true", { expires: expiryDate, secure: false, httpOnly: false });
+
+  const userData = { ...unregisteredUser.toObject() };
+  delete userData.password;
+  delete userData.otp;
+  delete userData.otpExpires;
+
+  return res.status(201).json(
+    new ApiResponse(201, { user: userData }, "Registration successful")
+  );
+});

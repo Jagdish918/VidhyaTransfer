@@ -19,6 +19,64 @@ const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useUser();
 
+  // OTP Login States
+  const [loginMethod, setLoginMethod] = useState("password"); // "password" or "otp"
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+
+  // Registration OTP State
+  const [showRegOtpModal, setShowRegOtpModal] = useState(false);
+  const [regOtp, setRegOtp] = useState("");
+
+  // Timer & Limits
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [otpAttempts, setOtpAttempts] = useState(0);
+
+  // Reset OTP state when inputs change
+  React.useEffect(() => {
+    setOtpSent(false);
+    setOtp("");
+    setOtpTimer(0);
+    setOtpAttempts(0);
+  }, [email, loginMethod, activeTab]);
+
+  // Timer Logic
+  React.useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
+
+  const handleResendOtp = async () => {
+    if (otpAttempts >= 3) {
+      toast.error("Maximum resend attempts reached. Please try again later.");
+      return;
+    }
+
+    if (otpTimer > 0) return;
+
+    try {
+      // Re-trigger the send OTP logic based on context
+      if (activeTab === "register") {
+        const { data } = await axios.post("/auth/send-registration-otp", { name, email, password });
+        if (data.success) toast.success("OTP Resent!");
+      } else {
+        // Login OTP resend
+        const { data } = await axios.post("/auth/send-otp", { email });
+        if (data.success) toast.success("OTP Resent!");
+      }
+
+      setOtpAttempts(prev => prev + 1);
+      setOtpTimer(60); // 60 seconds cooldown
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to resend OTP");
+    }
+  };
+
   const handleGoogleLogin = () => {
     window.location.href = `${axios.defaults.baseURL}/auth/google`;
   };
@@ -106,17 +164,13 @@ const Login = () => {
           return;
         }
 
-        const { data } = await axios.post("/auth/register", { name, email, password });
+        // Send Registration OTP
+        const { data } = await axios.post("/auth/send-registration-otp", { name, email, password });
 
         if (data.success) {
-          toast.success(data.message || "Registration successful");
-
-          const userInfo = data.data.user;
-          storeSanitizedUserData(userInfo);
-          setUser(userInfo);
-
-          // New users should start onboarding
-          navigate("/onboarding/personal-info");
+          toast.success(data.message || "OTP sent to email");
+          setShowRegOtpModal(true);
+          setOtpTimer(60);
         }
       }
     } catch (error) {
@@ -126,6 +180,34 @@ const Login = () => {
       } else {
         toast.error("An error occurred. Please try again.");
       }
+    } finally {
+      if (!showRegOtpModal) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleVerifyRegistrationOtp = async () => {
+    if (!regOtp) {
+      toast.error("Please enter OTP");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data } = await axios.post("/auth/verify-registration-otp", { email, otp: regOtp });
+      if (data.success) {
+        toast.success("Registration successful");
+        setShowRegOtpModal(false);
+
+        const userInfo = data.data.user;
+        storeSanitizedUserData(userInfo);
+        setUser(userInfo);
+
+        navigate("/onboarding/personal-info");
+      }
+    } catch (error) {
+      console.error("OTP Error", error);
+      toast.error(error?.response?.data?.message || "Invalid OTP");
     } finally {
       setLoading(false);
     }
@@ -182,6 +264,25 @@ const Login = () => {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+              {activeTab === "login" && (
+                <div className="flex gap-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setLoginMethod("password")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${loginMethod === "password" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                  >
+                    Password
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLoginMethod("otp")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${loginMethod === "otp" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                  >
+                    OTP
+                  </button>
+                </div>
+              )}
+
               {activeTab === "register" && (
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-semibold text-gray-700">Full Name</label>
@@ -206,32 +307,59 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                   required
-                  disabled={loading}
+                  disabled={loading || (loginMethod === "otp" && otpSent)}
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
-                <label className="text-sm font-semibold text-gray-700">Password</label>
-                <div className="relative">
+              {loginMethod === "password" && (
+                <div className="flex flex-col gap-2 relative">
+                  <label className="text-sm font-semibold text-gray-700">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      required
+                      disabled={loading}
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 border-none bg-transparent cursor-pointer p-0"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {loginMethod === "otp" && otpSent && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700">Enter OTP</label>
                   <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    type="text"
+                    placeholder="Enter 6-digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                     required
                     disabled={loading}
-                    minLength={6}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 border-none bg-transparent cursor-pointer p-0"
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={otpTimer > 0}
+                      className={`text-xs bg-transparent border-0 cursor-pointer hover:underline ${otpTimer > 0 ? "text-gray-400" : "text-blue-600"}`}
+                    >
+                      {otpTimer > 0 ? `Resend in ${otpTimer}s` : "Resend OTP"}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {activeTab === "register" && (
                 <div className="flex flex-col gap-2 relative">
@@ -251,7 +379,7 @@ const Login = () => {
                 </div>
               )}
 
-              {activeTab === "login" && (
+              {activeTab === "login" && loginMethod === "password" && (
                 <div className="flex justify-between items-center">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -267,13 +395,24 @@ const Login = () => {
                 </div>
               )}
 
-              <Button
-                type="submit"
-                className="w-full p-3.5 bg-blue-500 text-white border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 mt-2 hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-lg shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "Continue"}
-              </Button>
+              {activeTab === "login" && loginMethod === "otp" && !otpSent ? (
+                <Button
+                  type="button"
+                  onClick={() => axios.post("/auth/send-otp", { email }).then(res => { if (res.data.success) { setOtpSent(true); setOtpTimer(60); toast.success(res.data.message); } }).catch(err => toast.error(err.response?.data?.message || "Failed"))}
+                  className="w-full p-3.5 bg-blue-500 text-white border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 mt-2 hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-lg shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  {loading ? "Sending..." : "Send OTP"}
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  className="w-full p-3.5 bg-blue-500 text-white border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 mt-2 hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-lg shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  {loading ? "Processing..." : (activeTab === "register" ? "Continue" : (loginMethod === "otp" ? "Verify & Login" : "Login"))}
+                </Button>
+              )}
             </form>
 
             {/* Separator */}
@@ -301,6 +440,54 @@ const Login = () => {
           </div>
         </div>
       </div>
+      {/* OTP Modal */}
+      {showRegOtpModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md m-4 shadow-2xl animate-fade-in relative">
+            <button
+              onClick={() => { setShowRegOtpModal(false); setLoading(false); }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 border-none bg-transparent cursor-pointer text-xl"
+            >
+              ×
+            </button>
+
+            <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">Verify Email</h2>
+            <p className="text-gray-500 text-center mb-6">Enter the 6-digit code sent to {email}</p>
+
+            <div className="flex flex-col gap-4">
+              <input
+                type="text"
+                placeholder="000000"
+                value={regOtp}
+                onChange={(e) => setRegOtp(e.target.value)}
+                className="text-center text-3xl tracking-widest p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none font-mono"
+                maxLength={6}
+              />
+
+              <Button
+                onClick={handleVerifyRegistrationOtp}
+                disabled={loading}
+                className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-70"
+              >
+                {loading ? "Verifying..." : "Verify & Complete Registration"}
+              </Button>
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500">
+                Didn't receive code? {" "}
+                <button
+                  onClick={handleResendOtp}
+                  disabled={otpTimer > 0}
+                  className={`font-semibold bg-transparent border-none cursor-pointer hover:underline ${otpTimer > 0 ? "text-gray-400" : "text-blue-600"}`}
+                >
+                  {otpTimer > 0 ? `Resend in ${otpTimer}s` : "Resend"}
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

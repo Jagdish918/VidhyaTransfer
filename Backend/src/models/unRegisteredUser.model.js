@@ -11,6 +11,14 @@ const unRegisteredUserSchema = new Schema(
       required: true,
       unique: true,
     },
+    otp: {
+      type: String,
+      default: null,
+    },
+    otpExpires: {
+      type: Date,
+      default: null,
+    },
     password: {
       type: String,
       default: null, // null for Google OAuth users
@@ -47,7 +55,7 @@ const unRegisteredUserSchema = new Schema(
           default: "General",
         },
         proficiency: {
-        type: String,
+          type: String,
           enum: ["Beginner", "Intermediate", "Advanced", "Expert"],
           default: "Intermediate",
         },
@@ -114,7 +122,7 @@ const unRegisteredUserSchema = new Schema(
         {
           type: String,
         },
-    ],
+      ],
     },
     education: [
       {
