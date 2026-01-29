@@ -38,6 +38,7 @@ import ratingRouter from "./routes/rating.routes.js";
 import onboardingRouter from "./routes/onboarding.routes.js";
 import skillRouter from "./routes/skill.routes.js";
 import postRouter from "./routes/post.routes.js";
+import paymentRouter from "./routes/payment.routes.js";
 
 // Using routes
 app.use("/user", userRouter);
@@ -50,5 +51,6 @@ app.use("/rating", ratingRouter);
 app.use("/onboarding", onboardingRouter);
 app.use("/skill", skillRouter);
 app.use("/post", postRouter);
+app.use("/payment", paymentRouter);
 
 export { app };

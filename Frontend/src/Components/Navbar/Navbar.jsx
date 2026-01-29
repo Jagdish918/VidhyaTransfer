@@ -141,6 +141,15 @@ const Navbar = () => {
                 <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white transform translate-x-1/4 -translate-y-1/4"></span>
               </Link>
 
+              {/* Credits Button */}
+              <Link
+                to="/credits"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 rounded-full border border-amber-200 hover:shadow-sm transition-all text-decoration-none"
+              >
+                <span className="text-lg">💎</span>
+                <span className="font-bold text-sm">{user.credits || 0}</span>
+              </Link>
+
               <div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block"></div>
 
               <div className="relative profile-dropdown-container">

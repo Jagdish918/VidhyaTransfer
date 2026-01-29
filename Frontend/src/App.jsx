@@ -18,6 +18,7 @@ import Resources from "./Pages/Resources/Resources";
 import Utilisation from "./Pages/Utilisation/Utilisation";
 import Chat from "./Pages/Chat/Chat";
 import Notifications from "./Pages/Notifications/Notifications";
+import Credits from "./Pages/Credits/Credits";
 import PrivateRoutes from "./util/PrivateRoutes";
 import OnboardingGuard from "./util/OnboardingGuard";
 import { ToastContainer } from "react-toastify";
@@ -63,6 +64,7 @@ const App = () => {
           <Route path="/utilisation" element={<Utilisation />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/credits" element={<Credits />} />
 
           {/* Profile Routes */}
           {/* Profile Routes - allow both :id and :username implicitly by using just :id and handling in component */}
