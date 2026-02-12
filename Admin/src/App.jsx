@@ -6,6 +6,7 @@ import Users from './pages/Users';
 import Posts from './pages/Posts';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Events from './pages/Events';
 import Activity from './pages/Activity';
 
 const App = () => {
@@ -17,6 +18,7 @@ const App = () => {
                 <Route path="/activity" element={<Activity />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/posts" element={<Posts />} />
+                <Route path="/events" element={<Events />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
             </Route>

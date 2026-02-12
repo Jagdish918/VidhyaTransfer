@@ -7,7 +7,6 @@ import Spinner from "react-bootstrap/Spinner";
 import Form from "react-bootstrap/Form";
 import { skills } from "./Skills";
 import axios from "axios";
-import "./Register.css";
 import Badge from "react-bootstrap/Badge";
 import { v4 as uuidv4 } from "uuid";
 
@@ -410,7 +409,7 @@ const Register = () => {
   };
 
   return (
-    <div className="register_page ">
+    <div className="min-h-[80vh] bg-[#013e38] font-['Montserrat'] text-white flex flex-col justify-center items-center">
       <h1 className="m-4" style={{ fontFamily: "Oswald", color: "#3BB4A1" }}>
         Registration Form
       </h1>
@@ -419,7 +418,7 @@ const Register = () => {
           <Spinner animation="border" variant="primary" />
         </div>
       ) : (
-        <div className="register_section mb-3">
+        <div className="bg-[#f2f2f2] text-[#2d2d2d] min-h-[80vh] w-[95%] md:w-[50%] border border-black p-5 rounded-[10px] mb-3">
           <Tabs
             defaultActiveKey="registration"
             id="justify-tab-example"
@@ -1006,10 +1005,7 @@ const Register = () => {
             </Tab>
             <Tab eventKey="Preview" title="Confirm Details">
               <div>
-                <h3 style={{ color: "#3BB4A1", marginBottom: "20px" }} className="link w-100 text-center">
-                  Preview of the Form
-                </h3>
-                <div className="previewForm" style={{ fontFamily: "Montserrat, sans-serif", color: "#2d2d2d", marginBottom: "20px" }}>
+                <div className="flex flex-col w-screen justify-between font-['Montserrat'] text-[#2d2d2d] mb-5">
                   <div
                     style={{
                       display: "flex",
@@ -1018,7 +1014,7 @@ const Register = () => {
                       justifyContent: "space-between",
                       marginBottom: "1.5rem",
                     }}
-                    className="link m-sm-0"
+                    className="flex md:flex-row flex-col justify-center !ml-0 m-sm-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Name:</span>
                     <span style={{ flex: 2 }}>{form.name || "Yet to be filled"}</span>
@@ -1031,7 +1027,7 @@ const Register = () => {
                       justifyContent: "space-between",
                       marginBottom: "1.5rem",
                     }}
-                    className="link"
+                    className="flex md:flex-row flex-col justify-center !ml-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Email ID:</span>
                     <span style={{ flex: 2 }}>{form.email || "Yet to be filled"}</span>
@@ -1044,7 +1040,7 @@ const Register = () => {
                       justifyContent: "space-between",
                       marginBottom: "1.5rem",
                     }}
-                    className="link"
+                    className="flex md:flex-row flex-col justify-center !ml-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Username:</span>
                     <span style={{ flex: 2 }}>{form.username || "Yet to be filled"}</span>
@@ -1057,7 +1053,7 @@ const Register = () => {
                       justifyContent: "space-between",
                       marginBottom: "1.5rem",
                     }}
-                    className="link"
+                    className="flex md:flex-row flex-col justify-center !ml-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Portfolio Link:</span>
                     <span style={{ flex: 2 }}>{form.portfolioLink || "Yet to be filled"}</span>
@@ -1070,7 +1066,7 @@ const Register = () => {
                       justifyContent: "space-between",
                       marginBottom: "1.5rem",
                     }}
-                    className="link"
+                    className="flex md:flex-row flex-col justify-center !ml-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Github Link:</span>
                     <span style={{ flex: 2 }}>{form.githubLink || "Yet to be filled"}</span>
@@ -1084,7 +1080,7 @@ const Register = () => {
                       flexWrap: "wrap",
                       marginBottom: "10px",
                     }}
-                    className="link"
+                    className="flex md:flex-row flex-col justify-center !ml-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Linkedin Link:</span>
                     <span
@@ -1109,7 +1105,7 @@ const Register = () => {
                       justifyContent: "space-between",
                       marginBottom: "1.5rem",
                     }}
-                    className="link"
+                    className="flex md:flex-row flex-col justify-center !ml-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Skills Proficient At:</span>
                     <span style={{ flex: 2 }}>{form.skillsProficientAt.join(", ") || "Yet to be filled"}</span>
@@ -1122,7 +1118,7 @@ const Register = () => {
                       justifyContent: "space-between",
                       marginBottom: "1.5rem",
                     }}
-                    className="link"
+                    className="flex md:flex-row flex-col justify-center !ml-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Skills To Learn:</span>
                     <span style={{ flex: 2 }}>{form.skillsToLearn.join(", ") || "Yet to be filled"}</span>
@@ -1136,7 +1132,7 @@ const Register = () => {
                       justifyContent: "space-between",
                       marginBottom: "1.5rem",
                     }}
-                    className="link"
+                    className="flex md:flex-row flex-col justify-center !ml-0"
                   >
                     <span style={{ flex: 1, fontWeight: "bold", color: "#3BB4A1" }}>Bio:</span>
                     <span style={{ flex: 2 }}>{form.bio || "Yet to be filled"}</span>

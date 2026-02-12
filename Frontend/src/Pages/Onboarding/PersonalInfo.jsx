@@ -201,6 +201,19 @@ const PersonalInfo = () => {
                 {isSubmitting ? "Saving..." : "Save & Continue"}
               </button>
             </div>
+
+            <div className="mt-2 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  // Assuming logout logic or just back to landing
+                  window.location.href = "/login"; // or trigger logout
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                Back to Login
+              </button>
+            </div>
           </form>
 
           <div className="mt-6">

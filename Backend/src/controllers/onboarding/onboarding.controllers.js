@@ -149,8 +149,19 @@ export const updatePreferences = asyncHandler(async (req, res) => {
     if (preferences.availability !== undefined && (isNaN(preferences.availability) || preferences.availability < 0)) {
       throw new ApiError(400, "Availability must be a positive number");
     }
-    if (preferences.mode && !["Online", "Instant Help", "Events"].includes(preferences.mode)) {
-      throw new ApiError(400, "Invalid mode. Must be Online, Instant Help, or Events");
+    if (preferences.utilization && Array.isArray(preferences.utilization)) {
+      const validOptions = ["Instant Help", "Hire Expert", "Events"];
+      const invalid = preferences.utilization.some(u => !validOptions.includes(u));
+      if (invalid) {
+        throw new ApiError(400, "Invalid utilization option selected");
+      }
+    }
+
+    // Validate rates
+    if (preferences.rates) {
+      if (preferences.rates.mentorship && (isNaN(preferences.rates.mentorship) || preferences.rates.mentorship < 0)) {
+        throw new ApiError(400, "Mentorship rate must be a valid positive number");
+      }
     }
   }
 
@@ -180,6 +191,15 @@ export const updatePreferences = asyncHandler(async (req, res) => {
     ...user.preferences,
     ...preferences,
   };
+
+  // Update primary goal if provided (passed at top level of body)
+  if (req.body.primaryGoal) {
+    if (!["Peer Swap", "Skill Gain"].includes(req.body.primaryGoal)) {
+      throw new ApiError(400, "Invalid primary goal");
+    }
+    user.primaryGoal = req.body.primaryGoal;
+  }
+
   user.onboardingStep = 3;
   user.onboardingCompleted = true;
 
@@ -202,7 +222,11 @@ export const updatePreferences = asyncHandler(async (req, res) => {
       personalInfo: user.personalInfo,
       skillsProficientAt: user.skillsProficientAt,
       skillsToLearn: user.skillsToLearn,
+      personalInfo: user.personalInfo,
+      skillsProficientAt: user.skillsProficientAt,
+      skillsToLearn: user.skillsToLearn,
       preferences: user.preferences,
+      primaryGoal: user.primaryGoal, // Copy primaryGoal
       onboardingCompleted: true,
       onboardingStep: 3,
       // Copy timestamps if needed, or let them be new

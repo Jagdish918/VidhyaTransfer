@@ -326,6 +326,16 @@ export const saveRegRegisteredUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Please provide valid github and linkedin links");
   }
 
+  // Check if username is being changed
+  const isUsernameChanged = req.user.username !== username;
+
+  if (isUsernameChanged) {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      throw new ApiError(400, "Username already exists");
+    }
+  }
+
   const user = await User.findOneAndUpdate(
     { username: req.user.username },
     {
@@ -337,11 +347,24 @@ export const saveRegRegisteredUser = asyncHandler(async (req, res) => {
       skillsProficientAt: skillsProficientAt,
       skillsToLearn: skillsToLearn,
       picture: picture,
-    }
+    },
+    { new: true } // Return the updated document
   );
 
   if (!user) {
     throw new ApiError(500, "Error in saving user details");
+  }
+
+  // If username changed, we MUST issue a new token because the old one encoded the old username
+  if (isUsernameChanged) {
+    const jwtToken = generateJWTToken_username(user);
+    const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    res.cookie("accessToken", jwtToken, {
+      httpOnly: true,
+      expires: expiryDate,
+      secure: false // Set to true in production if using HTTPS
+    });
   }
 
   return res.status(200).json(new ApiResponse(200, user, "User details saved successfully"));
@@ -692,6 +715,77 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
   await sendMail(to, subject, message);
 
   return res.status(200).json(new ApiResponse(200, null, "Email sent successfully"));
+});
+
+// Skill Gain: Find mentors/teachers
+export const getSkillGainExperts = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const search = req.query.search || "";
+  const skip = (page - 1) * limit;
+
+  const query = {
+    username: { $ne: req.user.username },
+    status: { $nin: ["banned", "deleted"] },
+    isDeleted: { $ne: true },
+    // Logic: User wants to TEACH (mentorship rate > 0)
+    "preferences.rates.mentorship": { $gt: 0 }
+  };
+
+  if (search) {
+    query["skillsProficientAt.name"] = { $regex: search, $options: "i" };
+  }
+
+  const users = await User.find(query)
+    .select("name username picture skillsProficientAt preferences.rates.mentorship rating")
+    .skip(skip)
+    .limit(limit);
+
+  const total = await User.countDocuments(query);
+
+  return res.status(200).json(
+    new ApiResponse(200, { users, pagination: { current: page, pages: Math.ceil(total / limit), total } }, "Mentors fetched successfully")
+  );
+});
+
+// Utilization: Find service providers
+export const getUtilizationProviders = asyncHandler(async (req, res) => {
+  const { type } = req.query; // 'Instant Help' or 'Hire Expert'
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const search = req.query.search || "";
+  const skip = (page - 1) * limit;
+
+  if (!["Instant Help", "Hire Expert"].includes(type)) {
+    throw new ApiError(400, "Invalid utilization type");
+  }
+
+  const query = {
+    username: { $ne: req.user.username },
+    status: { $nin: ["banned", "deleted"] },
+    isDeleted: { $ne: true },
+    "preferences.utilization": type
+  };
+
+  if (search) {
+    // Search by skill or name
+    const searchRegex = new RegExp(search, "i");
+    query.$or = [
+      { name: searchRegex },
+      { "skillsProficientAt.name": searchRegex }
+    ];
+  }
+
+  const users = await User.find(query)
+    .select("name username picture skillsProficientAt preferences.rates preferences.utilization rating")
+    .skip(skip)
+    .limit(limit);
+
+  const total = await User.countDocuments(query);
+
+  return res.status(200).json(
+    new ApiResponse(200, { users, pagination: { current: page, pages: Math.ceil(total / limit), total } }, "Providers fetched successfully")
+  );
 });
 
 

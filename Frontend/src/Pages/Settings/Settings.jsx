@@ -55,8 +55,9 @@ const Settings = () => {
   const tabs = [
     { id: "Account", icon: <FaUser />, label: "Account" },
     { id: "Notifications", icon: <FaBell />, label: "Notifications" },
+    { id: "Preferences", icon: <FaPalette />, label: "Preferences" }, // Using FaPalette as placeholder
     { id: "Privacy", icon: <FaLock />, label: "Privacy" },
-    { id: "Appearance", icon: <FaPalette />, label: "Appearance" },
+    { id: "Appearance", icon: <FaMoon />, label: "Appearance" },
   ];
 
   return (
@@ -198,6 +199,11 @@ const Settings = () => {
               </div>
             )}
 
+            {/* Preferences Settings */}
+            {activeTab === "Preferences" && (
+              <PreferenceSettings user={user} />
+            )}
+
             {/* Appearance Settings */}
             {activeTab === "Appearance" && (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 animate-fadeIn">
@@ -241,7 +247,6 @@ const Settings = () => {
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>
@@ -249,4 +254,201 @@ const Settings = () => {
   );
 };
 
+const PreferenceSettings = ({ user }) => {
+  const { setUser } = useUser();
+  const [preferences, setPreferences] = useState({
+    primaryGoal: user?.primaryGoal || "Peer Swap",
+    utilization: user?.preferences?.utilization || [],
+    rates: user?.preferences?.rates || { mentorship: 0, instantHelp: 0, freelance: 0 }
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Derived state for teaching toggle
+  // If rate > 0, we assume they want to teach. But strictly we should check their intent.
+  // For now, let's use rate > 0 as a proxy or just rely on them setting it.
+  // Let's add a local toggle for better UX.
+  const [wantToTeach, setWantToTeach] = useState(preferences.rates.mentorship > 0);
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      // Re-use the onboarding endpoint or create a new settings update endpoint
+      // Usually we use /registered/updateDetails or similar.
+      // But here we might just need to patch preferences.
+      // Let's assume we use the updatePreferences endpoint from onboarding controller logic OR create a specific one.
+      // Since `updatePreferences` in backend is robust, we can use `/onboarding/registered/preferences`.
+      // Check usage in Preferences.jsx: axios.post("/onboarding/registered/preferences", payload)
+
+      const payload = { preferences, primaryGoal: preferences.primaryGoal };
+
+      // Note: In real app, we should probably have a dedicated settings endpoint, but this might work if auth matches.
+      // However, onboarding/preferences might force onboardingCompleted=true etc. which is fine.
+      const axios = (await import("axios")).default;
+      const { data } = await axios.post("/onboarding/registered/preferences", payload);
+
+      if (data.success && data.data.user) {
+        setUser(data.data.user);
+        // Also update local storage sanitized data if needed
+        try {
+          const { storeSanitizedUserData } = await import("../../util/sanitizeUserData");
+          storeSanitizedUserData(data.data.user);
+        } catch (e) { console.warn("Could not update sanitised data", e); }
+      }
+
+      toast.success("Preferences updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update preferences");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRateChange = (type, value) => {
+    setPreferences(prev => ({
+      ...prev,
+      rates: { ...prev.rates, [type]: parseInt(value) || 0 }
+    }));
+  };
+
+  const handleUtilizationToggle = (type) => {
+    setPreferences(prev => {
+      let newer = [...prev.utilization];
+      if (newer.includes(type)) newer = newer.filter(t => t !== type);
+      else newer.push(type);
+
+      // Logic to reset rate if unchecked?
+      // If we uncheck instant help, maybe reset rate to 0?
+      // Optional, but good for data consistency.
+      const newRates = { ...prev.rates };
+      if (!newer.includes("Instant Help")) newRates.instantHelp = 0;
+      if (!newer.includes("Hire Expert")) newRates.freelance = 0;
+
+      return { ...prev, utilization: newer, rates: newRates };
+    });
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 animate-fadeIn">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 border-b dark:border-gray-700 pb-4">Role & Preferences</h2>
+
+      <div className="space-y-8">
+        {/* 1. Learning */}
+        <div>
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Learning Goal</h3>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setPreferences(p => ({ ...p, primaryGoal: "Skill Gain" }))}
+              className={`px-4 py-2 rounded-lg border transition-colors ${preferences.primaryGoal === "Skill Gain" ? "bg-green-50 border-green-500 text-green-700" : "border-gray-200 text-gray-600"}`}
+            >
+              I want to Learn (Skill Gain)
+            </button>
+            <button
+              onClick={() => setPreferences(p => ({ ...p, primaryGoal: "Peer Swap" }))}
+              className={`px-4 py-2 rounded-lg border transition-colors ${preferences.primaryGoal === "Peer Swap" ? "bg-blue-50 border-blue-500 text-blue-700" : "border-gray-200 text-gray-600"}`}
+            >
+              Peer Swap
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Teaching */}
+        <div className="border-t pt-4 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Teaching</h3>
+              <p className="text-xs text-gray-500">Enable this to appear in the "Mentors" section.</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={wantToTeach}
+              onChange={(e) => {
+                setWantToTeach(e.target.checked);
+                if (!e.target.checked) handleRateChange('mentorship', 0);
+              }}
+              className="w-5 h-5 text-blue-600 rounded"
+            />
+          </div>
+          {wantToTeach && (
+            <div className="ml-4 animate-fade-in bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hourly Rate (Credits)</label>
+              <input
+                type="number"
+                min="0"
+                value={preferences.rates.mentorship}
+                onChange={(e) => handleRateChange('mentorship', e.target.value)}
+                className="w-32 px-3 py-2 border rounded-md"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 3. Utilization */}
+        <div className="border-t pt-4 dark:border-gray-700 space-y-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white">Utilization Services</h3>
+
+          {/* Instant Help */}
+          <div className="bg-gray-50 dark:bg-gray-700/20 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <label className="font-medium text-gray-700 dark:text-gray-200">Instant Help Provider</label>
+              <input
+                type="checkbox"
+                checked={preferences.utilization.includes("Instant Help")}
+                onChange={() => handleUtilizationToggle("Instant Help")}
+                className="w-4 h-4"
+              />
+            </div>
+            {preferences.utilization.includes("Instant Help") && (
+              <div className="mt-2">
+                <label className="block text-xs text-gray-500 mb-1">Rate per Session</label>
+                <input
+                  type="number" min="0"
+                  value={preferences.rates.instantHelp}
+                  onChange={(e) => handleRateChange('instantHelp', e.target.value)}
+                  className="w-24 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Expert */}
+          <div className="bg-gray-50 dark:bg-gray-700/20 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <label className="font-medium text-gray-700 dark:text-gray-200">Freelance Expert</label>
+              <input
+                type="checkbox"
+                checked={preferences.utilization.includes("Hire Expert")}
+                onChange={() => handleUtilizationToggle("Hire Expert")}
+                className="w-4 h-4"
+              />
+            </div>
+            {preferences.utilization.includes("Hire Expert") && (
+              <div className="mt-2">
+                <label className="block text-xs text-gray-500 mb-1">Hourly/Project Rate</label>
+                <input
+                  type="number" min="0"
+                  value={preferences.rates.freelance}
+                  onChange={(e) => handleRateChange('freelance', e.target.value)}
+                  className="w-24 px-2 py-1 border rounded text-sm"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-4">
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            {loading ? "Saving..." : "Save Preferences"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+
+};
 export default Settings;

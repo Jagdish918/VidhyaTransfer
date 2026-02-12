@@ -15,6 +15,8 @@ import {
   removePic,
   discoverUsers,
   sendScheduleMeet,
+  getSkillGainExperts,
+  getUtilizationProviders
 } from "../controllers/user/user.controllers.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -43,6 +45,10 @@ router.route("/registered/getDetails").get(verifyJWT_username, userDetailsWithou
 
 // get profiles for discover page
 router.route("/discover").get(verifyJWT_username, discoverUsers);
+
+// Skill Gain and Utilization
+router.route("/mentors").get(verifyJWT_username, getSkillGainExperts);
+router.route("/providers").get(verifyJWT_username, getUtilizationProviders);
 
 // send schedule meet email
 router.route("/sendScheduleMeet").post(verifyJWT_username, sendScheduleMeet);

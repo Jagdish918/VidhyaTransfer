@@ -17,6 +17,7 @@ const Layout = () => {
         { name: 'Live Activity', path: '/activity' },
         { name: 'Users', path: '/users' },
         { name: 'Posts', path: '/posts' },
+        { name: 'Events', path: '/events' },
         { name: 'Reports', path: '/reports' },
         { name: 'Settings', path: '/settings' },
     ];

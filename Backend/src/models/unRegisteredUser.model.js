@@ -113,10 +113,14 @@ const unRegisteredUserSchema = new Schema(
         type: Number,
         default: 0, // hours per week
       },
-      mode: {
+      utilization: [{
         type: String,
-        enum: ["Online", "Instant Help", "Events"],
-        default: "Online",
+        enum: ["Instant Help", "Hire Expert", "Events"],
+      }],
+      rates: {
+        mentorship: { type: Number, default: 0 },
+        instantHelp: { type: Number, default: 0 },
+        freelance: { type: Number, default: 0 }
       },
       skillsInterestedInLearning: [
         {

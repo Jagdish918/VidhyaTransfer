@@ -40,6 +40,7 @@ import skillRouter from "./routes/skill.routes.js";
 import postRouter from "./routes/post.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import eventRouter from "./routes/event.routes.js";
 
 // Using routes
 app.use("/user", userRouter);
@@ -54,5 +55,6 @@ app.use("/skill", skillRouter);
 app.use("/post", postRouter);
 app.use("/payment", paymentRouter);
 app.use("/admin", adminRouter);
+app.use("/events", eventRouter);
 
 export { app };

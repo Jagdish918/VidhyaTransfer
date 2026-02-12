@@ -300,13 +300,21 @@ const SkillProfile = () => {
         </div>
 
         <div className="flex justify-center">
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full sm:w-auto px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 shadow-lg transition-transform hover:-translate-y-0.5"
-          >
-            {loading ? "Saving..." : "Save & Continue"}
-          </button>
+          <div className="flex gap-4 w-full sm:w-auto">
+            <button
+              onClick={() => navigate("/onboarding/personal-info")}
+              className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-8 shadow-sm transition-transform"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full sm:w-auto px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 shadow-lg transition-transform hover:-translate-y-0.5"
+            >
+              {loading ? "Saving..." : "Save & Continue"}
+            </button>
+          </div>
         </div>
 
         <div className="mt-6">

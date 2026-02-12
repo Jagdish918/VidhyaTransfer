@@ -15,7 +15,7 @@ import Settings from "./Pages/Settings/Settings";
 import PeerSwap from "./Pages/PeerSwap/PeerSwap";
 import SkillGain from "./Pages/SkillGain/SkillGain";
 import Resources from "./Pages/Resources/Resources";
-import Utilisation from "./Pages/Utilisation/Utilisation";
+import Utilization from "./Pages/Utilization/Utilization";
 import Chat from "./Pages/Chat/Chat";
 import Notifications from "./Pages/Notifications/Notifications";
 import Credits from "./Pages/Credits/Credits";
@@ -61,7 +61,7 @@ const App = () => {
           <Route path="/peer-swap" element={<PeerSwap />} />
           <Route path="/skill-gain" element={<SkillGain />} />
           <Route path="/resources" element={<Resources />} />
-          <Route path="/utilisation" element={<Utilisation />} />
+          <Route path="/utilisation" element={<Utilization />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/credits" element={<Credits />} />

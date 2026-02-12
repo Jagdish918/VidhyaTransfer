@@ -10,7 +10,6 @@ import { Link, useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 import ScrollableFeed from "react-scrollable-feed";
 import RequestCard from "./RequestCard";
-import "./Chats.css";
 import Modal from "react-bootstrap/Modal";
 
 var socket;
@@ -248,12 +247,12 @@ const Chats = () => {
   };
 
   return (
-    <div className="container-overall">
-      <div className="container-right">
+    <div className="min-h-[90vh] bg-[#2d2d2d] font-['Montserrat'] text-white border-r border-[#3bb4a1]">
+      <div className="flex flex-col md:flex-row bg-gray-300">
         {/* Chat History */}
-        <div className="container-left">
+        <div className="flex-[3] bg-[#2d2d2d] min-h-[90vh]">
           {/* Tabs */}
-          <div className="tabs">
+          <div className="flex justify-around pt-8 border-b border-[#3bb4a1]">
             <Button
               className="chatButton"
               variant="secondary"
@@ -296,8 +295,8 @@ const Chats = () => {
 
           {/* Chat History or Requests List */}
           {showChatHistory && (
-            <div className="container-left">
-              <ListGroup className="chat-list">
+            <div className="flex-[3] bg-[#2d2d2d] min-h-[90vh]">
+              <ListGroup className="p-2.5">
                 {chatLoading ? (
                   <div className="row m-auto mt-5">
                     <Spinner animation="border" variant="primary" />
@@ -325,7 +324,7 @@ const Chats = () => {
             </div>
           )}
           {showRequests && (
-            <div className="container-left">
+            <div className="flex-[3] bg-[#2d2d2d] min-h-[90vh]">
               <ListGroup style={{ padding: "10px" }}>
                 {requestLoading ? (
                   <div className="row m-auto mt-5">
@@ -355,8 +354,8 @@ const Chats = () => {
             </div>
           )}
           {requestModalShow && (
-            <div className="modalBG" onClick={() => setRequestModalShow(false)}>
-              <div className="modalContent">
+            <div className="fixed inset-0 bg-black/70 z-[1000] flex justify-center items-center" onClick={() => setRequestModalShow(false)}>
+              <div className="bg-[#2d2d2d] text-[#3bb4a1] p-12 md:p-0 rounded-lg relative" onClick={(e) => e.stopPropagation()}>
                 <h2 style={{ textAlign: "center" }}>Confirm your choice?</h2>
                 {selectedRequest && (
                   <RequestCard
@@ -393,7 +392,7 @@ const Chats = () => {
           )}
         </div>
         {/* Right Section */}
-        <div className="container-chat">
+        <div className="min-w-[70vw]">
           {/* Profile Bar */}
           <div
             style={{

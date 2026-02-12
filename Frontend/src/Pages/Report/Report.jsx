@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "./Report.css";
 import { useParams } from "react-router-dom";
 import { useUser } from "../../util/UserContext";
 import axios from "axios";
@@ -59,41 +58,41 @@ const ReportForm = () => {
   };
 
   return (
-    <div className="form-container">
-      <h1>REPORT PROFILE</h1>
-      <div className="form-box">
+    <div className="flex flex-col items-center bg-[#2d2d2d] min-h-screen min-w-[70vw]">
+      <h1 className="p-12 text-center text-[#f56664] font-['Montserrat']">REPORT PROFILE</h1>
+      <div className="bg-[#f1f1f1] p-4 min-w-[70vw] m-20 mt-4 rounded-lg">
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="question" htmlFor="username">
+          <div className="flex flex-col">
+            <label className="text-[#087464] mb-2.5 mt-4" htmlFor="username">
               Your Username
             </label>
             <input
               type="text"
               id="username"
               name="username"
-              className="form-control"
+              className="bg-[#f1f1f1] border border-[#3bb4a1] rounded-[5px] p-[10px] w-[70%] mb-5 placeholder-[#6d6e7089]"
               placeholder="Enter your username"
               value={formData.username}
               onChange={handleChange}
             />
           </div>
-          <div className="form-group">
-            <label className="question" htmlFor="reportedUsername">
+          <div className="flex flex-col">
+            <label className="text-[#087464] mb-2.5 mt-4" htmlFor="reportedUsername">
               Username to be reported
             </label>
             <input
               type="text"
               id="reportedUsername"
               name="reportedUsername"
-              className="form-control"
+              className="bg-[#f1f1f1] border border-[#3bb4a1] rounded-[5px] p-[10px] w-[70%] mb-5 placeholder-[#6d6e7089]"
               placeholder="Enter username to be reported"
               value={formData.reportedUsername}
               onChange={handleChange}
             />
           </div>
-          <div className="form-group">
-            <label className="question">What was the nature of the issue?</label>
-            <div className="radio-group">
+          <div className="flex flex-col">
+            <label className="text-[#087464] mb-2.5 mt-4">What was the nature of the issue?</label>
+            <div className="flex mb-5 items-center">
               <input
                 type="radio"
                 id="conduct"
@@ -101,8 +100,9 @@ const ReportForm = () => {
                 value="Personal conduct"
                 checked={formData.issue === "Personal conduct"}
                 onChange={handleChange}
+                className="m-[0.3rem] ml-4"
               />
-              <label htmlFor="conduct">Personal conduct</label>
+              <label htmlFor="conduct" className="text-[#2d2d2d]">Personal conduct</label>
               <input
                 type="radio"
                 id="expertise"
@@ -110,8 +110,9 @@ const ReportForm = () => {
                 value="Professional expertise"
                 checked={formData.issue === "Professional expertise"}
                 onChange={handleChange}
+                className="m-[0.3rem] ml-4"
               />
-              <label htmlFor="expertise">Professional expertise</label>
+              <label htmlFor="expertise" className="text-[#2d2d2d]">Professional expertise</label>
               <input
                 type="radio"
                 id="others"
@@ -119,25 +120,26 @@ const ReportForm = () => {
                 value="Others"
                 checked={formData.issue === "Others"}
                 onChange={handleChange}
+                className="m-[0.3rem] ml-4"
               />
-              <label htmlFor="others">Others</label>
+              <label htmlFor="others" className="text-[#2d2d2d]">Others</label>
             </div>
           </div>
-          <div className="form-group">
-            <label className="question" htmlFor="issueDescription">
+          <div className="flex flex-col">
+            <label className="text-[#087464] mb-2.5 mt-4" htmlFor="issueDescription">
               Describe the issue to us
             </label>
             <textarea
               id="issueDescription"
               name="issueDescription"
-              className="form-control textarea-control"
+              className="bg-[#f1f1f1] border border-[#3bb4a1] rounded-[5px] p-[10px] w-[70%] mb-5 placeholder-[#6d6e7089] h-[150px]"
               placeholder="Enter description"
               value={formData.issueDescription}
               onChange={handleChange}
             ></textarea>
           </div>
-          <div className="submitButton">
-            <button type="submit" className="submit-button">
+          <div className="w-full flex justify-center md:block md:w-auto">
+            <button type="submit" className="bg-[#3bb4a1] text-white border-none px-5 py-2.5 rounded-[5px] cursor-pointer hover:bg-[#013e38]">
               {loading ? (
                 <>
                   <Spinner animation="border" variant="light" size="sm" style={{ marginRight: "0.5rem" }} />

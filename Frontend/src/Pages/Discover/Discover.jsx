@@ -13,7 +13,6 @@ import FormControl from "react-bootstrap/FormControl";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import ProfileCard from "./ProfileCard";
-import "./Discover.css";
 import Search from "./Search";
 import Spinner from "react-bootstrap/Spinner";
 
@@ -37,7 +36,7 @@ const Discover = () => {
       try {
         setLoading(true);
         const { data } = await axios.get(`/user/registered/getDetails`);
-                setUser(data.data);
+        setUser(data.data);
         storeSanitizedUserData(data.data);
       } catch (error) {
         console.log(error);
@@ -53,7 +52,7 @@ const Discover = () => {
     const getDiscoverUsers = async () => {
       try {
         const { data } = await axios.get("/user/discover");
-                setDiscoverUsers(data.data.forYou);
+        setDiscoverUsers(data.data.forYou);
         setWebDevUsers(data.data.webDev);
         setMlUsers(data.data.ml);
         setOtherUsers(data.data.others);
@@ -76,34 +75,28 @@ const Discover = () => {
 
   return (
     <>
-      <div className="discover-page">
-        <div className="content-container">
-          <div className="nav-bar">
+      <div className="min-h-screen bg-[#2d2d2d] text-white">
+        <div className="md:ml-[30vw] flex flex-col md:flex-row md:items-start items-center text-center md:text-left">
+          <div className="bg-[#013e38] h-screen w-[20vw] p-[20px] fixed left-0 hidden md:flex flex-col justify-center items-center top-0">
             <Nav defaultActiveKey="/home" className="flex-column">
-              <Nav.Link href="#for-you" className="navlink" id="foryou">
+              <Nav.Link href="#for-you" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f] !text-[#f56664] !text-[20px] !-ml-[1rem]" id="foryou">
                 For You
               </Nav.Link>
-              <Nav.Link href="#popular" className="navlink" id="popular1">
+              <Nav.Link href="#popular" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f] !text-[#3bb4a1] !text-[20px] !-ml-[1rem]" id="popular1">
                 Popular
               </Nav.Link>
-              <Nav.Link href="#web-development" className="navlink">
+              <Nav.Link href="#web-development" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f]">
                 Web Development
               </Nav.Link>
-              <Nav.Link href="#machine-learning" className="navlink">
+              <Nav.Link href="#machine-learning" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f]">
                 Machine Learning
               </Nav.Link>
-              {/* <Nav.Link href="#graphic-design" className="navlink">
-                Graphic Design
-              </Nav.Link>
-              <Nav.Link href="#soft-skills" className="navlink">
-                Soft Skills
-              </Nav.Link> */}
-              <Nav.Link href="#others" className="navlink">
+              <Nav.Link href="#others" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f]">
                 Others
               </Nav.Link>
             </Nav>
           </div>
-          <div className="heading-container">
+          <div className="flex-[80%] max-w-[100vw] flex flex-col items-center md:items-start md:block">
             {loading ? (
               <div className="container d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
                 <Spinner animation="border" variant="primary" />
@@ -115,16 +108,11 @@ const Discover = () => {
                 </div> */}
                 <h1
                   id="for-you"
-                  style={{
-                    fontFamily: "Josefin Sans, sans-serif",
-                    color: "#fbf1a4",
-                    marginTop: "2rem",
-                    marginBottom: "1rem",
-                  }}
+                  className="font-['Josefin_Sans'] text-[#fbf1a4] mt-[2rem] mb-[1rem]"
                 >
                   For You
                 </h1>
-                <div className="profile-cards">
+                <div className="flex flex-wrap md:p-[20px] p-0 justify-center md:justify-start items-center">
                   {discoverUsers && discoverUsers.length > 0 ? (
                     discoverUsers.map((user) => (
                       <ProfileCard
@@ -156,17 +144,12 @@ const Discover = () => {
                 </div>
                 <h1
                   id="popular"
-                  style={{
-                    fontFamily: "Josefin Sans, sans-serif",
-                    color: "#fbf1a4",
-                    marginTop: "1rem",
-                    marginBottom: "3rem",
-                  }}
+                  className="font-['Josefin_Sans'] text-[#fbf1a4] mt-[1rem] mb-[3rem]"
                 >
                   Popular
                 </h1>
-                <h2 id="web-development">Web Development</h2>
-                <div className="profile-cards">
+                <h2 id="web-development" className="font-['Montserrat'] mt-[5rem]">Web Development</h2>
+                <div className="flex flex-wrap md:p-[20px] p-0 justify-center md:justify-start items-center">
                   {/* Profile cards go here */}
                   {webDevUsers && webDevUsers.length > 0 ? (
                     webDevUsers.map((user) => (
@@ -184,8 +167,8 @@ const Discover = () => {
                   )}
                   {/* Add more ProfileCard components as needed */}
                 </div>
-                <h2 id="machine-learning">Machine Learning</h2>
-                <div className="profile-cards">
+                <h2 id="machine-learning" className="font-['Montserrat'] mt-[5rem]">Machine Learning</h2>
+                <div className="flex flex-wrap md:p-[20px] p-0 justify-center md:justify-start items-center">
                   {mlUsers && mlUsers.length > 0 ? (
                     mlUsers.map((user) => (
                       <ProfileCard
@@ -249,8 +232,8 @@ const Discover = () => {
                     skills={["HTML", "CSS", "JS"]}
                   />
                 </div> */}
-                <h2 id="others">Others</h2>
-                <div className="profile-cards">
+                <h2 id="others" className="font-['Montserrat'] mt-[5rem]">Others</h2>
+                <div className="flex flex-wrap md:p-[20px] p-0 justify-center md:justify-start items-center">
                   {/* Profile cards go here */}
                   {otherUsers && otherUsers.length > 0 ? (
                     otherUsers.map((user) => (
