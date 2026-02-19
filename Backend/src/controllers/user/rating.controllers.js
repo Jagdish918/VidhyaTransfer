@@ -72,3 +72,9 @@ export const rateUser = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, rate, "Rating added successfully"));
 });
+
+export const getRatings = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  const ratings = await Rating.find({ username }).populate("rater", "name picture username");
+  res.status(200).json(new ApiResponse(200, ratings, "Ratings fetched successfully"));
+});

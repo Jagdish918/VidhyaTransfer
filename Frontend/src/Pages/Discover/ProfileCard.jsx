@@ -4,7 +4,12 @@ import { Link } from "react-router-dom";
 const ProfileCard = ({ profileImageUrl, bio, name, skills, rating, username }) => {
   return (
     <div className="flex flex-col justify-between items-center font-['Montserrat'] bg-[#00000050] rounded-[25px] shadow-[10px_10px_15px_rgba(0,0,0,0.35)] text-[#b3c2cd] relative w-[300px] min-w-[300px] h-[450px] max-w-full text-center m-12 overflow-hidden md:w-[50vw] md:h-[60vh]">
-      <img className="border border-[#fbf1a4] rounded-full p-[7px] h-[100px] w-[100px] m-4 aspect-square text-white" src={profileImageUrl} alt="user" />
+      <img
+        className="border border-[#fbf1a4] rounded-full p-[7px] h-[100px] w-[100px] m-4 aspect-square text-white object-cover bg-gray-800"
+        src={profileImageUrl || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"}
+        alt=""
+        onError={(e) => { e.target.src = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png" }}
+      />
       <h3 className="font-['Montserrat'] m-[10px_0]">{name}</h3>
       <h6 className="font-['Montserrat'] text-[1rem] m-[5px_0] uppercase">Rating: {rating} ⭐</h6>
       <p className="font-['Montserrat'] text-[14px] leading-[21px] truncate w-[150px] mx-auto">{bio}</p>

@@ -404,7 +404,7 @@ export const saveEduRegisteredUser = asyncHandler(async (req, res) => {
 export const saveAddRegisteredUser = asyncHandler(async (req, res) => {
   console.log("******** Inside saveAddRegisteredUser Function *******");
 
-  const { bio, projects } = req.body;
+  const { bio, projects, tutorialVideo } = req.body;
 
   // Bio is optional but if provided, must be under 500 chars
   if (bio && bio.length > 500) {
@@ -428,7 +428,11 @@ export const saveAddRegisteredUser = asyncHandler(async (req, res) => {
     });
   }
 
-  const user = await User.findOneAndUpdate({ username: req.user.username }, { bio: bio, projects: projects });
+  const user = await User.findOneAndUpdate(
+    { username: req.user.username },
+    { bio, projects, tutorialVideo },
+    { new: true }
+  );
 
   if (!user) {
     throw new ApiError(500, "Error in saving user details");
@@ -632,6 +636,52 @@ export const removePic = asyncHandler(async (req, res) => {
 
   res.status(200).json(
     new ApiResponse(200, { user }, "Picture removed successfully")
+  );
+});
+
+export const uploadVid = asyncHandler(async (req, res) => {
+  console.log("\n******** Inside uploadVid Controller function ********");
+
+  const LocalPath = req.files?.video[0]?.path;
+
+  if (!LocalPath) {
+    throw new ApiError(400, "Video file is required");
+  }
+
+  // Get current user to find old video URL
+  const currentUser = await User.findOne({ username: req.user.username });
+
+  if (!currentUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Delete old video from Cloudinary if it exists
+  if (currentUser.tutorialVideo && currentUser.tutorialVideo !== "") {
+    try {
+      const { deleteFromCloudinary } = await import("../../config/connectCloudinary.js");
+      await deleteFromCloudinary(currentUser.tutorialVideo);
+      console.log("Old tutorial video deleted from Cloudinary");
+    } catch (error) {
+      console.error("Error deleting old tutorial video:", error);
+    }
+  }
+
+  // Upload new video to Cloudinary
+  const video = await uploadOnCloudinary(LocalPath);
+
+  if (!video || !video.url) {
+    throw new ApiError(500, "Error uploading video to cloud storage");
+  }
+
+  // Update user's tutorialVideo in database
+  const user = await User.findOneAndUpdate(
+    { username: req.user.username },
+    { tutorialVideo: video.url },
+    { new: true }
+  ).select('-password -resetPasswordToken -resetPasswordExpires -__v');
+
+  res.status(200).json(
+    new ApiResponse(200, { url: video.url, user }, "Tutorial video uploaded successfully")
   );
 });
 

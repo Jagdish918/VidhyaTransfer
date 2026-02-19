@@ -165,6 +165,10 @@ const userSchema = new Schema(
       type: String,
       default: "",
     },
+    tutorialVideo: {
+      type: String,
+      default: "",
+    },
     projects: [
       {
         title: {

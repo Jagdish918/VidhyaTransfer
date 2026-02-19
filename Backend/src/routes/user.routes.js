@@ -13,6 +13,7 @@ import {
   saveAddRegisteredUser,
   uploadPic,
   removePic,
+  uploadVid,
   discoverUsers,
   sendScheduleMeet,
   getSkillGainExperts,
@@ -35,8 +36,8 @@ router.route("/registered/saveEduDetail").post(verifyJWT_username, saveEduRegist
 router.route("/registered/saveAddDetail").post(verifyJWT_username, saveAddRegisteredUser);
 // router.route("/registered/updateDetails").post(verifyJWT_username, updateRegisteredUser);
 
-// Upload and Remove Picture
 router.route("/uploadPicture").post(verifyJWT_username, upload.fields([{ name: "picture", maxCount: 1 }]), uploadPic);
+router.route("/uploadVideo").post(verifyJWT_username, upload.fields([{ name: "video", maxCount: 1 }]), uploadVid);
 router.route("/removePicture").delete(verifyJWT_username, removePic);
 
 // get user details

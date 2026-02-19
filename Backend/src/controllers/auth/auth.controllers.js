@@ -61,10 +61,13 @@ export const handleGoogleLoginCallback = asyncHandler(async (req, res) => {
   let unregisteredUser = await UnRegisteredUser.findOne({ email: req.user._json.email });
   if (!unregisteredUser) {
     console.log("Creating new Unregistered User");
+    // Google sometimes puts the picture in different places
+    const googlePicture = req.user._json.picture || req.user.photos?.[0]?.value || "";
+
     unregisteredUser = await UnRegisteredUser.create({
       name: req.user._json.name,
       email: req.user._json.email,
-      picture: req.user._json.picture,
+      picture: googlePicture,
     });
   }
   const jwtToken = generateJWTToken_email(unregisteredUser);

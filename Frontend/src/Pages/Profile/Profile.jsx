@@ -7,6 +7,7 @@ import { FaGithub, FaLinkedin, FaLink, FaEdit, FaStar, FaUserPlus, FaCheck, FaEx
 import Box from "./Box";
 import { storeSanitizedUserData } from "../../util/sanitizeUserData";
 import ReportModal from "../Report/Report";
+import RatingModal from "../Rating/RatingModal";
 
 
 const Profile = () => {
@@ -16,6 +17,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [connectLoading, setConnectLoading] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [ratings, setRatings] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -81,6 +84,34 @@ const Profile = () => {
       getUser();
     }
   }, [id, user, setUser]);
+
+  useEffect(() => {
+    if (profileUser?.username) {
+      fetchRatings();
+    }
+  }, [profileUser]);
+
+  const fetchRatings = async () => {
+    try {
+      const { data } = await axios.get(`/rating/getRatings/${profileUser.username}`);
+      if (data.success) {
+        setRatings(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching ratings", error);
+    }
+  };
+
+  const onRatingSuccess = () => {
+    fetchRatings();
+    // Refresh user details to get updated avg rating
+    const getUser = async () => {
+      const endpoint = id ? `/user/registered/getDetails/${id}` : "/user/registered/getDetails";
+      const { data } = await axios.get(endpoint);
+      if (data.success) setProfileUser(data.data);
+    }
+    getUser();
+  };
 
   const convertDate = (dateTimeString) => {
     if (!dateTimeString) return "";
@@ -279,42 +310,79 @@ const Profile = () => {
             {/* Ratings & Reviews */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Ratings & Reviews</h2>
-                <div className="flex items-center bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
-                  <FaStar className="text-yellow-400 mr-1" />
-                  <span className="font-bold text-gray-900">{profileUser.rating || "5.0"}</span>
-                  <span className="text-gray-500 text-xs ml-1">/ 5</span>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Ratings & Reviews</h2>
+                  <p className="text-xs text-gray-500 mt-1">{ratings.length} reviews total</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
+                    <FaStar className="text-yellow-400 mr-1" />
+                    <span className="font-bold text-gray-900">{profileUser.rating?.toFixed(1) || "0.0"}</span>
+                    <span className="text-gray-500 text-xs ml-1">/ 5</span>
+                  </div>
+                  {!isOwnProfile && (
+                    <button
+                      onClick={() => setIsRatingModalOpen(true)}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+                    >
+                      Rate this User
+                    </button>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {/* Placeholder Reviews - In real app, map over profileUser.reviews */}
-                {[1, 2].map((i) => (
-                  <div key={i} className="border-b border-gray-50 last:border-0 pb-4 last:pb-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 mr-2">U{i}</div>
-                        <span className="font-semibold text-sm text-gray-900">User {i}</span>
+              <div className="space-y-6">
+                {ratings.length > 0 ? (
+                  ratings.map((r, i) => (
+                    <div key={i} className="border-b border-gray-50 last:border-0 pb-4 last:pb-0">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center">
+                          <img
+                            src={r.rater?.picture || "/default-avatar.png"}
+                            className="h-10 w-10 rounded-full object-cover mr-3 border border-gray-100"
+                            alt=""
+                          />
+                          <div>
+                            <span className="font-bold text-sm text-gray-900 block">{r.rater?.name}</span>
+                            <span className="text-[10px] text-gray-400">{new Date(r.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <div className="flex text-yellow-400 text-xs gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar key={i} className={i < r.rating ? "text-yellow-400" : "text-gray-200"} />
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex text-yellow-400 text-xs">
-                        {[...Array(5)].map((_, i) => <FaStar key={i} />)}
-                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed pl-[52px]">{r.description}</p>
                     </div>
-                    <p className="text-gray-600 text-sm">Great mentor! Very helpful and patient.</p>
+                  ))
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-gray-400 text-sm italic">No reviews yet. Be the first to rate!</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
-            {/* Video Section (Placeholder) */}
+            {/* Video Section */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Introduction Video</h2>
-              <div className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg flex items-center justify-center h-64 border-2 border-dashed border-gray-300">
-                <div className="text-center text-gray-500">
-                  <span className="text-4xl block mb-2">🎥</span>
-                  <p>Video introduction coming soon</p>
+              {profileUser.tutorialVideo ? (
+                <div className="rounded-2xl overflow-hidden shadow-lg aspect-video bg-black">
+                  <video
+                    src={profileUser.tutorialVideo}
+                    controls
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-              </div>
+              ) : (
+                <div className="aspect-video bg-gray-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                  <div className="text-center text-gray-400">
+                    <span className="text-4xl block mb-3 opacity-50">🎥</span>
+                    <p className="text-sm font-medium">Video introduction coming soon</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Education */}
@@ -358,6 +426,12 @@ const Profile = () => {
         onClose={() => setIsReportModalOpen(false)}
         reportedUsername={profileUser?.username}
         reporterUsername={user?.username}
+      />
+      <RatingModal
+        isOpen={isRatingModalOpen}
+        onClose={() => setIsRatingModalOpen(false)}
+        targetUsername={profileUser?.username}
+        onRatingSuccess={onRatingSuccess}
       />
     </div>
   );

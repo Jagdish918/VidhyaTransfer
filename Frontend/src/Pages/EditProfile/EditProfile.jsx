@@ -14,6 +14,7 @@ const EditProfile = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   // Form State
   const [form, setForm] = useState({
@@ -22,6 +23,7 @@ const EditProfile = () => {
     email: "",
     username: "",
     bio: "",
+    tutorialVideo: "",
     portfolioLink: "",
     githubLink: "",
     linkedinLink: "",
@@ -43,6 +45,7 @@ const EditProfile = () => {
         email: user.email || "",
         username: user.username || "",
         bio: user.bio || "",
+        tutorialVideo: user.tutorialVideo || "",
         portfolioLink: user.portfolioLink || "",
         githubLink: user.githubLink || "",
         linkedinLink: user.linkedinLink || "",
@@ -59,6 +62,34 @@ const EditProfile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleVideoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Video size should be less than 50MB");
+      return;
+    }
+
+    const data = new FormData();
+    data.append("video", file);
+
+    try {
+      setUploadingVideo(true);
+      toast.info("Uploading video introduction...");
+      const response = await axios.post("/user/uploadVideo", data);
+      toast.success("Video uploaded successfully");
+      setForm(prev => ({ ...prev, tutorialVideo: response.data.data.url }));
+      setUser(prev => ({ ...prev, tutorialVideo: response.data.data.url }));
+      storeSanitizedUserData({ ...user, tutorialVideo: response.data.data.url });
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Error uploading video");
+    } finally {
+      setUploadingVideo(false);
+    }
   };
 
   const handleFileChange = async (e) => {
@@ -332,7 +363,8 @@ const EditProfile = () => {
     try {
       await axios.post("/user/registered/saveAddDetail", {
         bio: form.bio,
-        projects: form.projects
+        projects: form.projects,
+        tutorialVideo: form.tutorialVideo
       });
       toast.success("Bio & Projects saved successfully!");
 
@@ -778,6 +810,43 @@ const EditProfile = () => {
                   <p className={`text-xs font-medium ${form.bio.length > 450 ? 'text-red-500' : 'text-gray-400'}`}>
                     {form.bio.length}/500
                   </p>
+                </div>
+              </div>
+
+              <hr className="border-gray-200" />
+
+              {/* Tutorial Video */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Video Introduction (Tutorial)</label>
+                <div className="flex flex-col md:flex-row gap-6 items-start">
+                  <div className="flex-1 w-full">
+                    <p className="text-sm text-gray-600 mb-4">Showcase your teaching style or introduce yourself with a short video.</p>
+                    <div className="flex gap-4 items-center">
+                      <label className={`px-6 py-3 rounded-lg font-bold cursor-pointer transition-all flex items-center gap-2 ${uploadingVideo ? 'bg-gray-100 text-gray-400' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}>
+                        {uploadingVideo ? (
+                          <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div> Uploading...</>
+                        ) : (
+                          <>📹 {form.tutorialVideo ? 'Change Video' : 'Upload Video'}</>
+                        )}
+                        <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} disabled={uploadingVideo} />
+                      </label>
+                      {form.tutorialVideo && (
+                        <button
+                          onClick={() => setForm(prev => ({ ...prev, tutorialVideo: "" }))}
+                          className="text-xs text-red-600 hover:underline font-medium"
+                        >
+                          Remove Video
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2 italic">MP4, WebM recommended (Max 50MB)</p>
+                  </div>
+
+                  {form.tutorialVideo && (
+                    <div className="w-full md:w-64 aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                      <video src={form.tutorialVideo} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                 </div>
               </div>
 
