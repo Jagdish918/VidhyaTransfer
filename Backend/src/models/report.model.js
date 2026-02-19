@@ -20,6 +20,11 @@ const reportSchema = new Schema(
       type: String,
       required: true,
     },
+    status: {
+      type: String,
+      enum: ["pending", "dismissed", "banned"],
+      default: "pending",
+    },
   },
   { timestamps: true }
 );

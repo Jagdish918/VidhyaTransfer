@@ -3,6 +3,8 @@ import {
     getDashboardStats,
     getAllUsers,
     deleteUser,
+    banUser,
+    unbanUser,
     getAllPosts,
     deletePost,
     getReports,
@@ -23,6 +25,8 @@ router.use(verifyAdmin); // Ensures only admins can access
 router.get("/dashboard", getDashboardStats);
 router.get("/users", getAllUsers);
 router.delete("/users/:id", deleteUser);
+router.patch("/users/:id/ban", banUser);
+router.patch("/users/:id/unban", unbanUser);
 router.get("/posts", getAllPosts);
 router.get("/posts/reported", getReportedPosts);
 router.delete("/posts/:id", deletePost);

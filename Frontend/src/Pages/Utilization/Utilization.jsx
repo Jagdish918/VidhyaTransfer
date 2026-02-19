@@ -9,16 +9,23 @@ const Utilization = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
 
     const tabs = ["Instant Help", "Hire Expert", "Events"];
+
+    // 1. Debounce the search input
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search]);
 
     const fetchProviders = async () => {
         setLoading(true);
         try {
             if (activeTab === "Events") {
-                const { data } = await axios.get("/events"); // Uses global axios instance (likely set up with baseURL)
-                // If it fails with 404, it means routes not set or axios issue.
-                // Assuming standard response structure
+                const { data } = await axios.get("/events");
                 if (data.success) {
                     setEvents(data.data);
                 }
@@ -26,7 +33,7 @@ const Utilization = () => {
                 const { data } = await axios.get("/user/providers", {
                     params: {
                         type: activeTab,
-                        search
+                        search: debouncedSearch // Use debounced value
                     }
                 });
                 if (data.success) {
@@ -42,12 +49,10 @@ const Utilization = () => {
         }
     };
 
+    // 2. Fetch data immediately when tab or debounced search changes
     useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchProviders();
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [activeTab, search]);
+        fetchProviders();
+    }, [activeTab, debouncedSearch]);
 
     const renderCard = (user) => {
         const rate = activeTab === "Instant Help"
@@ -166,51 +171,56 @@ const Utilization = () => {
                 {activeTab === "Events" ? (
                     loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {[1, 2, 3].map(i => <div key={i} className="bg-white h-64 rounded-xl shadow-sm animate-pulse"></div>)}
+                            {[1, 2, 3].map(i => <div key={i} className="bg-white h-72 rounded-2xl shadow-sm animate-pulse border border-gray-100"></div>)}
                         </div>
                     ) : events.length === 0 ? (
-                        <div className="bg-white rounded-3xl p-10 text-center border border-dashed border-gray-300 max-w-4xl mx-auto">
-                            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <FaCalendarAlt className="text-3xl text-blue-500" />
+                        <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-gray-300 max-w-2xl mx-auto">
+                            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-500">
+                                <FaCalendarAlt size={32} />
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 mb-2">No Upcoming Events</h3>
-                            <p className="text-gray-500 mb-8">Stay tuned! Community events and workshops are coming soon.</p>
+                            <p className="text-gray-500 mb-8">Stay tuned! Our community managers are planning exciting workshops available soon.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {events.map(event => (
-                                <div key={event._id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100 flex flex-col h-full">
-                                    <div className="h-48 bg-gray-100 relative overflow-hidden">
+                                <div key={event._id} className="group bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full transform hover:-translate-y-1">
+                                    <div className="h-56 bg-gray-100 relative overflow-hidden">
                                         {event.image ? (
-                                            <img src={event.image} alt={event.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                                            <img
+                                                src={event.image}
+                                                alt={event.title}
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
                                         ) : (
-                                            <div className="flex items-center justify-center h-full text-gray-400">
-                                                <FaCalendarAlt className="text-4xl opacity-50" />
+                                            <div className="flex flex-col items-center justify-center h-full text-gray-300 bg-gray-50">
+                                                <FaCalendarAlt className="text-5xl mb-3 opacity-50" />
+                                                <span className="text-xs font-semibold uppercase tracking-widest opacity-70">Event</span>
                                             </div>
                                         )}
-                                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 bg-white rounded-lg text-xs font-bold text-gray-700 shadow-sm">
-                                            {new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl text-xs font-bold text-gray-800 shadow-sm flex flex-col items-center min-w-[60px]">
+                                            <span className="text-red-500 text-xs uppercase tracking-wider">{new Date(event.date).toLocaleDateString(undefined, { month: 'short' })}</span>
+                                            <span className="text-xl font-black">{new Date(event.date).getDate()}</span>
                                         </div>
                                     </div>
-                                    <div className="p-6 flex-1 flex flex-col">
-                                        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
-                                        <p className="text-gray-500 text-sm mb-4 line-clamp-3 flex-1">{event.description}</p>
 
-                                        <div className="pt-4 border-t border-gray-100 mt-auto">
-                                            {event.link ? (
-                                                <a
-                                                    href={event.link}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="block w-full text-center bg-[#3bb4a1] hover:bg-[#2fa08e] text-white py-2.5 rounded-xl font-bold transition-colors"
-                                                >
-                                                    Register / Join
-                                                </a>
-                                            ) : (
-                                                <button disabled className="block w-full text-center bg-gray-100 text-gray-400 py-2.5 rounded-xl font-bold cursor-not-allowed">
-                                                    Info Only
-                                                </button>
-                                            )}
+                                    <div className="p-7 flex-1 flex flex-col">
+                                        <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-[#3bb4a1] transition-colors line-clamp-2">{event.title}</h3>
+
+                                        <div className="flex items-center text-sm text-gray-500 mb-4 bg-gray-50 p-2 rounded-lg w-fit">
+                                            <FaCalendarAlt className="mr-2 text-[#3bb4a1]" />
+                                            <span className="font-medium">{new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                        </div>
+
+                                        <p className="text-gray-600 text-sm mb-6 line-clamp-3 leading-relaxed flex-1">{event.description}</p>
+
+                                        <div className="mt-auto pt-2">
+                                            <Link
+                                                to={`/events/${event._id}`}
+                                                className="block w-full text-center bg-[#3bb4a1] hover:bg-[#2fa08e] text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-[#3bb4a1]/20 hover:shadow-[#3bb4a1]/40 transform active:scale-95"
+                                            >
+                                                View Details & Register
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>

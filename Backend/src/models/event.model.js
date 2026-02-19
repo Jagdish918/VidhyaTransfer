@@ -6,6 +6,10 @@ const eventSchema = new Schema(
             type: String,
             required: true,
         },
+        shortDescription: {
+            type: String,
+            required: true,
+        },
         description: {
             type: String,
             required: true,
@@ -14,8 +18,42 @@ const eventSchema = new Schema(
             type: Date,
             required: true,
         },
+        startTime: {
+            type: String, // e.g., "14:00"
+            required: true,
+        },
+        endTime: {
+            type: String, // e.g., "16:00"
+            required: true,
+        },
+        location: {
+            type: String,
+            required: true,
+        },
+        credits: {
+            type: Number,
+            required: true,
+            default: 0,
+        },
+        maxParticipants: {
+            type: Number,
+            required: true,
+            default: 50,
+        },
+        tags: {
+            type: [String],
+            default: [],
+        },
+        learningOutcomes: {
+            type: [String], // Array of strings for bullet points
+            default: [],
+        },
+        participants: [{
+            type: Schema.Types.ObjectId,
+            ref: "User",
+        }],
         link: {
-            type: String, // e.g., Meet link or Registration link
+            type: String, // Optional external link
             default: "",
         },
         image: {

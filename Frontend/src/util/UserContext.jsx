@@ -88,6 +88,42 @@ const UserContextProvider = ({ children }) => {
     fetchUserData();
   }, []); // navigate is stable, no need to include in deps
 
+  // Global Axios Interceptor for 403 (Banned) handling
+  useEffect(() => {
+    // Add a unique identifier to interceptors to prevent duplicates if strict mode mounts twice
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response && error.response.status === 403) {
+          // Check for specific ban message if possible
+          const errorMessage = String(error.response.data?.message || "").toLowerCase();
+          if (errorMessage.includes("banned") || errorMessage.includes("suspended")) {
+            toast.error("Your account has been banned. You have been logged out.");
+            setUser(null);
+            localStorage.removeItem("userInfo");
+            // Clear cookies just in case (though httpOnly can't be cleared from JS, backend should clear them)
+            document.cookie = "hasSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            navigate("/login");
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, [navigate, setUser]);
+
+  // ✅ Persist user state to localStorage whenever it changes
+  useEffect(() => {
+    if (user) {
+      storeSanitizedUserData(user);
+    } else {
+      localStorage.removeItem("userInfo");
+    }
+  }, [user]);
+
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
   }

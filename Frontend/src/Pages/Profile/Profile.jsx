@@ -6,6 +6,8 @@ import axios from "axios";
 import { FaGithub, FaLinkedin, FaLink, FaEdit, FaStar, FaUserPlus, FaCheck, FaExclamationTriangle } from "react-icons/fa";
 import Box from "./Box";
 import { storeSanitizedUserData } from "../../util/sanitizeUserData";
+import ReportModal from "../Report/Report";
+
 
 const Profile = () => {
   const { user, setUser } = useUser();
@@ -13,9 +15,11 @@ const Profile = () => {
   const { id } = useParams(); // Changed from username to id as per App.jsx
   const [loading, setLoading] = useState(true);
   const [connectLoading, setConnectLoading] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // ... existing useEffect logic
     const getUser = async () => {
       setLoading(true);
       try {
@@ -162,9 +166,12 @@ const Profile = () => {
                     >
                       {connectLoading ? "..." : profileUser.status === "Connect" ? <><FaUserPlus className="mr-2" /> Connect</> : <><FaCheck className="mr-2" /> {profileUser.status}</>}
                     </button>
-                    <Link to={`/report/${profileUser.username}`} className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <button
+                      onClick={() => setIsReportModalOpen(true)}
+                      className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    >
                       <FaExclamationTriangle className="mr-2" /> Report
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>
@@ -346,6 +353,12 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        reportedUsername={profileUser?.username}
+        reporterUsername={user?.username}
+      />
     </div>
   );
 };

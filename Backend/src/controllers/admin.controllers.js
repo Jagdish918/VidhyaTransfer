@@ -35,6 +35,39 @@ const deleteUser = asyncHandler(async (req, res) => {
     );
 });
 
+const banUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findByIdAndUpdate(
+        id,
+        {
+            status: "banned",
+            refreshToken: null // Force logout
+        },
+        { new: true }
+    );
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    return res.status(200).json(
+        new ApiResponse(200, user, "User banned successfully")
+    );
+});
+
+const unbanUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findByIdAndUpdate(
+        id,
+        { status: "active" },
+        { new: true }
+    );
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    return res.status(200).json(
+        new ApiResponse(200, user, "User unbanned successfully")
+    );
+});
+
 const getAllPosts = asyncHandler(async (req, res) => {
     const posts = await Post.find({ isDeleted: false })
         .populate("author", "name email picture")
@@ -64,7 +97,7 @@ const getReports = asyncHandler(async (req, res) => {
     // ... existing getReports code
     const reports = await Report.find()
         .populate("reporter", "name email picture")
-        .populate("reported", "name email picture")
+        .populate("reported", "name email picture status")
         .sort({ createdAt: -1 });
 
     return res.status(200).json(new ApiResponse(200, reports, "Reports fetched successfully"));
@@ -114,6 +147,8 @@ export {
     getDashboardStats,
     getAllUsers,
     deleteUser,
+    banUser,
+    unbanUser,
     getAllPosts,
     deletePost,
     getReports,

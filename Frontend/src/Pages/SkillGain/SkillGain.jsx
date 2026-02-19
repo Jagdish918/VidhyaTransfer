@@ -7,12 +7,21 @@ const SkillGain = () => {
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const fetchMentors = async () => {
     setLoading(true);
     try {
       const { data } = await axios.get("/user/mentors", {
-        params: { search }
+        params: { search: debouncedSearch }
       });
       if (data.success) {
         setMentors(data.data.users);
@@ -24,12 +33,10 @@ const SkillGain = () => {
     }
   };
 
+  // Fetch immediately when debouncedSearch changes
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchMentors();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [search]);
+    fetchMentors();
+  }, [debouncedSearch]);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-6 pb-12 font-['Montserrat']">

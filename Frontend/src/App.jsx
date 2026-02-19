@@ -16,8 +16,10 @@ import PeerSwap from "./Pages/PeerSwap/PeerSwap";
 import SkillGain from "./Pages/SkillGain/SkillGain";
 import Resources from "./Pages/Resources/Resources";
 import Utilization from "./Pages/Utilization/Utilization";
+import EventDetails from "./Pages/Utilization/EventDetails";
 import Chat from "./Pages/Chat/Chat";
 import Notifications from "./Pages/Notifications/Notifications";
+import Report from "./Pages/Report/Report";
 import Credits from "./Pages/Credits/Credits";
 import PrivateRoutes from "./util/PrivateRoutes";
 import OnboardingGuard from "./util/OnboardingGuard";
@@ -27,11 +29,14 @@ import "react-toastify/dist/ReactToastify.css";
 import ForgotPassword from "./Pages/Login/ForgotPassword";
 import ResetPassword from "./Pages/Login/ResetPassword";
 
+import ScrollToTop from "./Components/ScrollToTop";
+
 const App = () => {
   const location = useLocation();
 
   return (
     <>
+      <ScrollToTop />
       <Header />
       <ToastContainer position="top-right" />
       <Routes>
@@ -62,6 +67,7 @@ const App = () => {
           <Route path="/skill-gain" element={<SkillGain />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/utilisation" element={<Utilization />} />
+          <Route path="/events/:id" element={<EventDetails />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/credits" element={<Credits />} />
@@ -71,6 +77,7 @@ const App = () => {
           <Route path="/profile/:id" element={<Profile />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/edit_profile" element={<EditProfile />} />
+          <Route path="/report/:username" element={<Report />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
 

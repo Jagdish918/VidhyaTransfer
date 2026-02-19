@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyJWT_username } from "../middlewares/verifyJWT.middleware.js";
 import { verifyAdmin } from "../middlewares/admin.middleware.js";
-import { createEvent, getEvents, deleteEvent, getAllEventsAdmin } from "../controllers/event/event.controllers.js";
+import { createEvent, getEvents, deleteEvent, getAllEventsAdmin, getEventById, registerForEvent, updateEvent } from "../controllers/event/event.controllers.js";
 
 const router = Router();
 
@@ -17,6 +17,11 @@ router.route("/")
 // Admin specific routes
 router.route("/all").get(verifyAdmin, getAllEventsAdmin);
 
-router.route("/:id").delete(verifyAdmin, deleteEvent);
+router.route("/:id")
+    .get(getEventById)
+    .delete(verifyAdmin, deleteEvent)
+    .put(verifyAdmin, updateEvent);
+
+router.route("/:id/register").post(registerForEvent);
 
 export default router;

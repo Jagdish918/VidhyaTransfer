@@ -58,6 +58,12 @@ const verifyJWT_username = asyncHandler(async (req, res, next) => {
     if (!user) {
       throw new ApiError(401, "Invalid Access Token");
     }
+
+    if (user.status === 'banned') {
+      res.clearCookie("accessToken");
+      res.clearCookie("hasSession");
+      throw new ApiError(403, "Your account has been banned. Please contact support.");
+    }
     // console.log(user);
     req.user = user;
     next();

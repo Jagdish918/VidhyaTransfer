@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createOrder, verifyPayment, getKey } from "../controllers/payment.controller.js";
+import { createOrder, verifyPayment, getKey, getTransactions } from "../controllers/payment.controller.js";
 import { verifyJWT_username as verifyJWT } from "../middlewares/verifyJWT.middleware.js";
 
 const router = Router();
@@ -7,5 +7,6 @@ const router = Router();
 router.route("/create-order").post(verifyJWT, createOrder);
 router.route("/verify-payment").post(verifyJWT, verifyPayment);
 router.route("/get-key").get(verifyJWT, getKey);
+router.route("/history").get(verifyJWT, getTransactions);
 
 export default router;

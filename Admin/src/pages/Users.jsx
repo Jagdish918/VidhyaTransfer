@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { AiOutlineDelete, AiOutlineSearch } from 'react-icons/ai';
+import { AiOutlineDelete, AiOutlineSearch, AiOutlineStop, AiOutlineUndo } from 'react-icons/ai';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -38,10 +39,37 @@ const Users = () => {
         }
     };
 
+    const handleBan = async (id) => {
+        if (!window.confirm("Ban this user?")) return;
+        try {
+            const { data } = await axios.patch(`/admin/users/${id}/ban`);
+            if (data.success) {
+                toast.success("User banned");
+                setUsers(users.map(u => u._id === id ? { ...u, status: 'banned' } : u));
+            }
+        } catch (error) {
+            toast.error("Failed to ban user");
+        }
+    };
+
+    const handleUnban = async (id) => {
+        if (!window.confirm("Unban this user?")) return;
+        try {
+            const { data } = await axios.patch(`/admin/users/${id}/unban`);
+            if (data.success) {
+                toast.success("User unbanned");
+                setUsers(users.map(u => u._id === id ? { ...u, status: 'active' } : u));
+            }
+        } catch (error) {
+            toast.error("Failed to unban user");
+        }
+    };
+
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-        return matchesSearch && matchesRole;
+        const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+        return matchesSearch && matchesRole && matchesStatus;
     });
 
     if (loading) return <div className="text-center mt-20 text-gray-500">Loading Users...</div>;
@@ -61,6 +89,15 @@ const Users = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <select
+                        className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="banned">Banned</option>
+                    </select>
                     <select
                         className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={roleFilter}
@@ -87,10 +124,15 @@ const Users = () => {
                         {filteredUsers.length === 0 ? (
                             <tr><td colSpan="4" className="text-center py-8 text-gray-500">No users found.</td></tr>
                         ) : filteredUsers.map((user) => (
-                            <tr key={user._id} className="hover:bg-gray-50/50 transition-colors">
+                            <tr key={user._id} className={`hover:bg-gray-50/50 transition-colors ${user.status === 'banned' ? 'bg-red-50' : ''}`}>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <img src={user.picture || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"} alt="" className="w-10 h-10 rounded-full object-cover bg-gray-200" />
+                                        <div className="relative">
+                                            <img src={user.picture || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"} alt="" className="w-10 h-10 rounded-full object-cover bg-gray-200" />
+                                            {user.status === 'banned' && (
+                                                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1 rounded-full border border-white">BANNED</div>
+                                            )}
+                                        </div>
                                         <div>
                                             <div className="font-medium text-gray-900">{user.name}</div>
                                             <div className="text-sm text-gray-500">{user.email}</div>
@@ -106,14 +148,34 @@ const Users = () => {
                                     {new Date(user.createdAt).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button
-                                        onClick={() => handleDelete(user._id)}
-                                        disabled={user.role === 'admin'}
-                                        className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-30 disabled:hover:text-gray-400"
-                                        title="Delete User"
-                                    >
-                                        <AiOutlineDelete size={20} />
-                                    </button>
+                                    <div className="flex justify-end gap-2">
+                                        {user.status === 'banned' ? (
+                                            <button
+                                                onClick={() => handleUnban(user._id)}
+                                                className="text-gray-400 hover:text-green-600 transition-colors"
+                                                title="Unban User"
+                                            >
+                                                <AiOutlineUndo size={20} />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleBan(user._id)}
+                                                disabled={user.role === 'admin'}
+                                                className="text-gray-400 hover:text-orange-600 transition-colors disabled:opacity-30 disabled:hover:text-gray-400"
+                                                title="Ban User"
+                                            >
+                                                <AiOutlineStop size={20} />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => handleDelete(user._id)}
+                                            disabled={user.role === 'admin'}
+                                            className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-30 disabled:hover:text-gray-400"
+                                            title="Delete User"
+                                        >
+                                            <AiOutlineDelete size={20} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

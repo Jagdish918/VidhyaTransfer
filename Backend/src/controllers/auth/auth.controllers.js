@@ -41,6 +41,10 @@ export const handleGoogleLoginCallback = asyncHandler(async (req, res) => {
   const existingUser = await User.findOne({ email: req.user._json.email });
 
   if (existingUser) {
+    if (existingUser.status === 'banned') {
+      return res.redirect(`http://localhost:5173/login?error=account_banned`);
+    }
+
     const jwtToken = generateJWTToken_username(existingUser);
     const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
     res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });

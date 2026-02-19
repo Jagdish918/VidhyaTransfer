@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { AiOutlineDelete, AiOutlineCheck, AiOutlineWarning } from 'react-icons/ai';
+import { AiOutlineDelete, AiOutlineCheck, AiOutlineWarning, AiOutlineStop } from 'react-icons/ai';
 
 const Reports = () => {
     const [activeTab, setActiveTab] = useState('users'); // 'users' or 'posts'
@@ -37,6 +37,47 @@ const Reports = () => {
             setUserReports(prev => prev.filter(r => r._id !== id));
         } catch (error) {
             toast.error("Failed to dismiss report");
+        }
+    };
+
+    const handleBanUser = async (reportId, userId) => {
+        if (!userId) {
+            toast.error("User not found or already deleted");
+            return;
+        }
+        if (!window.confirm("Are you sure you want to BAN this user? This will deactivate their account but not delete it.")) return;
+        try {
+            // Ban the user
+            await axios.patch(`/admin/users/${userId}/ban`);
+            toast.success("User banned successfully");
+
+            // Update the local state to reflect the status change without removing the report
+            setUserReports(prev => prev.map(r =>
+                r.reported?._id === userId ? { ...r, reported: { ...r.reported, status: 'banned' } } : r
+            ));
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to ban user");
+        }
+    };
+
+    const handleUnbanUser = async (reportId, userId) => {
+        if (!userId) {
+            toast.error("User not found");
+            return;
+        }
+        if (!window.confirm("Are you sure you want to Unban this user?")) return;
+        try {
+            await axios.patch(`/admin/users/${userId}/unban`);
+            toast.success("User unbanned successfully");
+
+            // Update the local state to reflect the status change
+            setUserReports(prev => prev.map(r =>
+                r.reported?._id === userId ? { ...r, reported: { ...r.reported, status: 'active' } } : r
+            ));
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to unban user");
         }
     };
 
@@ -101,9 +142,37 @@ const Reports = () => {
                                                 <td className="px-6 py-4 text-sm text-gray-900">{report.reporter?.name || "Unknown"}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-900">{report.reported?.name || "Unknown"} <br /><span className="text-xs text-gray-500">{report.reported?.email}</span></td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <button onClick={() => handleDismissReport(report._id)} className="text-gray-400 hover:text-green-600 transition-colors" title="Dismiss">
-                                                        <AiOutlineCheck size={20} />
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleDismissReport(report._id)}
+                                                            className="p-2 rounded-full text-gray-400 hover:bg-green-50 hover:text-green-600 transition-colors"
+                                                            title="Dismiss Report"
+                                                        >
+                                                            <AiOutlineCheck size={20} />
+                                                        </button>
+
+                                                        {report.reported?.status === 'banned' ? (
+                                                            <button
+                                                                onClick={() => handleUnbanUser(report._id, report.reported?._id)}
+                                                                className="p-2 rounded-full text-green-500 hover:bg-green-50 hover:text-green-700 transition-colors"
+                                                                title="Unban User"
+                                                            >
+                                                                <span className="text-xs font-bold border border-green-500 rounded px-1">UNBAN</span>
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleBanUser(report._id, report.reported?._id)}
+                                                                disabled={!report.reported}
+                                                                className={`p-2 rounded-full transition-colors ${report.reported
+                                                                    ? "text-gray-400 hover:bg-red-50 hover:text-red-600"
+                                                                    : "text-gray-200 cursor-not-allowed"
+                                                                    }`}
+                                                                title={report.reported ? "Ban User" : "User already deleted"}
+                                                            >
+                                                                <AiOutlineStop size={20} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

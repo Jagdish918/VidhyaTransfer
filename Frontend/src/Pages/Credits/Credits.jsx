@@ -8,7 +8,22 @@ const Credits = () => {
     const { user, setUser } = useUser();
     const [loading, setLoading] = useState(false);
 
+    const [transactions, setTransactions] = useState([]);
+
     useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+                const { data } = await axios.get("/payment/history", { withCredentials: true });
+                if (data.success) {
+                    setTransactions(data.data);
+                }
+            } catch (error) {
+                console.error("Error fetching transactions", error);
+            }
+        };
+
+        fetchTransactions();
+
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
         script.async = true;
@@ -32,7 +47,7 @@ const Credits = () => {
             const { data: { key } } = await axios.get("/payment/get-key", { withCredentials: true });
 
             // 2. Create Order
-            const { data: order } = await axios.post("/payment/create-order", { amount });
+            const { data: order } = await axios.post("/payment/create-order", { amount, credits }); // Pass credits to store in DB
 
             // 3. Open Razorpay
             const options = {
@@ -50,14 +65,18 @@ const Credits = () => {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
-                            credits: credits,
-                            amount: amount
+                            // credits and amount are no longer sent here, backend looks them up by order_id
                         });
 
                         if (verifyRes.status === 200) {
                             toast.success("Credits added successfully!");
                             // Update user context with new credits
                             setUser(prev => ({ ...prev, credits: verifyRes.data.credits }));
+                            // Refresh transactions
+                            const { data } = await axios.get("/payment/history", { withCredentials: true });
+                            if (data.success) {
+                                setTransactions(data.data);
+                            }
                         }
                     } catch (error) {
                         console.error("Verification failed", error);
@@ -144,30 +163,60 @@ const Credits = () => {
                     ))}
                 </div>
 
-                {/* Transaction History (Static for now as requested user only asked for credit system, but UI shows it) */}
+                {/* Transaction History */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
                         <FaHistory className="text-gray-400" />
                         <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
                     </div>
-                    <div className="p-6">
-                        <div className="text-center text-gray-500 py-8">
-                            <p>No recent transactions to show.</p>
-                            <p className="text-sm mt-2 opacity-60">(Transaction history will appear here once you make a purchase)</p>
-                        </div>
-                        {/* 
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    </tr>
-                </thead>
-                // ... map rows
-            </table> 
-            */}
+                    <div className="p-0">
+                        {transactions.length === 0 ? (
+                            <div className="text-center text-gray-500 py-8">
+                                <p>No recent transactions to show.</p>
+                                <p className="text-sm mt-2 opacity-60">(Transaction history will appear here once you make a purchase)</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {transactions.map((tx) => (
+                                            <tr key={tx._id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {new Date(tx.createdAt).toLocaleDateString()}{" "}
+                                                    <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleTimeString()}</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                                                    {tx.orderId}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
+                                                    +{tx.credits}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    ₹{tx.amount}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tx.status === 'paid' ? 'bg-green-100 text-green-800' :
+                                                            tx.status === 'failed' ? 'bg-red-100 text-red-800' :
+                                                                'bg-yellow-100 text-yellow-800'
+                                                        }`}>
+                                                        {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
 
