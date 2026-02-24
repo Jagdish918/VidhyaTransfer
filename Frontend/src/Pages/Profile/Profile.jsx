@@ -181,7 +181,7 @@ const Profile = () => {
 
                 {/* Edit Profile Button */}
                 {isOwnProfile && (
-                  <Link to="/edit_profile" className="mt-6 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none w-full justify-center">
+                  <Link to="/edit_profile" className="mt-6 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none w-full justify-center no-underline">
                     <FaEdit className="mr-2 text-gray-500" />
                     Edit Profile
                   </Link>
@@ -323,7 +323,7 @@ const Profile = () => {
                   {!isOwnProfile && (
                     <button
                       onClick={() => setIsRatingModalOpen(true)}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700"
                     >
                       Rate this User
                     </button>

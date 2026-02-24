@@ -107,7 +107,7 @@ const Utilization = () => {
                     </div>
                     <Link
                         to={`/profile/${user.username}`}
-                        className="border border-[#013e38] text-[#013e38] text-xs px-4 py-2 rounded-lg hover:bg-[#013e38] hover:text-white transition-all font-bold"
+                        className="border border-[#013e38] text-[#013e38] text-xs px-4 py-2 rounded-lg hover:bg-[#013e38] hover:text-white transition-all font-bold no-underline"
                     >
                         Connect
                     </Link>
@@ -217,7 +217,7 @@ const Utilization = () => {
                                         <div className="mt-auto pt-2">
                                             <Link
                                                 to={`/events/${event._id}`}
-                                                className="block w-full text-center bg-[#3bb4a1] hover:bg-[#2fa08e] text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-[#3bb4a1]/20 hover:shadow-[#3bb4a1]/40 transform active:scale-95"
+                                                className="block w-full text-center bg-[#3bb4a1] hover:bg-[#2fa08e] text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-[#3bb4a1]/20 hover:shadow-[#3bb4a1]/40 transform active:scale-95 no-underline"
                                             >
                                                 View Details & Register
                                             </Link>

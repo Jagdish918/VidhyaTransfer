@@ -14,7 +14,7 @@ const ProfileCard = ({ profileImageUrl, bio, name, skills, rating, username }) =
       <h6 className="font-['Montserrat'] text-[1rem] m-[5px_0] uppercase">Rating: {rating} ⭐</h6>
       <p className="font-['Montserrat'] text-[14px] leading-[21px] truncate w-[150px] mx-auto">{bio}</p>
       <div className="flex justify-around">
-        <Link to={`/profile/${username}`}>
+        <Link to={`/profile/${username}`} className="no-underline">
           <button className="m-4 bg-transparent text-[#3bb4a1] border border-[#3bb4a1] rounded-[3px] p-[0.4rem] font-medium transition-all duration-300 hover:bg-[#ffffff27]">
             View Profile
           </button>

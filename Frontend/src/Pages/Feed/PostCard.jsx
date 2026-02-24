@@ -166,7 +166,7 @@ const PostCard = ({ post }) => {
       {/* Header */}
       <div className="p-6 pb-4 flex justify-between items-start">
         <div className="flex items-center gap-4">
-          <Link to={`/profile/${post.author?._id || post.author?.username}`} className="flex-shrink-0 relative">
+          <Link to={`/profile/${post.author?._id || post.author?.username}`} className="flex-shrink-0 relative no-underline">
             <img
               src={post.author?.picture || "/default-avatar.png"}
               alt={post.author?.name || "User"}
@@ -175,7 +175,7 @@ const PostCard = ({ post }) => {
           </Link>
           <div>
             <h4 className="font-bold text-gray-900 text-lg leading-tight flex items-center gap-2 font-['Oswald'] tracking-wide">
-              <Link to={`/profile/${post.author?._id || post.author?.username}`} className="hover:text-[#3bb4a1] transition-colors">
+              <Link to={`/profile/${post.author?._id || post.author?.username}`} className="hover:text-[#3bb4a1] transition-colors no-underline">
                 {post.author?.name || "Unknown User"}
               </Link>
               {!isAuthor && !isConnected && (
@@ -221,7 +221,7 @@ const PostCard = ({ post }) => {
           {post.content.length > 300 && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="mt-2 text-[#3bb4a1] font-bold text-sm hover:underline focus:outline-none"
+              className="mt-2 text-[#3bb4a1] font-bold text-sm focus:outline-none"
             >
               {expanded ? "Show less" : "Read more"}
             </button>
@@ -343,7 +343,7 @@ const PostCard = ({ post }) => {
                   <div className="flex-1">
                     <div className="bg-white rounded-2xl rounded-tl-none p-4 shadow-sm border border-gray-100 relative group-hover/comment:shadow-md transition-all">
                       <div className="flex justify-between items-center mb-2">
-                        <Link to={`/profile/${comment.user?._id}`} className="text-sm font-bold text-gray-900 hover:text-[#3bb4a1] transition-colors font-['Oswald'] tracking-wide">
+                        <Link to={`/profile/${comment.user?._id}`} className="text-sm font-bold text-gray-900 hover:text-[#3bb4a1] transition-colors font-['Oswald'] tracking-wide no-underline">
                           {comment.user?.name || "Unknown"}
                         </Link>
                         <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">

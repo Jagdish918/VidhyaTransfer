@@ -241,7 +241,7 @@ const PeerSwap = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-gray-900 text-lg leading-tight hover:text-[#3bb4a1] transition-colors cursor-pointer truncate font-['Oswald'] tracking-wide">
-                          <Link to={`/profile/${peer.username || peer._id}`}>{peer.name}</Link>
+                          <Link to={`/profile/${peer.username || peer._id}`} className="no-underline">{peer.name}</Link>
                         </h3>
                         <p className="text-xs text-gray-500 mt-1 line-clamp-2 font-medium">{role}</p>
                       </div>
@@ -274,7 +274,7 @@ const PeerSwap = () => {
                     <div className="flex gap-3 mt-auto">
                       <Link
                         to={`/profile/${peer.username || peer._id}`}
-                        className="flex-1 py-3 text-center text-gray-600 font-bold text-xs sm:text-sm bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
+                        className="flex-1 py-3 text-center text-gray-600 font-bold text-xs sm:text-sm bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200 no-underline"
                       >
                         Profile
                       </Link>

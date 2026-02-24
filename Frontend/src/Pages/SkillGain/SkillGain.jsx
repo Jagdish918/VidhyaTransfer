@@ -120,7 +120,7 @@ const SkillGain = () => {
                   </div>
                   <Link
                     to={`/profile/${mentor.username}`}
-                    className="bg-[#013e38] text-white text-xs px-4 py-2 rounded-lg hover:bg-[#3bb4a1] transition-colors font-bold"
+                    className="bg-[#013e38] text-white text-xs px-4 py-2 rounded-lg hover:bg-[#3bb4a1] transition-colors font-bold no-underline"
                   >
                     View Profile
                   </Link>

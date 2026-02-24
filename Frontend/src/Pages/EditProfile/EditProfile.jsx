@@ -165,10 +165,10 @@ const EditProfile = () => {
     }
 
     if (type === "proficient") {
-      setForm(prev => ({ ...prev, skillsProficientAt: [...prev.skillsProficientAt, skillName] }));
+      setForm(prev => ({ ...prev, skillsProficientAt: [...prev.skillsProficientAt, { name: skillName }] }));
       setSkillProficientInput("");
     } else {
-      setForm(prev => ({ ...prev, skillsToLearn: [...prev.skillsToLearn, skillName] }));
+      setForm(prev => ({ ...prev, skillsToLearn: [...prev.skillsToLearn, { name: skillName }] }));
       setSkillLearnInput("");
     }
   };
@@ -295,91 +295,160 @@ const EditProfile = () => {
   };
 
   const saveBasicInfo = async () => {
-    if (!validateBasic()) return;
+    if (!validateBasic()) return false;
 
     setLoading(true);
     try {
+      const normalizedProficient = form.skillsProficientAt.map(s =>
+        typeof s === 'string' ? { name: s } : { name: s.name }
+      );
+      const normalizedToLearn = form.skillsToLearn.map(s =>
+        typeof s === 'string' ? { name: s } : { name: s.name }
+      );
+
       const payload = {
         name: form.name,
         username: form.username,
         linkedinLink: form.linkedinLink,
         githubLink: form.githubLink,
         portfolioLink: form.portfolioLink,
-        skillsProficientAt: form.skillsProficientAt,
-        skillsToLearn: form.skillsToLearn,
+        skillsProficientAt: normalizedProficient,
+        skillsToLearn: normalizedToLearn,
         picture: form.picture,
       };
 
-      const response = await axios.post("/user/registered/saveRegDetails", payload);
+      await axios.post("/user/registered/saveRegDetails", payload);
       toast.success("Basic info saved successfully!");
 
-      // Fetch fresh user data from backend
       const { data: freshData } = await axios.get("/user/registered/getDetails");
       if (freshData.success) {
         setUser(freshData.data);
         storeSanitizedUserData(freshData.data);
-        // Update form with fresh data
         setForm(prev => ({ ...prev, ...freshData.data }));
       }
+      setLoading(false);
+      return true;
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || "Failed to save basic info");
-    } finally {
       setLoading(false);
+      return false;
     }
   };
 
   const saveEducation = async () => {
-    if (!validateEducation()) return;
+    if (!validateEducation()) return false;
 
     setLoading(true);
     try {
-      await axios.post("/user/registered/saveEduDetail", { education: form.education });
+      await axios.post("/user/registered/saveEduDetail", {
+        education: form.education.map(({ id, ...rest }) => rest)
+      });
       toast.success("Education saved successfully!");
 
-      // Fetch fresh user data from backend
       const { data: freshData } = await axios.get("/user/registered/getDetails");
       if (freshData.success) {
         setUser(freshData.data);
         storeSanitizedUserData(freshData.data);
-        // Update form with fresh data
         setForm(prev => ({ ...prev, education: freshData.data.education }));
       }
+      setLoading(false);
+      return true;
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || "Failed to save education");
-    } finally {
       setLoading(false);
+      return false;
     }
   };
 
   const saveAdditional = async () => {
     if (form.bio.length > 500) {
       toast.error("Bio must be less than 500 characters");
-      return;
+      return false;
     }
 
     setLoading(true);
     try {
       await axios.post("/user/registered/saveAddDetail", {
         bio: form.bio,
-        projects: form.projects,
+        projects: form.projects.map(({ id, ...rest }) => rest),
         tutorialVideo: form.tutorialVideo
       });
       toast.success("Bio & Projects saved successfully!");
 
-      // Fetch fresh user data from backend
+      const { data: freshData } = await axios.get("/user/registered/getDetails");
+      if (freshData.success) {
+        setUser(freshData.data);
+        storeSanitizedUserData(freshData.data);
+      }
+      setLoading(false);
+      return true;
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to save additional info");
+      setLoading(false);
+      return false;
+    }
+  };
+
+  const saveAllChanges = async () => {
+    if (!validateBasic()) {
+      setActiveTab('basic');
+      return;
+    }
+    if (!validateEducation()) {
+      setActiveTab('education');
+      return;
+    }
+    if (form.bio.length > 500) {
+      setActiveTab('portfolio');
+      toast.error("Bio must be less than 500 characters");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const normalizedProficient = form.skillsProficientAt.map(s =>
+        typeof s === 'string' ? { name: s } : { name: s.name }
+      );
+      const normalizedToLearn = form.skillsToLearn.map(s =>
+        typeof s === 'string' ? { name: s } : { name: s.name }
+      );
+
+      await axios.post("/user/registered/saveRegDetails", {
+        name: form.name,
+        username: form.username,
+        linkedinLink: form.linkedinLink,
+        githubLink: form.githubLink,
+        portfolioLink: form.portfolioLink,
+        skillsProficientAt: normalizedProficient,
+        skillsToLearn: normalizedToLearn,
+        picture: form.picture,
+      });
+
+      await axios.post("/user/registered/saveEduDetail", {
+        education: form.education.map(({ id, ...rest }) => rest)
+      });
+
+      await axios.post("/user/registered/saveAddDetail", {
+        bio: form.bio,
+        projects: form.projects.map(({ id, ...rest }) => rest),
+        tutorialVideo: form.tutorialVideo
+      });
+
+      toast.success("Profile updated successfully!");
+
       const { data: freshData } = await axios.get("/user/registered/getDetails");
       if (freshData.success) {
         setUser(freshData.data);
         storeSanitizedUserData(freshData.data);
       }
 
-      // Navigate back to profile after successful save
       setTimeout(() => navigate("/profile"), 1000);
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || "Failed to save additional info");
+      toast.error(error.response?.data?.message || "Failed to save some changes. Please check each tab.");
     } finally {
       setLoading(false);
     }
@@ -641,17 +710,12 @@ const EditProfile = () => {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <div className="flex justify-end items-center pt-6 border-t border-gray-200">
                 <button
-                  onClick={saveBasicInfo}
-                  className="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={loading}
-                >
-                  {loading ? "Saving..." : <><FaSave /> Save Changes</>}
-                </button>
-                <button
-                  onClick={() => setActiveTab('education')}
+                  onClick={async () => {
+                    const ok = await saveBasicInfo();
+                    if (ok) setActiveTab('education');
+                  }}
                   className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
                 >
                   Next: Education <FaArrowRight />
@@ -763,29 +827,23 @@ const EditProfile = () => {
                 ))
               )}
 
-              {/* Actions */}
-              <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <div className="flex justify-between items-center pt-6 border-t border-gray-200 gap-4">
                 <button
                   onClick={() => setActiveTab('basic')}
                   className="px-6 py-3 text-gray-600 font-semibold hover:text-gray-900 transition-colors flex items-center gap-2"
                 >
                   <FaArrowLeft /> Back
                 </button>
-                <div className="flex gap-3">
-                  <button
-                    onClick={saveEducation}
-                    className="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {loading ? "Saving..." : <><FaSave /> Save Changes</>}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('portfolio')}
-                    className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-                  >
-                    Next: Portfolio <FaArrowRight />
-                  </button>
-                </div>
+
+                <button
+                  onClick={async () => {
+                    const ok = await saveEducation();
+                    if (ok) setActiveTab('portfolio');
+                  }}
+                  className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                >
+                  Next: Portfolio <FaArrowRight />
+                </button>
               </div>
             </div>
           )}
@@ -985,7 +1043,7 @@ const EditProfile = () => {
                   <FaArrowLeft /> Back
                 </button>
                 <button
-                  onClick={saveAdditional}
+                  onClick={saveAllChanges}
                   className="px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 text-lg"
                   disabled={loading}
                 >
