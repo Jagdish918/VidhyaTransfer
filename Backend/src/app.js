@@ -41,6 +41,7 @@ import postRouter from "./routes/post.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import eventRouter from "./routes/event.routes.js";
+import resourceRouter from "./routes/resource.routes.js";
 
 // Using routes
 app.use("/user", userRouter);
@@ -56,5 +57,6 @@ app.use("/post", postRouter);
 app.use("/payment", paymentRouter);
 app.use("/admin", adminRouter);
 app.use("/events", eventRouter);
+app.use("/resources", resourceRouter);
 
 export { app };
