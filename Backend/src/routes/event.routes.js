@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyJWT_username } from "../middlewares/verifyJWT.middleware.js";
 import { verifyAdmin } from "../middlewares/admin.middleware.js";
-import { createEvent, getEvents, deleteEvent, getAllEventsAdmin, getEventById, registerForEvent, updateEvent, scheduleMeeting } from "../controllers/event/event.controllers.js";
+import { createEvent, getEvents, deleteEvent, getAllEventsAdmin, getEventById, registerForEvent, updateEvent, scheduleMeeting, getMyEvents } from "../controllers/event/event.controllers.js";
 
 const router = Router();
 
@@ -26,5 +26,6 @@ router.route("/:id")
     .put(verifyAdmin, updateEvent);
 
 router.route("/:id/register").post(registerForEvent);
+router.route("/user/my-events").get(getMyEvents);
 
 export default router;

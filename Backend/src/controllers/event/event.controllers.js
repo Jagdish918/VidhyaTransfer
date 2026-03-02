@@ -260,3 +260,17 @@ export const updateEvent = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, event, "Event updated successfully"));
 });
+
+// @desc    Get events registered by current user
+// @route   GET /api/v1/events/my-events
+// @access  User
+export const getMyEvents = asyncHandler(async (req, res) => {
+    const events = await Event.find({
+        participants: req.user._id
+    }).sort({ date: 1 });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, events, "Your registered events fetched successfully"));
+});
+

@@ -138,3 +138,32 @@ export const cancelRequest = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(new ApiResponse(200, null, "Request cancelled successfully"));
 });
+
+export const disconnectUser = asyncHandler(async (req, res, next) => {
+  console.log("\n******** Inside disconnectUser Controller function ********");
+
+  const { targetUserId } = req.body;
+  const currentUserId = req.user._id;
+
+  if (!targetUserId) {
+    throw new ApiError(400, "Target user ID is required");
+  }
+
+  // Remove the connected request in both directions
+  await Request.deleteMany({
+    $or: [
+      { sender: currentUserId, receiver: targetUserId, status: "Connected" },
+      { sender: targetUserId, receiver: currentUserId, status: "Connected" },
+    ],
+  });
+
+  // Delete the shared chat (and its messages will still be in DB but chat is gone)
+  const { Message } = await import("../../models/message.model.js");
+  const chat = await Chat.findOne({ users: { $all: [currentUserId, targetUserId] } });
+  if (chat) {
+    await Message.deleteMany({ chatId: chat._id });
+    await Chat.findByIdAndDelete(chat._id);
+  }
+
+  res.status(200).json(new ApiResponse(200, null, "Disconnected successfully"));
+});

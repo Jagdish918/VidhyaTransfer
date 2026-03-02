@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUser } from "../../util/UserContext";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { FaGithub, FaLinkedin, FaLink, FaEdit, FaStar, FaUserPlus, FaCheck, FaExclamationTriangle } from "react-icons/fa";
+import { FaGithub, FaLinkedin, FaLink, FaEdit, FaStar, FaUserPlus, FaCheck, FaExclamationTriangle, FaUserMinus, FaTimes } from "react-icons/fa";
 import Box from "./Box";
 import { storeSanitizedUserData } from "../../util/sanitizeUserData";
 import ReportModal from "../Report/Report";
@@ -16,10 +16,15 @@ const Profile = () => {
   const { id } = useParams(); // Changed from username to id as per App.jsx
   const [loading, setLoading] = useState(true);
   const [connectLoading, setConnectLoading] = useState(false);
+  const [isHoveringConnect, setIsHoveringConnect] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [ratings, setRatings] = useState([]);
+  const [myEvents, setMyEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const isOwnProfile = (user && (user.username === id || user._id === id)) || (!id && user);
 
   useEffect(() => {
     // ... existing useEffect logic
@@ -88,6 +93,7 @@ const Profile = () => {
   useEffect(() => {
     if (profileUser?.username) {
       fetchRatings();
+      if (isOwnProfile) fetchMyEvents();
     }
   }, [profileUser]);
 
@@ -99,6 +105,21 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error fetching ratings", error);
+    }
+  };
+
+  const fetchMyEvents = async () => {
+    if (!isOwnProfile) return;
+    setEventsLoading(true);
+    try {
+      const { data } = await axios.get("/events/user/my-events");
+      if (data.success) {
+        setMyEvents(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching my events", error);
+    } finally {
+      setEventsLoading(false);
     }
   };
 
@@ -137,6 +158,39 @@ const Profile = () => {
     }
   };
 
+  const disconnectHandler = async () => {
+    if (!window.confirm(`Are you sure you want to disconnect from ${profileUser.name}? This will also delete your chat history.`)) return;
+    try {
+      setConnectLoading(true);
+      await axios.post(`/request/disconnect`, { targetUserId: profileUser._id });
+      toast.success(`Disconnected from ${profileUser.name}`);
+      setProfileUser((prevState) => ({
+        ...prevState,
+        status: "Connect",
+      }));
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error disconnecting");
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+
+  const cancelRequestHandler = async () => {
+    try {
+      setConnectLoading(true);
+      await axios.post(`/request/cancel`, { receiverID: profileUser._id });
+      toast.success("Request cancelled");
+      setProfileUser((prevState) => ({
+        ...prevState,
+        status: "Connect",
+      }));
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error cancelling request");
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -153,7 +207,6 @@ const Profile = () => {
     )
   }
 
-  const isOwnProfile = (user && (user.username === id || user._id === id)) || (!id && user);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -189,13 +242,38 @@ const Profile = () => {
 
                 {/* Connect/Follow Actions for Other Users */}
                 {!isOwnProfile && id && (
-                  <div className="grid grid-cols-2 gap-3 w-full mt-6">
+                  <div className="grid grid-cols-2 gap-2 w-full mt-6">
                     <button
-                      onClick={profileUser.status === "Connect" ? connectHandler : undefined}
-                      disabled={connectLoading || profileUser.status !== "Connect"}
-                      className={`flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${profileUser.status === "Connect" ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                      onClick={
+                        profileUser.status === "Connect" ? connectHandler
+                          : profileUser.status === "Connected" ? disconnectHandler
+                            : profileUser.status === "Pending" ? cancelRequestHandler
+                              : undefined
+                      }
+                      disabled={connectLoading}
+                      onMouseEnter={() => setIsHoveringConnect(true)}
+                      onMouseLeave={() => setIsHoveringConnect(false)}
+                      className={`flex items-center justify-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium transition-all
+                        ${profileUser.status === "Connect"
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white border-transparent'
+                          : profileUser.status === "Connected"
+                            ? 'bg-red-50 hover:bg-red-100 text-red-600 border-red-200'
+                            : profileUser.status === "Pending"
+                              ? isHoveringConnect
+                                ? 'bg-red-50 text-red-600 border-red-200 cursor-pointer'
+                                : 'bg-yellow-50 text-yellow-700 border-yellow-300 cursor-pointer'
+                              : 'bg-gray-100 text-gray-400 border-transparent cursor-not-allowed'}`}
                     >
-                      {connectLoading ? "..." : profileUser.status === "Connect" ? <><FaUserPlus className="mr-2" /> Connect</> : <><FaCheck className="mr-2" /> {profileUser.status}</>}
+                      {connectLoading ? "..." :
+                        profileUser.status === "Connect" ? <><FaUserPlus className="mr-2" /> Connect</> :
+                          profileUser.status === "Connected" ? <><FaUserMinus className="mr-2" /> Disconnect</> :
+                            profileUser.status === "Pending" ? (
+                              isHoveringConnect
+                                ? <><FaTimes className="mr-2" size={12} /> Cancel Request</>
+                                : <><FaCheck className="mr-2" /> Pending</>
+                            ) :
+                              <><FaCheck className="mr-2" /> {profileUser.status}</>
+                      }
                     </button>
                     <button
                       onClick={() => setIsReportModalOpen(true)}
@@ -385,6 +463,56 @@ const Profile = () => {
               )}
             </div>
 
+            {/* Registered Events Section - Only for own profile */}
+            {isOwnProfile && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Your Registered Events</h2>
+                  <Link to="/utilisation" className="text-xs font-bold text-blue-600 hover:underline">Explore More</Link>
+                </div>
+
+                {eventsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : myEvents.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {myEvents.map((event) => (
+                      <Link
+                        key={event._id}
+                        to={`/events/${event._id}`}
+                        className="group bg-gray-50 hover:bg-white p-4 rounded-xl border border-transparent hover:border-blue-100 hover:shadow-md transition-all no-underline"
+                      >
+                        <div className="flex items-start gap-4">
+                          {event.image ? (
+                            <img src={event.image} className="w-16 h-16 rounded-lg object-cover" alt="" />
+                          ) : (
+                            <div className="w-16 h-16 rounded-lg bg-blue-100 flex items-center justify-center text-blue-500">
+                              <FaCalendarAlt />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-bold text-gray-900 truncate mb-1 group-hover:text-blue-600">{event.title}</h4>
+                            <p className="text-[10px] text-gray-500 font-medium mb-2">{new Date(event.date).toLocaleDateString()} • {event.startTime}</p>
+                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${new Date(event.date) > new Date() ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {new Date(event.date) > new Date() ? 'upcoming' : 'concluded'}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                    <p className="text-gray-400 text-sm italic mb-4">You haven't registered for any events yet.</p>
+                    <Link to="/utilisation" className="inline-flex items-center text-xs font-bold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors no-underline">
+                      Find Events
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Education */}
             {profileUser.education?.length > 0 && (
               <div>
@@ -420,7 +548,7 @@ const Profile = () => {
 
           </div>
         </div>
-      </div>
+      </div >
       <ReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
@@ -433,7 +561,7 @@ const Profile = () => {
         targetUsername={profileUser?.username}
         onRatingSuccess={onRatingSuccess}
       />
-    </div>
+    </div >
   );
 };
 

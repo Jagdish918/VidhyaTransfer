@@ -91,6 +91,7 @@ export const getFeed = asyncHandler(async (req, res) => {
     .populate("author", "name picture username")
     .populate("likes", "name picture")
     .populate("comments.user", "name picture username")
+    .populate("comments.replies.user", "name picture username")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
@@ -263,3 +264,71 @@ export const reportPost = asyncHandler(async (req, res) => {
   );
 });
 
+// Like / Unlike a comment
+export const likeComment = asyncHandler(async (req, res) => {
+  const { postId, commentId } = req.params;
+  const userId = req.user._id || req.user.id;
+
+  const post = await Post.findById(postId);
+  if (!post) throw new ApiError(404, "Post not found");
+
+  const comment = post.comments.id(commentId);
+  if (!comment) throw new ApiError(404, "Comment not found");
+
+  const alreadyLiked = comment.likes.some(id => id.toString() === userId.toString());
+  if (alreadyLiked) {
+    comment.likes = comment.likes.filter(id => id.toString() !== userId.toString());
+  } else {
+    comment.likes.push(userId);
+  }
+
+  await post.save();
+  return res.status(200).json(new ApiResponse(200, { isLiked: !alreadyLiked, likesCount: comment.likes.length }, "Comment like toggled"));
+});
+
+// Reply to a comment
+export const replyToComment = asyncHandler(async (req, res) => {
+  const { postId, commentId } = req.params;
+  const { content } = req.body;
+  const userId = req.user._id || req.user.id;
+
+  if (!content || content.trim().length === 0) throw new ApiError(400, "Reply content is required");
+
+  const post = await Post.findById(postId);
+  if (!post) throw new ApiError(404, "Post not found");
+
+  const comment = post.comments.id(commentId);
+  if (!comment) throw new ApiError(404, "Comment not found");
+
+  comment.replies.push({ user: userId, content: content.trim() });
+  await post.save();
+  await post.populate("comments.replies.user", "name picture username");
+
+  const newReply = comment.replies[comment.replies.length - 1];
+  return res.status(201).json(new ApiResponse(201, newReply, "Reply added"));
+});
+
+// Like / Unlike a reply
+export const likeReply = asyncHandler(async (req, res) => {
+  const { postId, commentId, replyId } = req.params;
+  const userId = req.user._id || req.user.id;
+
+  const post = await Post.findById(postId);
+  if (!post) throw new ApiError(404, "Post not found");
+
+  const comment = post.comments.id(commentId);
+  if (!comment) throw new ApiError(404, "Comment not found");
+
+  const reply = comment.replies.id(replyId);
+  if (!reply) throw new ApiError(404, "Reply not found");
+
+  const alreadyLiked = reply.likes.some(id => id.toString() === userId.toString());
+  if (alreadyLiked) {
+    reply.likes = reply.likes.filter(id => id.toString() !== userId.toString());
+  } else {
+    reply.likes.push(userId);
+  }
+
+  await post.save();
+  return res.status(200).json(new ApiResponse(200, { isLiked: !alreadyLiked, likesCount: reply.likes.length }, "Reply like toggled"));
+});

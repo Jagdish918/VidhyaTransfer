@@ -104,7 +104,7 @@ const Navbar = () => {
           <div className="w-10 h-10 rounded-[10px] bg-blue-50 flex items-center justify-center">
             <FaGraduationCap className="text-[28px] text-blue-500" />
           </div>
-          <span className="text-2xl font-bold text-gray-800 font-sans">SkillSwap</span>
+          <span className="text-2xl font-bold text-gray-800 font-sans">VidhyaTransfer</span>
         </Link>
 
         {/* Desktop Navigation Links - Notification removed */}

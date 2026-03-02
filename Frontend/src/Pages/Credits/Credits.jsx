@@ -54,7 +54,7 @@ const Credits = () => {
                 key: key,
                 amount: order.amount,
                 currency: "INR",
-                name: "SkillSwap",
+                name: "VidhyaTransfer",
                 description: `Purchase ${credits} Credits`,
                 image: "https://your-logo-url.com/logo.png", // Replace with actual logo URL if available
                 order_id: order.id,
@@ -205,8 +205,8 @@ const Credits = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tx.status === 'paid' ? 'bg-green-100 text-green-800' :
-                                                            tx.status === 'failed' ? 'bg-red-100 text-red-800' :
-                                                                'bg-yellow-100 text-yellow-800'
+                                                        tx.status === 'failed' ? 'bg-red-100 text-red-800' :
+                                                            'bg-yellow-100 text-yellow-800'
                                                         }`}>
                                                         {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                                                     </span>

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import axios from "axios";
 import { useUser } from "../../util/UserContext";
-import { FaVideo, FaSearch, FaPaperPlane, FaCalendarAlt, FaCheck, FaCheckDouble } from "react-icons/fa";
+import { FaVideo, FaSearch, FaPaperPlane, FaCalendarAlt, FaTrash, FaReply, FaTimes } from "react-icons/fa";
 import { io } from "socket.io-client";
 import VideoCall from "./VideoCall";
 import ScheduleMeeting from "./ScheduleMeeting";
+
+const EMOJIS = ['❤️', '😂', '😮', '😢', '👍', '🙏'];
 
 const Chat = () => {
     const { user } = useUser();
@@ -16,7 +19,13 @@ const Chat = () => {
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [unreadChatIds, setUnreadChatIds] = useState(new Set());
 
+    // Context menu state
+    const [contextMenu, setContextMenu] = useState(null); // { msgId, x, y, isMe }
+    const [replyingTo, setReplyingTo] = useState(null); // message object
+    const [emojiPickerFor, setEmojiPickerFor] = useState(null); // msgId
+
     const messagesEndRef = useRef(null);
+    const contextMenuRef = useRef(null);
 
     const [socket, setSocket] = useState(null);
     const [activeCall, setActiveCall] = useState(false);
@@ -27,41 +36,32 @@ const Chat = () => {
     useEffect(() => {
         const newSocket = io("http://localhost:8000");
         setSocket(newSocket);
-
         newSocket.emit("setup", user);
         newSocket.on("connected", () => console.log("Socket connected"));
-
-        newSocket.on("callUser", (data) => {
-            setIncomingCall(data);
-        });
-
-        newSocket.on("callEnded", () => {
-            setIncomingCall(null);
-            setActiveCall(false);
-        });
-
+        newSocket.on("callUser", (data) => setIncomingCall(data));
+        newSocket.on("callEnded", () => { setIncomingCall(null); setActiveCall(false); });
         return () => newSocket.disconnect();
     }, [user]);
 
-    const startCall = () => {
-        if (!selectedChatId) return;
-        setActiveCall(true);
-    };
-
-    const endCall = () => {
-        setActiveCall(false);
-        setIncomingCall(null);
-    };
-
-    // Scroll to bottom
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
+    // Close context menu on outside click
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        const handler = (e) => {
+            if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+                setContextMenu(null);
+                setEmojiPickerFor(null);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
 
+    const startCall = () => { if (!selectedChatId) return; setActiveCall(true); };
+    const endCall = () => { setActiveCall(false); setIncomingCall(null); };
+
+    const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    useEffect(() => { scrollToBottom(); }, [messages]);
+
+    // Fetch Chats
     useEffect(() => {
         const fetchChats = async () => {
             setLoadingChats(true);
@@ -69,8 +69,6 @@ const Chat = () => {
                 const { data } = await axios.get("http://localhost:8000/chat", { withCredentials: true });
                 const fetchedChats = data.data || [];
                 setChats(fetchedChats);
-
-                // Initialize unread status
                 const newUnreadIds = new Set();
                 fetchedChats.forEach(chat => {
                     if (chat.latestMessage && chat.latestMessage.sender && chat.latestMessage.sender !== user._id) {
@@ -78,7 +76,6 @@ const Chat = () => {
                     }
                 });
                 setUnreadChatIds(newUnreadIds);
-
             } catch (error) {
                 console.error("Error fetching chats:", error);
             } finally {
@@ -90,6 +87,8 @@ const Chat = () => {
 
     const handleChatSelect = (chatId) => {
         setSelectedChatId(chatId);
+        setReplyingTo(null);
+        setContextMenu(null);
         if (unreadChatIds.has(chatId)) {
             const nextUnread = new Set(unreadChatIds);
             nextUnread.delete(chatId);
@@ -97,10 +96,9 @@ const Chat = () => {
         }
     };
 
-    // Fetch Messages for Selected Chat
+    // Fetch Messages
     useEffect(() => {
         if (!selectedChatId) return;
-
         const fetchMessages = async () => {
             setLoadingMessages(true);
             try {
@@ -117,7 +115,6 @@ const Chat = () => {
 
     const activeChat = chats.find(c => c._id === selectedChatId);
 
-    // Derive active chat partner details
     const getChatPartner = (chat) => {
         if (!chat || !chat.users) return { _id: null, name: "Unknown", avatar: "/default-avatar.png", status: "Offline" };
         const partner = chat.users.find(u => u._id !== user._id);
@@ -131,6 +128,7 @@ const Chat = () => {
 
     const partner = activeChat ? getChatPartner(activeChat) : { name: "", avatar: "", status: "" };
 
+    // ── Send Message ──────────────────────────────────────────
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!messageInput.trim() || !selectedChatId) return;
@@ -140,70 +138,82 @@ const Chat = () => {
             _id: tempId,
             content: messageInput,
             sender: { _id: user._id, name: user.name, picture: user.picture },
+            replyTo: replyingTo || null,
+            reactions: [],
             createdAt: new Date().toISOString()
         };
 
         setMessages(prev => [...prev, optimisticMessage]);
         setMessageInput("");
+        setReplyingTo(null);
 
         try {
             const { data } = await axios.post("http://localhost:8000/message/sendMessage", {
                 chatId: selectedChatId,
-                content: optimisticMessage.content
+                content: optimisticMessage.content,
+                replyTo: replyingTo?._id || null
             }, { withCredentials: true });
 
             setMessages(prev => prev.map(msg => msg._id === tempId ? data.data : msg));
-
-            setChats(prev => prev.map(c =>
-                c._id === selectedChatId
-                    ? { ...c, latestMessage: data.data }
-                    : c
-            ));
-
+            setChats(prev => prev.map(c => c._id === selectedChatId ? { ...c, latestMessage: data.data } : c));
         } catch (error) {
             console.error("Error sending message:", error);
             setMessages(prev => prev.filter(msg => msg._id !== tempId));
         }
     };
 
+    // ── Delete Message ────────────────────────────────────────
+    const handleDeleteMessage = async (msgId) => {
+        setContextMenu(null);
+        try {
+            const { data } = await axios.delete(`http://localhost:8000/message/${msgId}`, { withCredentials: true });
+            setMessages(prev => prev.map(m => m._id === msgId ? { ...m, deleted: true, content: "This message was deleted" } : m));
+        } catch (error) {
+            console.error("Error deleting message:", error);
+        }
+    };
+
+    // ── React to Message ──────────────────────────────────────
+    const handleReact = async (msgId, emoji) => {
+        setEmojiPickerFor(null);
+        setContextMenu(null);
+        try {
+            const { data } = await axios.patch(`http://localhost:8000/message/${msgId}/react`, { emoji }, { withCredentials: true });
+            setMessages(prev => prev.map(m => m._id === msgId ? { ...m, reactions: data.data.reactions } : m));
+        } catch (error) {
+            console.error("Error reacting:", error);
+        }
+    };
+
+    // ── Schedule Meeting ──────────────────────────────────────
     const handleScheduleMeeting = async (details) => {
         const { title, date, time, type, link } = details;
         const meetingMessage = `📅 Scheduled Meeting\n\n📌 ${title}\n🗓 ${new Date(date).toLocaleDateString()} at ${time}\n🔗 ${type === 'internal' ? 'Video Call' : link}`;
-
         const tempId = Date.now();
         const optimisticMessage = {
             _id: tempId,
             content: meetingMessage,
             sender: { _id: user._id, name: user.name, picture: user.picture },
+            reactions: [],
             createdAt: new Date().toISOString()
         };
-
         setMessages(prev => [...prev, optimisticMessage]);
-
         try {
-            // Send the chat message
-            const { data } = await axios.post("http://localhost:8000/message/sendMessage", {
-                chatId: selectedChatId,
-                content: meetingMessage
-            }, { withCredentials: true });
-
-            // Trigger email notification system
-            await axios.post("http://localhost:8000/events/schedule", {
-                chatId: selectedChatId,
-                title,
-                date,
-                time,
-                type,
-                link
-            }, { withCredentials: true });
-
+            const { data } = await axios.post("http://localhost:8000/message/sendMessage", { chatId: selectedChatId, content: meetingMessage }, { withCredentials: true });
+            await axios.post("http://localhost:8000/events/schedule", { chatId: selectedChatId, title, date, time, type, link }, { withCredentials: true });
             setMessages(prev => prev.map(msg => msg._id === tempId ? data.data : msg));
             setChats(prev => prev.map(c => c._id === selectedChatId ? { ...c, latestMessage: data.data } : c));
-
         } catch (error) {
             console.error("Error scheduling meeting:", error);
             setMessages(prev => prev.filter(msg => msg._id !== tempId));
         }
+    };
+
+    // ── Right-click / long-press context menu ─────────────────
+    const handleMessageContextMenu = (e, msg, isMe) => {
+        e.preventDefault();
+        setEmojiPickerFor(null);
+        setContextMenu({ msgId: msg._id, msg, x: e.clientX, y: e.clientY, isMe });
     };
 
     if (loadingChats) return (
@@ -229,40 +239,61 @@ const Chat = () => {
 
     return (
         <div className="h-[calc(100vh-65px)] bg-gray-50 flex flex-col p-4 md:p-6 overflow-hidden">
-            {/* Schedule Meeting Modal */}
-            <ScheduleMeeting
-                isOpen={isScheduleOpen}
-                onClose={() => setIsScheduleOpen(false)}
-                onSchedule={handleScheduleMeeting}
-            />
+            <ScheduleMeeting isOpen={isScheduleOpen} onClose={() => setIsScheduleOpen(false)} onSchedule={handleScheduleMeeting} />
 
-            {/* Video Call Modal */}
             {(activeCall || incomingCall) && (
-                <VideoCall
-                    socket={socket}
-                    user={user}
-                    partner={videoCallPartner}
-                    activeCall={activeCall}
-                    incomingCall={incomingCall}
-                    onEndCall={endCall}
-                />
+                <VideoCall socket={socket} user={user} partner={videoCallPartner} activeCall={activeCall} incomingCall={incomingCall} onEndCall={endCall} />
             )}
+
+            {/* ── Context Menu ── */}
+            {contextMenu && (
+                <div
+                    ref={contextMenuRef}
+                    className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden min-w-[180px] py-1"
+                    style={{ top: Math.min(contextMenu.y, window.innerHeight - 200), left: Math.min(contextMenu.x, window.innerWidth - 210) }}
+                >
+                    {/* Emoji reactions row */}
+                    <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-100">
+                        {EMOJIS.map(emoji => (
+                            <button
+                                key={emoji}
+                                onClick={() => handleReact(contextMenu.msgId, emoji)}
+                                className="text-xl hover:scale-125 transition-transform p-0.5 rounded-lg hover:bg-gray-100"
+                            >
+                                {emoji}
+                            </button>
+                        ))}
+                    </div>
+                    {/* Reply */}
+                    <button
+                        onClick={() => { setReplyingTo(contextMenu.msg); setContextMenu(null); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700 font-medium transition-colors"
+                    >
+                        <FaReply className="text-blue-500" size={13} /> Reply
+                    </button>
+                    {/* Delete – only for sender */}
+                    {contextMenu.isMe && !contextMenu.msg.deleted && (
+                        <button
+                            onClick={() => handleDeleteMessage(contextMenu.msgId)}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-sm text-red-500 font-medium transition-colors"
+                        >
+                            <FaTrash size={12} /> Delete
+                        </button>
+                    )}
+                </div>
+            )}
+
             <div className="flex-1 max-w-[1400px] w-full mx-auto flex h-full gap-6">
 
-                {/* Left Sidebar - Chat List */}
+                {/* Left Sidebar */}
                 <div className={`w-full md:w-80 bg-white shadow-sm border border-gray-200 rounded-2xl flex flex-col overflow-hidden ${selectedChatId ? 'hidden md:flex' : 'flex'}`}>
                     <div className="p-3 border-b border-gray-100">
                         <h2 className="text-lg font-bold text-gray-900 mb-2">Chats</h2>
                         <div className="relative">
                             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
-                            />
+                            <input type="text" placeholder="Search..." className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none" />
                         </div>
                     </div>
-
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         {chats.map(chat => {
                             const chatPartner = getChatPartner(chat);
@@ -298,12 +329,12 @@ const Chat = () => {
                                         </div>
                                     </div>
                                 </div>
-                            )
+                            );
                         })}
                     </div>
                 </div>
 
-                {/* Right Area - Chat Window */}
+                {/* Right – Chat Window */}
                 <div className={`flex-1 bg-white shadow-sm border border-gray-200 rounded-2xl flex flex-col overflow-hidden ${!selectedChatId ? 'hidden md:flex' : 'flex'} h-full`}>
                     {!selectedChatId ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500 bg-white">
@@ -317,55 +348,135 @@ const Chat = () => {
                         <>
                             {/* Chat Header */}
                             <div className="px-4 py-3 bg-white border-b border-gray-100 flex justify-between items-center shadow-sm z-10 h-16">
-                                <div className="flex items-center gap-3">
-                                    <button className="md:hidden text-gray-500 mr-1" onClick={() => setSelectedChatId(null)}>←</button>
+                                <Link to={`/profile/${partner._id}`} className="flex items-center gap-3 no-underline hover:opacity-80 transition-opacity">
+                                    <button className="md:hidden text-gray-500 mr-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedChatId(null); }}>←</button>
                                     <div className="relative">
                                         <img src={partner.avatar} alt={partner.name} className="w-8 h-8 rounded-full object-cover" />
                                         <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full"></div>
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-gray-900 text-sm">{partner.name}</h3>
-                                        <p className="text-[10px] text-green-500 font-medium">Online</p>
+                                        <h3 className="font-bold text-gray-900 text-sm leading-tight">{partner.name}</h3>
+                                        <div className="flex items-center gap-1">
+                                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                            <p className="text-[10px] text-green-600 font-medium">Online</p>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
                                 <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setIsScheduleOpen(true)}
-                                        className="px-3 py-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-2 text-xs font-semibold"
-                                    >
+                                    <button onClick={() => setIsScheduleOpen(true)} className="px-3 py-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-2 text-xs font-semibold">
                                         <FaCalendarAlt /> Schedule
                                     </button>
-                                    <button
-                                        onClick={startCall}
-                                        className="px-3 py-1.5 text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors flex items-center gap-2 text-xs font-semibold shadow-md shadow-green-200"
-                                    >
+                                    <button onClick={startCall} className="px-3 py-1.5 text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors flex items-center gap-2 text-xs font-semibold shadow-md shadow-green-200">
                                         <FaVideo /> Video Call
                                     </button>
                                 </div>
                             </div>
 
                             {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-1.5 bg-[#f5f7fa]">
                                 {loadingMessages ? (
                                     <div className="flex justify-center mt-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
                                 ) : messages.length === 0 ? (
                                     <div className="text-center text-gray-400 mt-10">
                                         <p className="text-sm">Start the conversation with {partner.name}</p>
+                                        <p className="text-xs mt-1 text-gray-300">Right-click a message to react, reply or delete</p>
                                     </div>
                                 ) : (
                                     messages.map((msg, idx) => {
                                         const isMe = msg.sender?._id === user?._id || msg.sender === user?._id;
+                                        const isDeleted = msg.deleted;
                                         return (
-                                            <div key={msg._id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${isMe
-                                                    ? 'bg-green-100 text-gray-800 rounded-tr-none'
-                                                    : 'bg-blue-50 text-gray-800 rounded-tl-none'
-                                                    }`}>
-                                                    <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                                                    <div className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? 'text-green-700/60' : 'text-blue-700/60'}`}>
-                                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        {isMe && <span className="text-[10px]">✓✓</span>}
+                                            <div
+                                                key={msg._id || idx}
+                                                className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}
+                                                onContextMenu={(e) => !isDeleted && handleMessageContextMenu(e, msg, isMe)}
+                                            >
+                                                <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                                                    {/* Reply preview */}
+                                                    {msg.replyTo && (
+                                                        <div className={`text-[10px] mb-1 px-3 py-1.5 rounded-xl border-l-2 bg-gray-100 border-blue-400 text-gray-500 max-w-full overflow-hidden`}>
+                                                            <span className="font-bold text-blue-600">{msg.replyTo?.sender?.name || "Someone"}</span>
+                                                            <p className="truncate">{msg.replyTo?.content}</p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="relative">
+                                                        <div
+                                                            className={`rounded-2xl px-4 py-2 text-sm select-none cursor-default
+                                                                ${isDeleted ? 'bg-gray-100 text-gray-400 italic' :
+                                                                    isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none shadow-sm'}`}
+                                                        >
+                                                            <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                                            <div className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>
+                                                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                {isMe && <span className="text-[10px]">✓✓</span>}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Quick action buttons on hover */}
+                                                        {!isDeleted && (
+                                                            <div className={`absolute top-1 ${isMe ? '-left-16' : '-right-16'} hidden group-hover:flex items-center gap-1`}>
+                                                                <button
+                                                                    onClick={() => setReplyingTo(msg)}
+                                                                    className="p-1.5 bg-white rounded-full shadow text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                                                                    title="Reply"
+                                                                >
+                                                                    <FaReply size={10} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setEmojiPickerFor(emojiPickerFor === msg._id ? null : msg._id); }}
+                                                                    className="p-1.5 bg-white rounded-full shadow text-gray-500 hover:text-yellow-500 hover:bg-yellow-50 transition-all text-xs"
+                                                                    title="React"
+                                                                >
+                                                                    😊
+                                                                </button>
+                                                                {isMe && (
+                                                                    <button
+                                                                        onClick={() => handleDeleteMessage(msg._id)}
+                                                                        className="p-1.5 bg-white rounded-full shadow text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                                                                        title="Delete"
+                                                                    >
+                                                                        <FaTrash size={9} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Inline emoji picker */}
+                                                        {emojiPickerFor === msg._id && (
+                                                            <div className={`absolute ${isMe ? 'right-0' : 'left-0'} -top-12 bg-white rounded-2xl shadow-xl border border-gray-100 flex items-center gap-1 px-2 py-1.5 z-20`}>
+                                                                {EMOJIS.map(emoji => (
+                                                                    <button
+                                                                        key={emoji}
+                                                                        onClick={() => handleReact(msg._id, emoji)}
+                                                                        className="text-lg hover:scale-125 transition-transform p-0.5 rounded-lg hover:bg-gray-100"
+                                                                    >
+                                                                        {emoji}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
+
+                                                    {/* Reactions display */}
+                                                    {msg.reactions && msg.reactions.length > 0 && (
+                                                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                                            {Object.entries(
+                                                                msg.reactions.reduce((acc, r) => {
+                                                                    acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                                                                    return acc;
+                                                                }, {})
+                                                            ).map(([emoji, count]) => (
+                                                                <button
+                                                                    key={emoji}
+                                                                    onClick={() => handleReact(msg._id, emoji)}
+                                                                    className="bg-white border border-gray-200 rounded-full px-1.5 py-0.5 text-xs flex items-center gap-0.5 shadow-sm hover:bg-gray-50 transition-colors"
+                                                                >
+                                                                    {emoji} <span className="text-[10px] text-gray-600">{count}</span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -373,6 +484,19 @@ const Chat = () => {
                                 )}
                                 <div ref={messagesEndRef} />
                             </div>
+
+                            {/* Reply Banner */}
+                            {replyingTo && (
+                                <div className="px-4 py-2 bg-blue-50 border-t border-blue-100 flex items-center gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">Replying to {replyingTo.sender?.name || "message"}</p>
+                                        <p className="text-xs text-gray-600 truncate">{replyingTo.content}</p>
+                                    </div>
+                                    <button onClick={() => setReplyingTo(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+                                        <FaTimes size={12} />
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Input Area */}
                             <div className="p-3 bg-white border-t border-gray-200">

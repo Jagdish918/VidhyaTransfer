@@ -106,7 +106,7 @@ const Notifications = () => {
             id: 'm5',
             type: 'system',
             title: 'System Update',
-            description: 'SkillSwap has been updated with new features. Check out what\'s new!',
+            description: 'VidhyaTransfer has been updated with new features. Check out what\'s new!',
             time: 'Yesterday',
             read: true,
             icon: FaInfoCircle,

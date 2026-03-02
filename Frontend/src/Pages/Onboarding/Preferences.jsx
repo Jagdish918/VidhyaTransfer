@@ -171,7 +171,7 @@ const Preferences = () => {
               <div className="w-10 h-10 rounded-[10px] bg-blue-50 flex items-center justify-center">
                 <FaGraduationCap className="text-[28px] text-blue-500" />
               </div>
-              <span className="text-2xl font-bold text-gray-800 font-sans">SkillSwap</span>
+              <span className="text-2xl font-bold text-gray-800 font-sans">VidhyaTransfer</span>
             </div>
           </div>
 
@@ -313,7 +313,7 @@ const Preferences = () => {
           {/* 3. Utilization Options */}
           <div className="mt-8">
             <h3 className="text-lg font-bold text-gray-800 mb-3 border-b pb-2">3. Utilization & Services</h3>
-            <p className="text-sm text-gray-500 mb-4">How else would you like to use SkillSwap? (Optional)</p>
+            <p className="text-sm text-gray-500 mb-4">How else would you like to use VidhyaTransfer? (Optional)</p>
 
             <div className="space-y-4">
               {/* Instant Help */}

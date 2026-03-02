@@ -1,16 +1,18 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUsers, FaBook, FaStar, FaClock, FaCoins } from "react-icons/fa";
+import { useUser } from "../../util/UserContext";
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
 
   const handleGetStarted = () => {
-    navigate('/login');
+    navigate(user ? '/feed' : '/login');
   };
 
   const handleStartLearning = () => {
-    navigate('/login');
+    navigate(user ? '/feed' : '/login');
   };
 
   const handleExploreSkills = () => {
@@ -99,7 +101,7 @@ const LandingPage = () => {
       <div id="features" className="py-20 px-6 bg-white max-w-[1400px] mx-auto">
         <h2 className="text-3xl md:text-5xl font-extrabold text-gray-800 text-center mb-4">Features</h2>
         <p className="text-lg text-gray-500 text-center max-w-[700px] mx-auto mb-16 leading-relaxed">
-          Discover what makes SkillSwap the perfect platform for skill exchange and learning.
+          Discover what makes VidhyaTransfer the perfect platform for skill exchange and learning.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-[1200px] mx-auto">
           <div className="bg-white rounded-[20px] p-10 px-8 border border-gray-200 text-center transition-all duration-300 shadow-sm hover:-translate-y-1 hover:shadow-xl">
@@ -134,7 +136,7 @@ const LandingPage = () => {
 
       {/* How SkillSwap Works Section */}
       <div id="how-it-works" className="py-20 px-6 bg-white max-w-[1400px] mx-auto">
-        <h2 className="text-3xl md:text-5xl font-extrabold text-gray-800 text-center mb-4">How SkillSwap Works</h2>
+        <h2 className="text-3xl md:text-5xl font-extrabold text-gray-800 text-center mb-4">How VidhyaTransfer Works</h2>
         <p className="text-lg text-gray-500 text-center max-w-[700px] mx-auto mb-16 leading-relaxed">
           A simple, credit-based system that makes learning and teaching accessible to everyone.
         </p>
