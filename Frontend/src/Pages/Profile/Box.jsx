@@ -2,22 +2,22 @@ import React from "react";
 
 const Box = ({ head, date, spec, desc, skills, score }) => {
   return (
-    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow mb-4">
-      <div className="flex justify-between items-start mb-2">
-        <h5 className="text-lg font-bold text-gray-900">{head}</h5>
-        <span className="text-sm text-gray-500 whitespace-nowrap">{date}</span>
+    <div className="bg-[#fafafa] p-6 rounded-[1.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-all hover:bg-white hover:border-gray-200 mb-5">
+      <div className="flex justify-between items-start mb-3">
+        <h5 className="text-lg font-black text-gray-900 tracking-tight">{head}</h5>
+        <span className="text-[9px] uppercase font-black tracking-widest text-gray-400 whitespace-nowrap pt-1 bg-white px-3 py-1.5 rounded-full shadow-sm">{date}</span>
       </div>
 
-      {spec && <div className="text-blue-600 font-medium text-sm mb-2">{spec}</div>}
+      {spec && <div className="text-[#3bb4a1] font-black text-[10px] uppercase tracking-widest mb-3">{spec}</div>}
 
-      {desc && <p className="text-gray-600 text-sm leading-relaxed mb-4">{desc}</p>}
+      {desc && <p className="text-gray-600 text-sm leading-relaxed mb-5 font-medium">{desc}</p>}
 
       {skills && skills.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Skills Used:</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="mt-4 bg-white p-4 rounded-[1.2rem] border border-gray-50">
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Skills Used:</p>
+          <div className="flex flex-wrap gap-2.5">
             {skills.map((skill, index) => (
-              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              <span key={index} className="inline-flex items-center px-4 py-2 rounded-[1rem] text-[9px] uppercase tracking-widest font-black bg-blue-50 text-blue-700 shadow-sm">
                 {skill}
               </span>
             ))}
@@ -26,8 +26,9 @@ const Box = ({ head, date, spec, desc, skills, score }) => {
       )}
 
       {score && (
-        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-          <span className="text-sm font-medium text-gray-700">Grade / Percentage: <span className="text-gray-900">{score}</span></span>
+        <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+          <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Grade / Percentage</span>
+          <span className="text-sm font-black text-gray-900 bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">{score}</span>
         </div>
       )}
     </div>

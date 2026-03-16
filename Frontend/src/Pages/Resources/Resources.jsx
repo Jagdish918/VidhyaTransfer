@@ -742,28 +742,28 @@ const Resources = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 font-['Montserrat']">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setTestInstructionsOpen(false)}></div>
           <div className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.2)] border border-gray-50 p-8 sm:p-12 scroll-smooth animate-fade-in text-center">
-            <div className="w-20 h-20 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mx-auto mb-6">
-              <FaExclamationTriangle className="text-4xl" />
+            <div className="w-20 h-20 rounded-full bg-yellow-100/50 text-yellow-500 flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <FaExclamationTriangle className="text-3xl" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Are you ready?</h2>
-            <div className="text-left bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8 space-y-3 text-gray-700">
-              <p><strong>1. One Attempt Only:</strong> Once you click start, you cannot retake this test. Leaving the page will submit your current progress.</p>
-              <p><strong>2. Timed Environment:</strong> You will have exactly 30 minutes to complete the test. It will auto-submit when the timer reaches 00:00.</p>
-              <p><strong>3. Comprehensive:</strong> Expect 10 Multiple Choice Questions (and 2 Coding Questions if the topic is technical).</p>
-              <p className="text-sm text-red-500 mt-2">* Please ensure you have a stable internet connection before beginning.</p>
+            <h2 className="text-3xl font-black text-gray-900 mb-6 tracking-tight">Are you ready?</h2>
+            <div className="text-left bg-[#fafafa] p-8 rounded-[1.5rem] border border-gray-100 mb-10 space-y-4 text-gray-600 font-medium tracking-wide leading-relaxed">
+              <p><strong className="text-gray-900 font-black">1. One Attempt Only:</strong> Once you click start, you cannot retake this test. Leaving the page will submit your current progress.</p>
+              <p><strong className="text-gray-900 font-black">2. Timed Environment:</strong> You will have exactly 30 minutes to complete the test. It will auto-submit when the timer reaches 00:00.</p>
+              <p><strong className="text-gray-900 font-black">3. Comprehensive:</strong> Expect 10 Multiple Choice Questions (and 2 Coding Questions if the topic is technical).</p>
+              <p className="text-[10px] uppercase font-black tracking-widest text-red-500 pt-2">* Please ensure you have a stable internet connection before beginning.</p>
             </div>
 
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => setTestInstructionsOpen(false)}
-                className="px-6 py-3 font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                className="px-8 py-4 rounded-[1.2rem] text-[10px] uppercase font-black tracking-widest text-gray-500 hover:text-[#013e38] transition-all bg-[#fafafa] hover:bg-white border border-transparent hover:border-gray-200 shadow-sm hover:shadow-md"
               >
                 Cancel
               </button>
               <button
                 onClick={handleStartTest}
                 disabled={testLoading}
-                className="px-8 py-4 bg-[#013e38] text-white text-[10px] uppercase font-black tracking-[0.25em] rounded-[1.2rem] hover:bg-[#3bb4a1] hover:shadow-[#3bb4a1]/30 transition-all shadow-xl shadow-[#013e38]/20 flex items-center gap-2"
+                className="px-10 py-4 bg-[#013e38] text-white text-[10px] uppercase font-black tracking-[0.25em] rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {testLoading ? <FaSpinner className="animate-spin" /> : <FaPlay />} I understand, Start Test
               </button>
@@ -776,19 +776,19 @@ const Resources = () => {
       {testActiveOpen && activeResource?.testData?.questions && (
         <div className="fixed inset-0 z-[100] flex flex-col bg-[#fafafa] font-['Montserrat'] animate-fade-in">
           {/* Header */}
-          <div className="sticky top-0 bg-white border-b border-gray-100 p-6 sm:p-8 flex justify-between items-center z-10 shadow-sm">
+          <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-100 p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-center z-10 shadow-sm gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{activeResource.skill} Final Assessment</h2>
-              <p className="text-sm text-gray-500">Do not refresh or leave this page.</p>
+              <h2 className="text-2xl font-black text-[#013e38] tracking-tight">{activeResource.skill} Final Assessment</h2>
+              <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-1">Do not refresh or leave this page.</p>
             </div>
-            <div className="flex items-center gap-6">
-              <div className={`text-2xl font-mono font-bold px-4 py-2 rounded-lg ${testTimeLeft < 300 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-100 text-gray-800'}`}>
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+              <div className={`text-xl font-mono font-black px-6 py-3 rounded-[1.2rem] shadow-inner ${testTimeLeft < 300 ? 'bg-red-50 text-red-600 animate-pulse border border-red-100' : 'bg-[#fafafa] border border-gray-100 text-gray-600'}`}>
                 {formatTime(testTimeLeft)}
               </div>
               <button
                 onClick={() => handleSubmitTest(false)}
                 disabled={testLoading}
-                className="px-6 py-2 bg-[#3bb4a1] text-white font-bold rounded-lg hover:bg-[#2c9886] transition flex items-center gap-2 shadow-md"
+                className="w-full sm:w-auto px-8 py-4 bg-[#3bb4a1] text-white text-[10px] uppercase font-black tracking-widest rounded-[1.2rem] hover:bg-[#013e38] transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 {testLoading ? <FaSpinner className="animate-spin" /> : "Submit Test"}
               </button>
@@ -796,22 +796,22 @@ const Resources = () => {
           </div>
 
           {/* Quiz Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50">
-            <div className="max-w-4xl mx-auto space-y-10 pb-20">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-10 scroll-smooth">
+            <div className="max-w-4xl mx-auto space-y-12 pb-20">
 
               {/* MCQs */}
               {activeResource.testData.questions.mcqs && activeResource.testData.questions.mcqs.length > 0 && (
                 <div className="space-y-8">
-                  <h3 className="text-xl font-bold uppercase tracking-wider text-gray-500 border-b pb-2">Multiple Choice Questions</h3>
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-100 pb-3">Multiple Choice Questions</h3>
                   {activeResource.testData.questions.mcqs.map((q, idx) => (
-                    <div key={q.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                      <h4 className="text-lg font-bold text-gray-900 mb-4">{idx + 1}. {q.question}</h4>
-                      <div className="space-y-3">
+                    <div key={q.id} className="bg-white p-8 rounded-[2rem] border border-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                      <h4 className="text-lg font-black text-gray-900 mb-6 leading-relaxed">{idx + 1}. {q.question}</h4>
+                      <div className="space-y-4">
                         {q.options.map((opt, optIdx) => (
                           <label
                             key={optIdx}
-                            className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors
-                                         ${testAnswers.mcqs[q.id] === optIdx ? 'bg-[#3bb4a1]/10 border-[#3bb4a1]' : 'border-gray-200 hover:bg-gray-50'}`}
+                            className={`flex items-center gap-4 p-5 rounded-[1.5rem] cursor-pointer transition-all duration-200 border-2
+                                         ${testAnswers.mcqs[q.id] === optIdx ? 'bg-[#3bb4a1]/5 border-[#3bb4a1] shadow-md' : 'bg-[#fafafa] border-transparent hover:border-gray-200 hover:bg-white'}`}
                           >
                             <input
                               type="radio"
@@ -819,9 +819,9 @@ const Resources = () => {
                               value={optIdx}
                               onChange={() => handleMcqSelect(q.id, optIdx)}
                               checked={testAnswers.mcqs[q.id] === optIdx}
-                              className="w-5 h-5 text-[#3bb4a1] focus:ring-[#3bb4a1]"
+                              className="w-5 h-5 text-[#3bb4a1] focus:ring-[#3bb4a1] border-gray-300"
                             />
-                            <span className="text-gray-700 font-medium">{opt}</span>
+                            <span className={`font-semibold ${testAnswers.mcqs[q.id] === optIdx ? 'text-[#013e38]' : 'text-gray-600'}`}>{opt}</span>
                           </label>
                         ))}
                       </div>
@@ -833,13 +833,13 @@ const Resources = () => {
               {/* Coding Questions */}
               {activeResource.testData.questions.coding && activeResource.testData.questions.coding.length > 0 && (
                 <div className="space-y-8 pt-8">
-                  <h3 className="text-xl font-bold uppercase tracking-wider text-gray-500 border-b pb-2">Practical / Coding</h3>
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-100 pb-3">Practical / Coding</h3>
                   {activeResource.testData.questions.coding.map((q, idx) => (
-                    <div key={q.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                      <h4 className="text-lg font-bold text-gray-900 mb-4">C{idx + 1}. {q.question}</h4>
+                    <div key={q.id} className="bg-white p-8 rounded-[2rem] border border-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                      <h4 className="text-lg font-black text-gray-900 mb-6 leading-relaxed">C{idx + 1}. {q.question}</h4>
                       <textarea
-                        className="w-full h-48 p-4 font-mono text-sm bg-gray-900 text-green-400 rounded-lg focus:ring-[#3bb4a1] focus:border-[#3bb4a1]"
-                        placeholder="// Write your solution here..."
+                        className="w-full h-56 p-6 font-mono text-sm bg-gray-900 text-[#3bb4a1] rounded-[1.5rem] focus:ring-4 focus:ring-[#3bb4a1]/20 focus:border-[#3bb4a1] outline-none shadow-inner resize-y transition-all"
+                        placeholder="// Write your ultimate solution here..."
                         value={testAnswers.coding[q.id] || ""}
                         onChange={(e) => handleCodingType(q.id, e.target.value)}
                         spellCheck="false"
@@ -856,35 +856,49 @@ const Resources = () => {
 
       {/* MODAL: Test Results */}
       {testResultsOpen && activeResource?.testData?.status === "completed" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 font-['Montserrat']">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setTestResultsOpen(false)}></div>
-          <div className="relative bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden animate-fade-in flex flex-col max-h-[90vh]">
-            <div className="p-8 text-center bg-gradient-to-br from-[#3bb4a1] to-teal-700 text-white relative">
-              <button onClick={() => setTestResultsOpen(false)} className="absolute top-4 right-4 text-white/70 hover:text-white">
-                <FaTimes className="text-2xl" />
+          <div className="relative bg-white w-full max-w-3xl rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.2)] overflow-hidden animate-fade-in flex flex-col max-h-[90vh] border border-gray-50">
+            {/* Header / Score Section */}
+            <div className="p-6 md:p-8 text-center bg-gradient-to-br from-[#013e38] to-[#3bb4a1] text-white relative shrink-0">
+              <button 
+                onClick={() => setTestResultsOpen(false)} 
+                className="absolute top-4 right-4 md:top-6 md:right-6 w-8 h-8 md:w-10 md:h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors text-white"
+              >
+                <FaTimes className="text-lg md:text-xl" />
               </button>
-              <FaTrophy className="text-6xl mx-auto mb-4 text-yellow-300" />
-              <h2 className="text-3xl font-extrabold mb-1">Test Completed</h2>
-              <p className="text-teal-100 font-medium">Your score is based on both MCQs and AI-evaluated coding logic.</p>
-
-              <div className="mt-8">
-                <span className="text-6xl font-black">{activeResource.testData.score}%</span>
+              
+              <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-white/10 rounded-full flex items-center justify-center shadow-inner shrink-0">
+                  <FaTrophy className="text-3xl md:text-4xl text-yellow-300" />
+                </div>
+                
+                <div className="text-center md:text-left flex-1">
+                  <h2 className="text-2xl md:text-3xl font-black mb-1 tracking-tight">Test Completed</h2>
+                  <p className="text-teal-100 font-bold text-xs md:text-sm tracking-wide">Score based on MCQs and AI-evaluated logic.</p>
+                </div>
+                
+                <div className="mt-2 md:mt-0 flex-shrink-0 bg-white/10 px-6 py-3 rounded-2xl shadow-inner border border-white/20">
+                  <span className="text-5xl md:text-6xl font-black tracking-tighter drop-shadow-md">{activeResource.testData.score}%</span>
+                </div>
               </div>
             </div>
 
-            <div className="flex-1 p-8 overflow-y-auto bg-gray-50">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2">AI Feedback & Analytics</h3>
-              <div className="prose prose-blue max-w-none">
+            {/* Scrolling Feedback Section */}
+            <div className="flex-1 p-6 md:p-10 overflow-y-auto bg-[#fafafa]">
+              <h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-100 pb-2 mb-6">AI Feedback & Analytics</h3>
+              <div className="prose prose-sm md:prose-base lg:prose-lg prose-[#013e38] max-w-none prose-headings:font-black prose-p:font-medium prose-strong:font-black text-gray-700">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {activeResource.testData.analytics}
                 </ReactMarkdown>
               </div>
             </div>
 
-            <div className="p-6 border-t border-gray-200 bg-white">
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-100 bg-white shrink-0">
               <button
                 onClick={() => setTestResultsOpen(false)}
-                className="w-full py-3 bg-gray-900 text-white font-bold rounded-lg hover:bg-gray-800 transition"
+                className="w-full md:w-auto md:px-12 py-4 bg-[#013e38] text-white text-[10px] uppercase font-black tracking-widest rounded-[1.2rem] hover:bg-[#3bb4a1] hover:shadow-xl transition-all shadow-md mx-auto block"
               >
                 Close & Return to Roadmap
               </button>

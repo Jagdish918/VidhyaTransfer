@@ -218,31 +218,31 @@ const PostCard = ({ post }) => {
   const isAuthor = user && (post.author?._id === user._id || post.author === user._id);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex gap-4">
+    <div className="bg-white rounded-[2.5rem] border border-gray-50 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(59,180,161,0.12)] group">
+      <div className="flex gap-5">
         {/* Avatar */}
         <Link to={`/profile/${post.author?._id || post.author?.username}`} className="flex-shrink-0">
           <img
             src={post.author?.picture || "/default-avatar.png"}
             alt={post.author?.name || "User"}
-            className="w-12 h-12 rounded-full object-cover border border-gray-100"
+            className="w-14 h-14 rounded-[1.2rem] object-cover ring-4 ring-gray-50 group-hover:ring-[#3bb4a1]/10 transition-all shadow-sm"
           />
         </Link>
 
         {/* Content Area */}
         <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-start mb-1">
-            <Link to={`/profile/${post.author?._id || post.author?.username}`} className="font-bold text-gray-900 hover:text-[#3f51b5] transition-colors truncate no-underline">
+          <div className="flex justify-between items-start mb-2">
+            <Link to={`/profile/${post.author?._id || post.author?.username}`} className="text-lg font-black text-gray-900 hover:text-[#3bb4a1] transition-colors truncate no-underline tracking-tight">
               {post.author?.name || "Unknown User"}
             </Link>
-            <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{formatTime(post.createdAt)}</span>
+            <span className="text-[10px] font-black uppercase text-gray-400 whitespace-nowrap ml-2 tracking-widest">{formatTime(post.createdAt)}</span>
           </div>
 
           <p className="text-sm text-gray-600 leading-relaxed mb-4">{post.content}</p>
 
           {/* Media */}
           {post.attachments && post.attachments.length > 0 && (
-            <div className="mb-4 rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+            <div className="mb-6 rounded-[1.5rem] overflow-hidden border border-gray-50 bg-[#fafafa]">
               {post.attachments.map((att, idx) => {
                 const isImage = att.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(att) || att.includes('/image/upload/');
                 const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(att) || att.includes('/video/upload/');
@@ -254,23 +254,23 @@ const PostCard = ({ post }) => {
           )}
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-8">
             {post.skills && post.skills.map((skill, index) => (
-              <span key={index} className="px-3 py-1 rounded-full text-[11px] font-medium bg-[#f0f3ff] text-[#3f51b5]">{skill.name}</span>
+              <span key={index} className="px-4 py-1.5 rounded-[1rem] text-[9px] font-black uppercase tracking-[0.1em] bg-[#3bb4a1]/10 text-[#013e38]">{skill.name}</span>
             ))}
             {post.domain && post.domain !== "All" && (
-              <span className="px-3 py-1 rounded-full text-[11px] font-medium bg-[#fff4e5] text-[#b45309]">{post.domain}</span>
+              <span className="px-4 py-1.5 rounded-[1rem] text-[9px] font-black uppercase tracking-[0.1em] bg-amber-50 text-amber-700">{post.domain}</span>
             )}
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-6">
-            <button onClick={handleLike} className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${isLiked ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}>
-              <FaHeart className={isLiked ? "fill-current" : ""} />
+          <div className="flex items-center justify-end gap-5">
+            <button onClick={handleLike} className={`flex items-center gap-1.5 text-xs font-black transition-colors ${isLiked ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}>
+              <FaHeart className={isLiked ? "fill-current scale-110 transition-transform" : ""} size={14} />
               <span>{likesCount}</span>
             </button>
-            <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-[#3f51b5] transition-colors">
-              <FaComment />
+            <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-1.5 text-xs font-black text-gray-400 hover:text-[#3bb4a1] transition-colors">
+              <FaComment size={14} />
               <span>{commentsCount}</span>
             </button>
             {!isAuthor && (
@@ -281,11 +281,11 @@ const PostCard = ({ post }) => {
                       : undefined
                 }
                 disabled={connectStatus === "Connected"}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${connectStatus === "Connect"
-                    ? "bg-[#3f51b5] text-white hover:bg-[#303f9f] shadow-sm border-transparent"
+                className={`px-5 py-2.5 rounded-[1rem] text-[9px] uppercase font-black tracking-widest transition-all ${connectStatus === "Connect"
+                    ? "bg-[#013e38] text-white hover:bg-[#3bb4a1] shadow-lg shadow-[#013e38]/20"
                     : connectStatus === "Pending"
-                      ? "bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-                      : "bg-gray-100 text-gray-400 border-transparent cursor-not-allowed"
+                      ? "bg-yellow-50 text-yellow-700 hover:bg-red-50 hover:text-red-600"
+                      : "bg-[#fafafa] text-gray-400 cursor-not-allowed"
                   }`}
                 title={connectStatus === "Pending" ? "Click to cancel request" : ""}
               >
@@ -313,18 +313,18 @@ const PostCard = ({ post }) => {
               const rs = replyState[comment._id] || {};
 
               return (
-                <div key={comment._id} className="flex gap-3">
+                <div key={comment._id} className="flex gap-4">
                   <img
                     src={comment.user?.picture || "/default-avatar.png"}
                     alt={comment.user?.name}
-                    className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-1"
+                    className="w-10 h-10 rounded-xl object-cover flex-shrink-0 mt-2 border border-gray-50"
                   />
                   <div className="flex-1">
                     {/* Comment bubble */}
-                    <div className="bg-gray-50 rounded-2xl px-4 py-2.5">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs font-bold text-gray-900">{comment.user?.name}</span>
-                        <span className="text-[10px] text-gray-400">{formatTime(comment.createdAt)}</span>
+                    <div className="bg-[#fafafa] rounded-[1.5rem] px-5 py-4 border border-gray-50">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-black text-gray-900 tracking-tight">{comment.user?.name}</span>
+                        <span className="text-[9px] uppercase font-black tracking-widest text-gray-400">{formatTime(comment.createdAt)}</span>
                       </div>
                       <p className="text-xs text-gray-600 leading-relaxed">{comment.content}</p>
                     </div>
@@ -346,7 +346,7 @@ const PostCard = ({ post }) => {
                       {comment.replies?.length > 0 && (
                         <button
                           onClick={() => setReplyState(prev => ({ ...prev, [comment._id]: { ...prev[comment._id], showReplies: !(prev[comment._id]?.showReplies ?? true) } }))}
-                          className="text-[10px] font-semibold text-[#3f51b5] hover:underline"
+                          className="text-[10px] font-black text-[#3bb4a1] hover:underline uppercase tracking-wider"
                         >
                           {(rs.showReplies ?? true) ? `▲ Hide` : `▼ ${comment.replies.length} repl${comment.replies.length === 1 ? 'y' : 'ies'}`}
                         </button>
@@ -355,18 +355,18 @@ const PostCard = ({ post }) => {
 
                     {/* Reply input */}
                     {rs.show && (
-                      <form onSubmit={(e) => handleReply(e, comment._id)} className="flex gap-2 mt-2 pl-2">
+                      <form onSubmit={(e) => handleReply(e, comment._id)} className="flex gap-3 mt-4 pl-3">
                         <input
                           type="text"
                           placeholder={`Reply to ${comment.user?.name}...`}
                           value={rs.input || ""}
                           onChange={(e) => setReplyState(prev => ({ ...prev, [comment._id]: { ...prev[comment._id], input: e.target.value } }))}
-                          className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-[11px] focus:ring-1 focus:ring-[#3f51b5] outline-none"
+                          className="flex-1 bg-white border-2 border-transparent hover:border-gray-50 rounded-[1rem] px-4 py-2 text-[11px] font-semibold focus:ring-4 focus:ring-[#3bb4a1]/10 outline-none transition-all shadow-sm"
                         />
                         <button
                           type="submit"
                           disabled={rs.loading || !rs.input?.trim()}
-                          className="bg-[#3f51b5] text-white px-3 py-1.5 rounded-full text-[11px] font-bold disabled:opacity-50"
+                          className="bg-[#013e38] text-white px-5 py-2 rounded-[1rem] text-[9px] uppercase tracking-widest font-black disabled:opacity-50 hover:bg-[#3bb4a1] hover:shadow-lg transition-all"
                         >
                           {rs.loading ? "..." : "Reply"}
                         </button>
@@ -413,18 +413,18 @@ const PostCard = ({ post }) => {
           </div>
 
           {/* New Comment Input */}
-          <form onSubmit={handleComment} className="flex gap-2">
+          <form onSubmit={handleComment} className="flex gap-3 mt-6">
             <input
               type="text"
               placeholder="Add a comment..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              className="flex-1 bg-gray-50 border-none rounded-full px-4 py-2 text-xs focus:ring-1 focus:ring-[#3f51b5] outline-none"
+              className="flex-1 bg-white border-2 border-transparent hover:border-gray-50 rounded-[1.2rem] px-5 py-3 text-sm font-medium focus:ring-4 focus:ring-[#3bb4a1]/10 outline-none transition-all shadow-[0_4px_15px_rgba(0,0,0,0.02)]"
             />
             <button
               type="submit"
               disabled={loading || !newComment.trim()}
-              className="bg-[#3f51b5] text-white px-4 py-2 rounded-full text-xs font-bold disabled:opacity-50"
+              className="bg-[#013e38] text-white px-6 py-3 rounded-[1.2rem] text-[10px] uppercase tracking-widest font-black disabled:opacity-50 hover:bg-[#3bb4a1] hover:shadow-lg transition-all"
             >
               Post
             </button>

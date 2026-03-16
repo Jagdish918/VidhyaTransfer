@@ -158,8 +158,8 @@ const Feed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafe] font-sans pb-20">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div className="min-h-screen bg-[#fafafa] font-['Montserrat'] pb-20">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-10">
 
         {/* Mobile Filter */}
         <div className="lg:hidden overflow-x-auto pb-4 scrollbar-hide mb-4">
@@ -168,9 +168,9 @@ const Feed = () => {
               <button
                 key={domain}
                 onClick={() => setSelectedDomain(domain)}
-                className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-medium transition-all ${selectedDomain === domain
-                  ? "bg-[#3f51b5] text-white shadow-md"
-                  : "bg-white text-gray-600 border border-gray-100"
+                className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] uppercase font-black tracking-widest transition-all ${selectedDomain === domain
+                  ? "bg-[#013e38] text-white shadow-lg shadow-[#013e38]/20"
+                  : "bg-white text-gray-400 border border-gray-100 hover:text-gray-900"
                   } `}
               >
                 {domain}
@@ -179,18 +179,18 @@ const Feed = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* Column 1: Domain Filter */}
           <div className="hidden lg:block lg:col-span-2 sticky top-24">
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-6 px-2">Domain Filter</h3>
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 px-2">Domain Filter</h3>
             <div className="space-y-1">
               {domains.map((domain) => (
                 <button
                   key={domain}
                   onClick={() => setSelectedDomain(domain)}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${selectedDomain === domain
-                    ? "bg-[#3f51b5] text-white shadow-md shadow-blue-500/10"
-                    : "text-gray-600 hover:bg-white hover:text-[#3f51b5]"
+                  className={`w-full text-left px-5 py-4 rounded-[1.2rem] text-[11px] uppercase font-black tracking-widest transition-all duration-300 ${selectedDomain === domain
+                    ? "bg-[#013e38] text-white shadow-xl shadow-[#013e38]/20 translate-x-2"
+                    : "text-gray-400 hover:bg-white hover:text-gray-900 hover:shadow-sm border border-transparent hover:border-gray-50"
                     } `}
                 >
                   {domain}
@@ -202,41 +202,41 @@ const Feed = () => {
           {/* Column 2: Main Feed Content (Scrollable) */}
           <div className="lg:col-span-7">
             {/* Create Post Box */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-8 shadow-sm">
-              <div className="flex gap-4 mb-4">
+            <div className="bg-white rounded-[2.5rem] border border-gray-50 p-6 mb-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <div className="flex gap-4 mb-5">
                 <img
                   src={user?.picture || "/default-avatar.png"}
                   alt="Profile"
-                  className="w-10 h-10 rounded-full object-cover border border-gray-100 shadow-sm"
+                  className="w-12 h-12 rounded-[1.2rem] object-cover ring-4 ring-gray-50 shadow-sm"
                 />
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="flex-1 bg-gray-50 hover:bg-gray-100 text-left text-gray-400 rounded-xl px-4 py-2.5 transition-all text-sm border-none cursor-pointer"
+                  className="flex-1 bg-[#fafafa] hover:bg-white border-2 border-transparent hover:border-gray-100 text-left text-gray-400 rounded-[1.5rem] px-5 py-3 transition-all text-sm font-semibold cursor-pointer"
                 >
                   What's on your mind? Share an update or an image...
                 </button>
               </div>
-              <div className="flex justify-between items-center pt-3 border-t border-gray-50">
+              <div className="flex justify-between items-center pt-4 border-t border-gray-50">
                 <div className="flex gap-6">
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-[#3f51b5] text-[11px] font-bold transition-colors py-1 group"
+                    className="flex items-center gap-2 text-gray-400 hover:text-[#3bb4a1] text-[10px] uppercase font-black tracking-widest transition-colors py-1 group"
                   >
-                    <span className="text-xl group-hover:scale-110 transition-transform">🖼️</span>
+                    <span className="text-lg group-hover:scale-110 transition-transform">🖼️</span>
                     <span>Photo</span>
                   </button>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-[#3f51b5] text-[11px] font-bold transition-colors py-1 group"
+                    className="flex items-center gap-2 text-gray-400 hover:text-[#3bb4a1] text-[10px] uppercase font-black tracking-widest transition-colors py-1 group"
                   >
-                    <span className="text-xl group-hover:scale-110 transition-transform">📹</span>
+                    <span className="text-lg group-hover:scale-110 transition-transform">📹</span>
                     <span>Video</span>
                   </button>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-[#3f51b5] text-[11px] font-bold transition-colors py-1 group"
+                    className="flex items-center gap-2 text-gray-400 hover:text-[#3bb4a1] text-[10px] uppercase font-black tracking-widest transition-colors py-1 group"
                   >
-                    <span className="text-xl group-hover:scale-110 transition-transform">📅</span>
+                    <span className="text-lg group-hover:scale-110 transition-transform">📅</span>
                     <span>Event</span>
                   </button>
                 </div>
@@ -249,7 +249,7 @@ const Feed = () => {
                   setNewPostsCount(0);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="mb-8 w-full py-3 bg-[#3f51b5]/10 text-[#3f51b5] rounded-xl text-xs font-bold hover:bg-[#3f51b5]/20 transition-all border border-[#3f51b5]/20"
+                className="mb-8 w-full py-4 bg-[#3bb4a1]/10 text-[#3bb4a1] rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.25em] hover:bg-[#3bb4a1]/20 transition-all border border-[#3bb4a1]/20"
               >
                 {newPostsCount} New Posts
               </button>
@@ -274,17 +274,17 @@ const Feed = () => {
 
                   if (filteredPosts.length === 0 && !loading) {
                     return (
-                      <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
-                        <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                          <span className="text-2xl opacity-50">📭</span>
+                      <div className="text-center py-24 bg-white rounded-[2.5rem] border border-dashed border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                        <div className="mx-auto w-20 h-20 bg-[#fafafa] rounded-full flex items-center justify-center mb-6">
+                          <span className="text-3xl opacity-50">📭</span>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">No posts yet</h3>
-                        <p className="text-sm text-gray-500 max-w-sm mx-auto mb-8">
-                          Be the first to share in the <span className="font-semibold text-[#3f51b5]">{selectedDomain}</span> domain!
+                        <h3 className="text-xl font-black text-gray-900 mb-2 tracking-tight">No posts yet</h3>
+                        <p className="text-sm font-medium text-gray-500 max-w-sm mx-auto mb-8">
+                          Be the first to share in the <span className="font-bold text-[#3bb4a1]">{selectedDomain}</span> domain!
                         </p>
                         <button
                           onClick={() => setShowCreateModal(true)}
-                          className="px-8 py-3 bg-[#3f51b5] text-white text-sm font-bold rounded-xl hover:bg-[#303f9f] transition-all shadow-lg"
+                          className="px-8 py-4 bg-[#013e38] text-white text-[10px] uppercase font-black tracking-[0.25em] rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-xl shadow-[#013e38]/20 hover:shadow-[#3bb4a1]/30"
                         >
                           Create Post
                         </button>
@@ -304,13 +304,13 @@ const Feed = () => {
 
                 {loading && (
                   <div className="flex justify-center py-10">
-                    <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-gray-200 border-t-[#3f51b5]"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-gray-100 border-t-[#3bb4a1]"></div>
                   </div>
                 )}
 
                 {!hasMore && posts.length > 0 && (
                   <div className="text-center py-16">
-                    <p className="text-gray-400 text-xs font-medium uppercase tracking-widest">You're all caught up!</p>
+                    <p className="text-gray-300 text-[10px] font-black uppercase tracking-[0.25em]">You're all caught up!</p>
                   </div>
                 )}
               </div>
@@ -318,30 +318,31 @@ const Feed = () => {
           </div>
 
           {/* Column 3: Premium Notice & Suggestions */}
-          <div className="hidden lg:block lg:col-span-3 sticky top-24 space-y-6">
-            <div className="bg-gradient-to-br from-[#3f51b5] to-[#5c6bc0] rounded-2xl p-6 text-white shadow-lg overflow-hidden relative group">
-              <div className="absolute top-0 right-0 p-8 bg-white/10 rounded-full -mr-6 -mt-6 transform group-hover:scale-110 transition-transform duration-700"></div>
-              <h3 className="font-bold text-lg mb-2 relative z-10">Premium Access</h3>
-              <p className="text-xs text-blue-50/80 mb-6 leading-relaxed relative z-10">Unlock advanced analytics, unlimited peer connections, and exclusive content.</p>
-              <button className="w-full py-2 bg-white text-[#3f51b5] font-bold rounded-xl text-xs hover:bg-gray-50 transition-all shadow-md relative z-10">
+          <div className="hidden lg:block lg:col-span-3 sticky top-24 space-y-8">
+            <div className="bg-gradient-to-br from-[#013e38] to-[#3bb4a1] rounded-[2rem] p-8 text-white shadow-[0_20px_40px_rgba(59,180,161,0.2)] overflow-hidden relative group">
+              <div className="absolute top-0 right-0 p-12 bg-white/5 rounded-bl-[4rem] -mr-8 -mt-8 transform group-hover:scale-110 transition-transform duration-700"></div>
+              <h3 className="font-black text-xl mb-3 relative z-10 tracking-tight">Premium Access</h3>
+              <p className="text-[11px] font-medium text-teal-50/80 mb-8 leading-relaxed relative z-10">Unlock advanced analytics, unlimited peer connections, and exclusive content.</p>
+              <button className="w-full py-4 bg-white text-[#013e38] font-black uppercase tracking-[0.2em] rounded-[1.2rem] text-[9px] hover:bg-gray-50 transition-all shadow-xl relative z-10">
                 Upgrade Now
               </button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-6">Suggested Skills</h3>
-              <div className="flex flex-wrap gap-2">
+            <div className="bg-white rounded-[2rem] border border-gray-50 p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Suggested Skills</h3>
+              <div className="flex flex-wrap gap-2.5">
                 {trendingSkills.map(skill => (
-                  <span key={skill} className="text-[10px] font-bold bg-gray-50 text-gray-500 border border-gray-100 px-3 py-1.5 rounded-lg hover:border-[#3f51b5] hover:text-[#3f51b5] cursor-pointer transition-all uppercase tracking-tight">
+                  <span key={skill} className="text-[9px] font-black uppercase tracking-widest bg-[#fafafa] text-gray-400 border border-gray-100 px-4 py-2.5 rounded-[1rem] hover:border-[#3bb4a1]/30 hover:bg-[#3bb4a1]/5 hover:text-[#3bb4a1] cursor-pointer transition-all">
                     #{skill}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100">
-              <p className="text-[11px] text-blue-700 font-medium leading-relaxed">
-                <span className="font-bold">Did you know?</span> Verified profiles get 3x more connection requests. Complete your profile today!
+            <div className="p-6 rounded-[2rem] bg-amber-50 border border-amber-100/50">
+              <p className="text-[11px] text-amber-700 font-semibold leading-relaxed">
+                <span className="font-black uppercase tracking-wider text-[9px] block mb-2 opacity-70">Did you know?</span> 
+                Verified profiles get 3x more connection requests. Complete your profile today!
               </p>
             </div>
           </div>
