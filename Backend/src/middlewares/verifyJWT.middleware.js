@@ -78,4 +78,50 @@ const verifyJWT_username = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { verifyJWT_email, verifyJWT_username };
+const verifyJWT_any = asyncHandler(async (req, res, next) => {
+  try {
+    // 1. Try Registered User Token First
+    let token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+    if (token) {
+      try {
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findOne({ username: decodedToken?.username }).select("-__v -createdAt -updatedAt");
+        if (user) {
+          if (user.status === 'banned') {
+            res.clearCookie("accessToken");
+            res.clearCookie("hasSession");
+            throw new ApiError(403, "Your account has been banned. Please contact support.");
+          }
+          req.user = user;
+          return next();
+        }
+      } catch (e) {
+        // let it fall through to unregistered
+      }
+    }
+
+    // 2. Try UnRegistered User Token
+    token = req.cookies?.accessTokenRegistration || req.header("Authorization")?.replace("Bearer ", "");
+    if (token) {
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await UnRegisteredUser.findOne({ email: decodedToken?.email }).select(
+        "-__v -createdAt -updatedAt" // Include _id for resource controllers
+      );
+      if (user) {
+        req.user = user;
+        return next();
+      }
+    }
+
+    throw new ApiError(401, "Please Login");
+
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      throw new ApiError(401, "Please Login");
+    } else {
+      throw new ApiError(401, error.message || "Invalid Access Token");
+    }
+  }
+});
+
+export { verifyJWT_email, verifyJWT_username, verifyJWT_any };

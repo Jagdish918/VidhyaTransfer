@@ -9,7 +9,7 @@ const resourceSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ["note", "roadmap"],
+            enum: ["roadmap"], // We only store unified roadmaps now
             required: true,
         },
         skill: {
@@ -17,13 +17,37 @@ const resourceSchema = new mongoose.Schema(
             required: true,
             trim: true,
         },
-        levelOrTimeframe: {
-            type: String,
+        timeframe: {
+            type: String, // e.g. "1 Month", "3 Months", "Flexible"
             required: true,
         },
-        content: {
-            type: String,
-            required: true,
+        roadmapData: {
+            // A structured JSON object containing topics and subtopics
+            type: Object,
+            default: {}
+        },
+        testData: {
+            status: {
+                type: String,
+                enum: ["locked", "ready", "in_progress", "completed"],
+                default: "locked"
+            },
+            questions: {
+                type: Array,
+                default: []
+            },
+            score: {
+                type: Number,
+                default: null
+            },
+            analytics: {
+                type: String,
+                default: ""
+            },
+            startedAt: {
+                type: Date,
+                default: null
+            }
         },
     },
     {

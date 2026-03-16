@@ -1,13 +1,23 @@
 import { Router } from "express";
-import { generateNote, generateRoadmap, getSavedResources } from "../controllers/resource.controller.js";
-import { verifyJWT_username } from "../middlewares/verifyJWT.middleware.js";
+import {
+    generateUnifiedRoadmap,
+    generateSubtopicNote,
+    updateSubtopicProgress,
+    generateFinalTest,
+    submitFinalTest,
+    getSavedResources
+} from "../controllers/resource.controller.js";
+import { verifyJWT_any } from "../middlewares/verifyJWT.middleware.js";
 
 const router = Router();
 
-router.use(verifyJWT_username);
+router.use(verifyJWT_any);
 
-router.post("/generate-note", generateNote);
-router.post("/generate-roadmap", generateRoadmap);
+router.post("/generate-roadmap", generateUnifiedRoadmap);
+router.post("/generate-subtopic-note", generateSubtopicNote);
+router.put("/update-progress", updateSubtopicProgress);
+router.post("/generate-final-test", generateFinalTest);
+router.post("/submit-final-test", submitFinalTest);
 router.get("/saved", getSavedResources);
 
 export default router;
