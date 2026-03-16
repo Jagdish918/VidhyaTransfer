@@ -37,3 +37,6 @@ const messageSchema = new Schema(
 );
 
 export const Message = mongoose.model("Message", messageSchema);
+
+// ✅ Fix #7: Index for fast message retrieval by chat (most common query pattern)
+messageSchema.index({ chatId: 1, createdAt: -1 });

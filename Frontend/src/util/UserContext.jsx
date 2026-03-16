@@ -88,24 +88,31 @@ const UserContextProvider = ({ children }) => {
     fetchUserData();
   }, []); // navigate is stable, no need to include in deps
 
-  // Global Axios Interceptor for 403 (Banned) handling
+  // Global Axios Interceptor for 401 (Session expired) and 403 (Banned) handling
   useEffect(() => {
-    // Add a unique identifier to interceptors to prevent duplicates if strict mode mounts twice
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response && error.response.status === 403) {
-          // Check for specific ban message if possible
-          const errorMessage = String(error.response.data?.message || "").toLowerCase();
-          if (errorMessage.includes("banned") || errorMessage.includes("suspended")) {
-            toast.error("Your account has been banned. You have been logged out.");
-            setUser(null);
-            localStorage.removeItem("userInfo");
-            // Clear cookies just in case (though httpOnly can't be cleared from JS, backend should clear them)
-            document.cookie = "hasSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            navigate("/login");
-          }
+        const status = error.response?.status;
+        const errorMessage = String(error.response?.data?.message || "").toLowerCase();
+
+        // ✅ FIX: Handle 401 — token expired or revoked (logout/ban/password reset on another device)
+        if (status === 401) {
+          setUser(null);
+          localStorage.removeItem("userInfo");
+          document.cookie = "hasSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          navigate("/login");
         }
+
+        // Handle 403 with ban-specific message
+        if (status === 403 && (errorMessage.includes("banned") || errorMessage.includes("suspended"))) {
+          toast.error("Your account has been banned. You have been logged out.");
+          setUser(null);
+          localStorage.removeItem("userInfo");
+          document.cookie = "hasSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          navigate("/login");
+        }
+
         return Promise.reject(error);
       }
     );

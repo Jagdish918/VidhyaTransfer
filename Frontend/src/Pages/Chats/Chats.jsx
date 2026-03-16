@@ -87,7 +87,7 @@ const Chats = () => {
         if (err.response.data.message === "Please Login") {
           localStorage.removeItem("userInfo");
           setUser(null);
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           navigate("/login");
         }
       } else {
@@ -118,7 +118,7 @@ const Chats = () => {
         if (err.response.data.message === "Please Login") {
           localStorage.removeItem("userInfo");
           setUser(null);
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           navigate("/login");
         }
       } else {
@@ -145,7 +145,7 @@ const Chats = () => {
       if (err?.response?.data?.message) {
         toast.error(err.response.data.message);
         if (err.response.data.message === "Please Login") {
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           setUser(null);
           localStorage.removeItem("userInfo");
           navigate("/login");
@@ -166,7 +166,7 @@ const Chats = () => {
       if (err?.response?.data?.message) {
         toast.error(err.response.data.message);
         if (err.response.data.message === "Please Login") {
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           setUser(null);
           localStorage.removeItem("userInfo");
           navigate("/login");
@@ -208,7 +208,7 @@ const Chats = () => {
       if (err?.response?.data?.message) {
         toast.error(err.response.data.message);
         if (err.response.data.message === "Please Login") {
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           setUser(null);
           localStorage.removeItem("userInfo");
           navigate("/login");
@@ -232,7 +232,7 @@ const Chats = () => {
       if (err?.response?.data?.message) {
         toast.error(err.response.data.message);
         if (err.response.data.message === "Please Login") {
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           setUser(null);
           localStorage.removeItem("userInfo");
           navigate("/login");
@@ -587,7 +587,7 @@ const Chats = () => {
                       if (error.response.data.message === "Please Login") {
                         localStorage.removeItem("userInfo");
                         setUser(null);
-                        await axios.get("/auth/logout");
+                        await axios.post("/auth/logout");
                         navigate("/login");
                       }
                     } else {

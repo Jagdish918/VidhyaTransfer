@@ -14,6 +14,8 @@ import {
   loginWithOtp,
   loginAdmin
 } from "../controllers/auth/auth.controllers.js";
+import { authLimiter, emailLimiter } from "../middlewares/rateLimiter.middleware.js";
+import { verifyJWT_username } from "../middlewares/verifyJWT.middleware.js";
 
 const router = Router();
 
@@ -21,22 +23,23 @@ const router = Router();
 router.get("/google", googleAuthHandler);
 router.get("/google/callback", googleAuthCallback, handleGoogleLoginCallback);
 
-// Admin Login
-router.post("/admin/login", loginAdmin);
+// Admin Login — strict rate limit
+router.post("/admin/login", authLimiter, loginAdmin);
 
 // Email/Password routes
-router.post("/register", registerWithEmailPassword);
-router.post("/login", loginWithEmailPassword);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
-router.post("/send-registration-otp", sendRegistrationOtp);
-router.post("/verify-registration-otp", verifyRegistrationOtp);
+router.post("/register", authLimiter, registerWithEmailPassword);
+router.post("/login", authLimiter, loginWithEmailPassword);
+router.post("/forgot-password", emailLimiter, forgotPassword);
+router.post("/reset-password", authLimiter, resetPassword);
+router.post("/send-registration-otp", emailLimiter, sendRegistrationOtp);
+router.post("/verify-registration-otp", authLimiter, verifyRegistrationOtp);
 
-// Login OTP Routes
-router.post("/send-otp", sendLoginOtp);
-router.post("/login-with-otp", loginWithOtp);
+// Login OTP Routes — email limiter for sending, auth limiter for verifying
+router.post("/send-otp", emailLimiter, sendLoginOtp);
+router.post("/login-with-otp", authLimiter, loginWithOtp);
 
-// Logout
-router.get("/logout", handleLogout);
+// Logout — POST (not GET) to prevent accidental/prefetch-triggered logouts
+// verifyJWT_username needed so we can read the token and increment tokenVersion
+router.post("/logout", verifyJWT_username, handleLogout);
 
 export default router;

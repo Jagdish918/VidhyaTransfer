@@ -16,9 +16,10 @@ export const scheduleMeeting = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields (chatId, title, date, time) are required");
     }
 
-    const chat = await Chat.findById(chatId).populate("users", "email name");
+    // ✅ FIX: Verify the requester is actually a participant in this chat (prevents email spam to strangers)
+    const chat = await Chat.findOne({ _id: chatId, users: req.user._id }).populate("users", "email name");
     if (!chat) {
-        throw new ApiError(404, "Chat not found");
+        throw new ApiError(403, "You are not a participant in this chat");
     }
 
     const meetingLink = type === 'internal' ? 'Internal Video Call' : link;
@@ -113,13 +114,24 @@ export const createEvent = asyncHandler(async (req, res) => {
 // @route   GET /api/v1/events
 // @access  Public/User
 export const getEvents = asyncHandler(async (req, res) => {
-    const events = await Event.find({
-        date: { $gte: new Date() } // Only upcoming events by default
-    }).sort({ date: 1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // ✅ FIX: add pagination, cap at 100
+    const skip = (page - 1) * limit;
+
+    const query = { date: { $gte: new Date() } }; // Only upcoming events
+    const total = await Event.countDocuments(query);
+
+    const events = await Event.find(query)
+        .sort({ date: 1 })
+        .skip(skip)
+        .limit(limit);
 
     return res
         .status(200)
-        .json(new ApiResponse(200, events, "Events fetched successfully"));
+        .json(new ApiResponse(200, {
+            events,
+            pagination: { page, pages: Math.ceil(total / limit), total },
+        }, "Events fetched successfully"));
 });
 
 // @desc    Get single event by ID

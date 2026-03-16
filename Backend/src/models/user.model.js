@@ -237,9 +237,20 @@ const userSchema = new Schema(
       type: Date,
       default: null,
     },
+    // OTP attempt tracking (brute-force protection)
+    otpAttempts: {
+      type: Number,
+      default: 0,
+    },
     refreshToken: {
       type: String,
       default: null,
+    },
+    // ✅ JWT Revocation: Incrementing this number instantly invalidates ALL existing tokens for this user.
+    // Used on: logout, ban, password reset, password change.
+    tokenVersion: {
+      type: Number,
+      default: 0,
     },
     passwordChangedAt: {
       type: Date,
@@ -264,5 +275,13 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+// ✅ Fix #7: Indexes for high-traffic query fields
+// username: hit on every auth request, profile view, discover
+// email: hit on every login, OTP, password reset
+// status+lockUntil: hit on every banUser admin action check
+userSchema.index({ username: 1 });
+userSchema.index({ email: 1 });
+userSchema.index({ status: 1, lockUntil: 1 });
+userSchema.index({ "skillsProficientAt.name": 1 }); // discover/search queries
 
 export const User = mongoose.model("User", userSchema);

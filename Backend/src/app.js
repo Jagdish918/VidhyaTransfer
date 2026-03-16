@@ -2,32 +2,41 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import passport from "passport";
+import { globalLimiter } from "./middlewares/rateLimiter.middleware.js";
 
 const app = express();
 
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
-app.use(express.json({ limit: "10mb" })); // to parse json in body
-app.use(express.urlencoded({ extended: true, limit: "10mb" })); // to parse url
-app.use(express.static("public")); // to use static public folder
-app.use(cookieParser()); // to enable CRUD operation on browser cookies
+// ─── GLOBAL RATE LIMITER (200 req / 15 min per IP) ───────────────────────────
+app.use(globalLimiter);
 
-// app.use(function (req, res, next) {
-//   res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-//   res.setHeader("Access-Control-Allow-Creden tials", "true");
-//   // Add other CORS headers as needed
-//   next();
-// });
+// ─── BODY PARSING ─────────────────────────────────────────────────────────────
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.static("public"));
+app.use(cookieParser());
 
-// Passport middleware
+// ─── PASSPORT ─────────────────────────────────────────────────────────────────
 app.use(passport.initialize());
 
-// Importing routes
+// ─── ROUTES ───────────────────────────────────────────────────────────────────
 import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import chatRouter from "./routes/chat.routes.js";
@@ -42,7 +51,6 @@ import paymentRouter from "./routes/payment.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import eventRouter from "./routes/event.routes.js";
 
-// Using routes
 app.use("/user", userRouter);
 app.use("/auth", authRouter);
 app.use("/chat", chatRouter);

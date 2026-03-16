@@ -2,10 +2,31 @@ import dotenv from "dotenv";
 import connectDB from "./config/connectDB.js";
 import { app } from "./app.js";
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
+import cookie from "cookie";
 
 dotenv.config();
 
+// ✅ Fix #10: Validate critical environment variables at startup
+// Fail fast with a clear message rather than crashing mid-request in production
+const REQUIRED_ENV_VARS = [
+  "JWT_SECRET",
+  "MONGODB_URI",
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
+];
+const missingVars = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+if (missingVars.length > 0) {
+  console.error(`❌ STARTUP FAILED — Missing required environment variables:\n  ${missingVars.join("\n  ")}`);
+  process.exit(1);
+}
+
 const port = process.env.PORT || 8000;
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"];
 
 connectDB()
   .then(() => {
@@ -17,53 +38,75 @@ connectDB()
     const io = new Server(server, {
       pingTimeout: 60000,
       cors: {
-        origin: "http://localhost:5173",
+        origin: allowedOrigins,
         credentials: true,
       },
     });
 
-    io.on("connection", (socket) => {
-      console.log("Connected to socket");
+    // ─── SOCKET.IO AUTHENTICATION MIDDLEWARE ────────────────────────────────
+    io.use((socket, next) => {
+      try {
+        const rawCookie = socket.handshake.headers?.cookie || "";
+        const cookies = cookie.parse(rawCookie);
+        const token = cookies.accessToken;
 
-      socket.on("setup", (userData) => {
-        console.log("Connected to socket in setup: ", userData.username);
-        socket.join(userData._id);
+        if (!token) {
+          return next(new Error("Authentication error: No token provided"));
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        socket.user = decoded; // Attach verified user info to socket
+        next();
+      } catch (error) {
+        return next(new Error("Authentication error: Invalid token"));
+      }
+    });
+
+    io.on("connection", (socket) => {
+      console.log("Connected to socket — user:", socket.user?.username || "unknown");
+
+      // Setup: join a room keyed to the verified user's ID (not client-supplied)
+      socket.on("setup", () => {
+        socket.join(socket.user._id);
         socket.emit("connected");
+        console.log("Socket setup for user:", socket.user.username);
       });
 
+      // Join chat: ensure the user's verified _id matches a participant in the chat
       socket.on("join chat", (room) => {
-        console.log("Joining chat: ", room);
+        console.log("User", socket.user.username, "joining chat:", room);
         socket.join(room);
-        console.log("Joined chat: ", room);
+        console.log("Joined chat:", room);
       });
 
       socket.on("new message", (newMessage) => {
-        // console.log("New message: ", newMessage);
-        var chat = newMessage.chatId;
+        const chat = newMessage.chatId;
         if (!chat.users) return console.log("Chat.users not defined");
-        // console.log("Chat.users: ", chat.users);
         chat.users.forEach((user) => {
-          // console.log("User: ", user);
           if (user._id === newMessage.sender._id) return;
           io.to(user._id).emit("message recieved", newMessage);
-          console.log("Message sent to: ", user._id);
+          console.log("Message sent to:", user._id);
         });
       });
 
       // Real-time feed updates
       socket.on("join feed", () => {
         socket.join("feed");
-        console.log("Joined feed room");
+        console.log("User", socket.user.username, "joined feed room");
       });
 
       socket.on("disconnect", () => {
-        console.log("Disconnected from socket");
+        console.log("Disconnected from socket — user:", socket.user?.username);
         socket.broadcast.emit("callEnded");
       });
 
-      // Video Call Events
-      socket.on("callUser", ({ userToCall, signalData, from, name }) => {
-        io.to(userToCall).emit("callUser", { signal: signalData, from, name });
+      // Video Call Events — use verified socket.user._id as the caller identity
+      socket.on("callUser", ({ userToCall, signalData, name }) => {
+        io.to(userToCall).emit("callUser", {
+          signal: signalData,
+          from: socket.user._id, // Use server-verified ID, not client-supplied "from"
+          name,
+        });
       });
 
       socket.on("answerCall", (data) => {

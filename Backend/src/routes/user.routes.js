@@ -20,6 +20,7 @@ import {
   getUtilizationProviders
 } from "../controllers/user/user.controllers.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { emailLimiter } from "../middlewares/rateLimiter.middleware.js";
 
 const router = Router();
 
@@ -52,6 +53,6 @@ router.route("/mentors").get(verifyJWT_username, getSkillGainExperts);
 router.route("/providers").get(verifyJWT_username, getUtilizationProviders);
 
 // send schedule meet email
-router.route("/sendScheduleMeet").post(verifyJWT_username, sendScheduleMeet);
+router.route("/sendScheduleMeet").post(verifyJWT_username, emailLimiter, sendScheduleMeet);
 
 export default router;

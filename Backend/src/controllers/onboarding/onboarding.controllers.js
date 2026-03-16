@@ -218,18 +218,13 @@ export const updatePreferences = asyncHandler(async (req, res) => {
       password: user.password,
       picture: user.picture,
       username: username,
-      // Map other fields
-      personalInfo: user.personalInfo,
-      skillsProficientAt: user.skillsProficientAt,
-      skillsToLearn: user.skillsToLearn,
       personalInfo: user.personalInfo,
       skillsProficientAt: user.skillsProficientAt,
       skillsToLearn: user.skillsToLearn,
       preferences: user.preferences,
-      primaryGoal: user.primaryGoal, // Copy primaryGoal
+      primaryGoal: user.primaryGoal,
       onboardingCompleted: true,
       onboardingStep: 3,
-      // Copy timestamps if needed, or let them be new
     });
 
     // Delete unregistered user
@@ -238,11 +233,17 @@ export const updatePreferences = asyncHandler(async (req, res) => {
   }
 
   // Generate proper access token for User (username-based)
+  const IS_PROD = process.env.NODE_ENV === "production";
   const jwtToken = generateJWTToken_username(finalUser);
   const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-  // Set both cookies to be safe, or just accessToken
-  res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
+  res.cookie("accessToken", jwtToken, {
+    httpOnly: true,
+    expires: expiryDate,
+    secure: IS_PROD,                          // ✅ FIX: HTTPS-only in production
+    sameSite: IS_PROD ? "Strict" : "Lax",    // ✅ FIX: CSRF protection in production
+    path: "/",
+  });
   // Clear registration token
   res.clearCookie("accessTokenRegistration");
 

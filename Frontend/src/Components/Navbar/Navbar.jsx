@@ -40,7 +40,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get("/auth/logout");
+      await axios.post("/auth/logout");
       localStorage.removeItem("userInfo");
       setUser(null);
       resetOnboarding();

@@ -8,6 +8,14 @@ import { generateJWTToken_username } from "../../utils/generateJWTToken.js";
 import { uploadOnCloudinary } from "../../config/connectCloudinary.js";
 import { sendMail } from "../../utils/SendMail.js";
 
+// ✅ FIX: Escape regex special characters to prevent ReDoS attacks
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// ✅ FIX: In-memory cooldown map for sendScheduleMeet (prevents email spam)
+// Format: "senderUsername->receiverUsername" => timestamp of last send
+const scheduleMeetCooldown = new Map();
+const SCHEDULE_MEET_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+
 export const userDetailsWithoutID = asyncHandler(async (req, res) => {
   console.log("\n******** Inside userDetailsWithoutID Controller function ********");
 
@@ -186,11 +194,7 @@ export const saveAddUnRegisteredUser = asyncHandler(async (req, res) => {
 
 export const registerUser = async (req, res) => {
   console.log("\n******** Inside registerUser function ********");
-  // First check if the user is already registered
-  // if the user is already registerd than send a message that the user is already registered
-  // redirect him to the discover page
-  // if the user is not registered than create a new user and redirect him to the discover page after generating the token and setting the cookie and also delete the user detail from unregistered user from the database
-  console.log("User:", req.user);
+  // Sensitive user data removed from log to prevent PII exposure in production
 
   const {
     name,
@@ -293,9 +297,16 @@ export const registerUser = async (req, res) => {
 
   await UnRegisteredUser.findOneAndDelete({ email: email });
 
+  const IS_PROD = process.env.NODE_ENV === "production";
   const jwtToken = generateJWTToken_username(newUser);
   const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
-  res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
+  res.cookie("accessToken", jwtToken, {
+    httpOnly: true,
+    expires: expiryDate,
+    secure: IS_PROD,                            // ✅ FIX: HTTPS-only in production
+    sameSite: IS_PROD ? "Strict" : "Lax",      // ✅ FIX: CSRF protection in production
+    path: "/",
+  });
   res.clearCookie("accessTokenRegistration");
   return res.status(200).json(new ApiResponse(200, newUser, "NewUser registered successfully"));
 };
@@ -305,8 +316,6 @@ export const saveRegRegisteredUser = asyncHandler(async (req, res) => {
 
   const { name, username, linkedinLink, githubLink, portfolioLink, skillsProficientAt, skillsToLearn, picture } =
     req.body;
-
-  console.log("Body: ", req.body);
 
   if (!name || !username || !skillsProficientAt || skillsProficientAt.length === 0) {
     throw new ApiError(400, "Please provide name, username, and at least one proficient skill");
@@ -357,13 +366,16 @@ export const saveRegRegisteredUser = asyncHandler(async (req, res) => {
 
   // If username changed, we MUST issue a new token because the old one encoded the old username
   if (isUsernameChanged) {
+    const IS_PROD = process.env.NODE_ENV === "production";
     const jwtToken = generateJWTToken_username(user);
     const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     res.cookie("accessToken", jwtToken, {
       httpOnly: true,
       expires: expiryDate,
-      secure: false // Set to true in production if using HTTPS
+      secure: IS_PROD,                          // ✅ FIX: HTTPS-only in production
+      sameSite: IS_PROD ? "Strict" : "Lax",    // ✅ FIX: CSRF protection in production
+      path: "/",
     });
   }
 
@@ -690,7 +702,7 @@ export const discoverUsers = asyncHandler(async (req, res) => {
   console.log("******** Inside discoverUsers Function *******");
 
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100); // ✅ FIX: cap at 100 to prevent DoS
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
@@ -702,7 +714,9 @@ export const discoverUsers = asyncHandler(async (req, res) => {
   };
 
   if (search) {
-    const searchRegex = new RegExp(search, "i");
+    // ✅ FIX: Escape regex special chars — prevents ReDoS attack
+    const safeSearch = escapeRegex(search.slice(0, 100)); // also cap length
+    const searchRegex = new RegExp(safeSearch, "i");
     query.$or = [
       { name: searchRegex },
       { username: searchRegex },
@@ -752,6 +766,19 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Please provide all the details");
   }
 
+  // ✅ FIX: Prevent self-meet spam
+  if (username === req.user.username) {
+    throw new ApiError(400, "You cannot schedule a meet with yourself");
+  }
+
+  // ✅ FIX: Cooldown check — prevent spamming the same person
+  const cooldownKey = `${req.user.username}->${username}`;
+  const lastSent = scheduleMeetCooldown.get(cooldownKey);
+  if (lastSent && Date.now() - lastSent < SCHEDULE_MEET_COOLDOWN_MS) {
+    const waitMinutes = Math.ceil((SCHEDULE_MEET_COOLDOWN_MS - (Date.now() - lastSent)) / 60000);
+    throw new ApiError(429, `Please wait ${waitMinutes} more minute(s) before sending another meeting request to this user.`);
+  }
+
   const user = await User.findOne({ username: username });
 
   if (!user) {
@@ -760,9 +787,14 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
 
   const to = user.email;
   const subject = "Request for Scheduling a meeting";
-  const message = `${req.user.name} has requested for a meet at ${time} time on ${date} date. Please respond to the request.`;
+  const message = `${req.user.name} has requested for a meet at ${time} on ${date}. Please respond to the request.`;
 
   await sendMail(to, subject, message);
+
+  // Record cooldown timestamp
+  scheduleMeetCooldown.set(cooldownKey, Date.now());
+  // Auto-clean the map entry after cooldown expires
+  setTimeout(() => scheduleMeetCooldown.delete(cooldownKey), SCHEDULE_MEET_COOLDOWN_MS);
 
   return res.status(200).json(new ApiResponse(200, null, "Email sent successfully"));
 });
@@ -770,7 +802,7 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
 // Skill Gain: Find mentors/teachers
 export const getSkillGainExperts = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100); // ✅ FIX: cap at 100
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
@@ -783,7 +815,8 @@ export const getSkillGainExperts = asyncHandler(async (req, res) => {
   };
 
   if (search) {
-    query["skillsProficientAt.name"] = { $regex: search, $options: "i" };
+    // ✅ FIX: Escape regex special chars — prevents ReDoS attack
+    query["skillsProficientAt.name"] = { $regex: escapeRegex(search.slice(0, 100)), $options: "i" };
   }
 
   const users = await User.find(query)
@@ -802,7 +835,7 @@ export const getSkillGainExperts = asyncHandler(async (req, res) => {
 export const getUtilizationProviders = asyncHandler(async (req, res) => {
   const { type } = req.query; // 'Instant Help' or 'Hire Expert'
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100); // ✅ FIX: cap at 100
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
@@ -818,8 +851,9 @@ export const getUtilizationProviders = asyncHandler(async (req, res) => {
   };
 
   if (search) {
-    // Search by skill or name
-    const searchRegex = new RegExp(search, "i");
+    // ✅ FIX: Escape regex special chars + cap length — prevents ReDoS attack (same as discoverUsers)
+    const safeSearch = escapeRegex(search.slice(0, 100));
+    const searchRegex = new RegExp(safeSearch, "i");
     query.$or = [
       { name: searchRegex },
       { "skillsProficientAt.name": searchRegex }

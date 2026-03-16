@@ -339,8 +339,8 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                     <button
                         onClick={toggleMute}
                         className={`group relative p-3.5 md:p-4 rounded-full transition-all duration-300 ${isMuted
-                                ? 'bg-[#ea4335] hover:bg-[#d93025] shadow-lg shadow-red-500/20'
-                                : 'bg-[#3c4043] hover:bg-[#4a4e51]'
+                            ? 'bg-[#ea4335] hover:bg-[#d93025] shadow-lg shadow-red-500/20'
+                            : 'bg-[#3c4043] hover:bg-[#4a4e51]'
                             }`}
                         title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
                     >
@@ -354,8 +354,8 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                     <button
                         onClick={toggleVideo}
                         className={`group relative p-3.5 md:p-4 rounded-full transition-all duration-300 ${isVideoOff
-                                ? 'bg-[#ea4335] hover:bg-[#d93025] shadow-lg shadow-red-500/20'
-                                : 'bg-[#3c4043] hover:bg-[#4a4e51]'
+                            ? 'bg-[#ea4335] hover:bg-[#d93025] shadow-lg shadow-red-500/20'
+                            : 'bg-[#3c4043] hover:bg-[#4a4e51]'
                             }`}
                         title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
                     >
@@ -369,8 +369,8 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                     <button
                         onClick={handleScreenShare}
                         className={`group relative p-3.5 md:p-4 rounded-full transition-all duration-300 ${isScreenSharing
-                                ? 'bg-[#8ab4f8] text-[#202124] hover:bg-[#aecbfa]'
-                                : 'bg-[#3c4043] hover:bg-[#4a4e51] text-white'
+                            ? 'bg-[#8ab4f8] text-[#202124] hover:bg-[#aecbfa]'
+                            : 'bg-[#3c4043] hover:bg-[#4a4e51] text-white'
                             }`}
                         title="Present Screen"
                     >

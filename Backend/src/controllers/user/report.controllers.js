@@ -2,10 +2,6 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { User } from "../../models/user.model.js";
-import { UnRegisteredUser } from "../../models/unRegisteredUser.model.js";
-import { generateJWTToken_username } from "../../utils/generateJWTToken.js";
-import { Request } from "../../models/request.model.js";
-import { Chat } from "../../models/chat.model.js";
 import { Report } from "../../models/report.model.js";
 
 export const createReport = asyncHandler(async (req, res, next) => {
@@ -16,6 +12,16 @@ export const createReport = asyncHandler(async (req, res, next) => {
     return next(new ApiError(400, "Please fill all the details"));
   }
 
+  // ✅ FIX: Prevent self-reporting
+  if (username === reportedUsername) {
+    return next(new ApiError(400, "You cannot report yourself"));
+  }
+
+  // ✅ FIX: Limit issue description length
+  if (issueDescription.length > 1000) {
+    return next(new ApiError(400, "Issue description must be under 1000 characters"));
+  }
+
   const reporter = await User.findOne({ username: username });
   const reported = await User.findOne({ username: reportedUsername });
 
@@ -23,16 +29,20 @@ export const createReport = asyncHandler(async (req, res, next) => {
     return next(new ApiError(400, "User not found"));
   }
 
-  // Removed check for existing chat to allow reporting without prior interaction
-  // const chat = await Chat.findOne({
-  //   users: {
-  //     $all: [reported._id, reporter._id],
-  //   },
-  // });
+  // ✅ SECURITY: Verify the reporter is actually the authenticated user
+  if (reporter._id.toString() !== req.user._id.toString()) {
+    return next(new ApiError(403, "You can only file reports on your own behalf"));
+  }
 
-  // if (!chat) {
-  //   return next(new ApiError(400, "User never interacted with the reported user so cannot report"));
-  // }
+  // ✅ FIX: Prevent duplicate reports from the same user against the same person
+  const existingReport = await Report.findOne({
+    reporter: reporter._id,
+    reported: reported._id,
+  });
+
+  if (existingReport) {
+    return next(new ApiError(429, "You have already submitted a report against this user"));
+  }
 
   const report = await Report.create({
     reporter: reporter._id,

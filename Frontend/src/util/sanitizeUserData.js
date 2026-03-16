@@ -1,23 +1,47 @@
 /**
- * Sanitize user data before storing in localStorage
- * Removes sensitive and unnecessary fields
+ * Sanitize user data before storing in localStorage.
+ * ✅ FIX: Uses an ALLOWLIST — only explicitly safe fields are stored.
+ * This is safer than a denylist because any new sensitive DB field (otp, tokenVersion etc.)
+ * can't accidentally leak into localStorage through a future API endpoint that forgets to strip it.
  */
 export const sanitizeUserData = (userData) => {
     if (!userData) return null;
 
+    // Only these fields are safe to store in the browser
     const {
-        password,
-        resetPasswordToken,
-        resetPasswordExpires,
-        phone,
-        personalInfo,
-        __v,
-        createdAt,
-        updatedAt,
-        ...safeData
+        _id,
+        name,
+        username,
+        email,
+        role,
+        picture,
+        tutorialVideo,
+        bio,
+        rating,
+        credits,
+        linkedinLink,
+        githubLink,
+        portfolioLink,
+        skillsProficientAt,
+        skillsToLearn,
+        preferences,
+        education,
+        projects,
+        onboardingCompleted,
+        onboardingStep,
+        isEmailVerified,
+        status,
+        termsAccepted,
+        timezone,
     } = userData;
 
-    return safeData;
+    return {
+        _id, name, username, email, role, picture, tutorialVideo, bio,
+        rating, credits, linkedinLink, githubLink, portfolioLink,
+        skillsProficientAt, skillsToLearn, preferences, education, projects,
+        onboardingCompleted, onboardingStep, isEmailVerified, status,
+        termsAccepted, timezone,
+    };
 };
 
 /**

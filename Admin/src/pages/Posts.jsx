@@ -13,7 +13,7 @@ const Posts = () => {
             try {
                 const { data } = await axios.get('/admin/posts');
                 if (data.success) {
-                    setPosts(data.data);
+                    setPosts(data.data.posts || data.data); // support both formats
                 }
             } catch (error) {
                 toast.error("Failed to fetch posts");
