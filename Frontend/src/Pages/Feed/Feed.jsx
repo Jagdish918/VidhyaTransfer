@@ -7,7 +7,8 @@ import { useUser } from "../../util/UserContext";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
 import PostSkeleton from "./PostSkeleton";
-import { FaFire, FaUserPlus, FaHashtag } from "react-icons/fa";
+import DailyQuizModal from "./DailyQuizModal";
+import { FaFire, FaUserPlus, FaHashtag, FaQuestion } from "react-icons/fa";
 
 const Feed = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const Feed = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [newPostsCount, setNewPostsCount] = useState(0);
+  const [showQuizModal, setShowQuizModal] = useState(false);
   const observer = useRef();
   const socketRef = useRef(null);
 
@@ -352,6 +354,20 @@ const Feed = () => {
           onSubmit={handleCreatePost}
         />
       )}
+
+      {/* Floating Daily Quiz Button */}
+      <button 
+        onClick={() => setShowQuizModal(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-br from-[#013e38] to-[#3bb4a1] rounded-full shadow-2xl flex items-center justify-center text-white text-2xl hover:scale-110 transition-transform z-50 group border-4 border-white"
+      >
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+        <FaQuestion className="group-hover:rotate-12 transition-transform" />
+      </button>
+
+      <DailyQuizModal 
+        isOpen={showQuizModal} 
+        onClose={() => setShowQuizModal(false)} 
+      />
     </div>
   );
 };
