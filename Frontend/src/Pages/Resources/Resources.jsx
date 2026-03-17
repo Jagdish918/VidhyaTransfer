@@ -54,7 +54,7 @@ const Resources = () => {
     setHistoryLoading(true);
     setError("");
     try {
-      const response = await axios.get("http://localhost:8000/resources/saved", { withCredentials: true });
+      const response = await axios.get("/resources/saved", { withCredentials: true });
       setHistoryData(response.data.data);
     } catch (err) {
       console.error(err);
@@ -81,7 +81,7 @@ const Resources = () => {
 
     try {
       const payload = { skill: selectedSkill.trim(), timeframe };
-      const response = await axios.post("http://localhost:8000/resources/generate-roadmap", payload, { withCredentials: true });
+      const response = await axios.post("/resources/generate-roadmap", payload, { withCredentials: true });
       setActiveResource(response.data.data);
 
     } catch (err) {
@@ -122,7 +122,7 @@ const Resources = () => {
         mainSkill: activeResource.skill,
         subtopicTitle: subtopic.title
       };
-      const response = await axios.post("http://localhost:8000/resources/generate-subtopic-note", payload, { withCredentials: true });
+      const response = await axios.post("/resources/generate-subtopic-note", payload, { withCredentials: true });
 
       // Update local state with new roadmapData
       setActiveResource(prev => ({
@@ -168,7 +168,7 @@ const Resources = () => {
     setActiveResource(prev => ({ ...prev, roadmapData: updatedData }));
 
     try {
-      await axios.put("http://localhost:8000/resources/update-progress", {
+      await axios.put("/resources/update-progress", {
         resourceId: activeResource._id,
         topicIndex: tIndex,
         subtopicIndex: sIndex,
@@ -231,7 +231,7 @@ const Resources = () => {
 
     try {
       // 1. Generate Test on Backend (this locks the record and returns questions)
-      const response = await axios.post("http://localhost:8000/resources/generate-final-test", { resourceId: activeResource._id }, { withCredentials: true });
+      const response = await axios.post("/resources/generate-final-test", { resourceId: activeResource._id }, { withCredentials: true });
 
       // Update local activeResource testData to reflect generation
       setActiveResource(prev => ({
@@ -284,7 +284,7 @@ const Resources = () => {
     setTestActiveOpen(false);
 
     try {
-      const response = await axios.post("http://localhost:8000/resources/submit-final-test", {
+      const response = await axios.post("/resources/submit-final-test", {
         resourceId: activeResource._id,
         answers: testAnswers
       }, { withCredentials: true });
@@ -861,23 +861,23 @@ const Resources = () => {
           <div className="relative bg-white w-full max-w-3xl rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.2)] overflow-hidden animate-fade-in flex flex-col max-h-[90vh] border border-gray-50">
             {/* Header / Score Section */}
             <div className="p-6 md:p-8 text-center bg-gradient-to-br from-[#013e38] to-[#3bb4a1] text-white relative shrink-0">
-              <button 
-                onClick={() => setTestResultsOpen(false)} 
+              <button
+                onClick={() => setTestResultsOpen(false)}
                 className="absolute top-4 right-4 md:top-6 md:right-6 w-8 h-8 md:w-10 md:h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors text-white"
               >
                 <FaTimes className="text-lg md:text-xl" />
               </button>
-              
+
               <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white/10 rounded-full flex items-center justify-center shadow-inner shrink-0">
                   <FaTrophy className="text-3xl md:text-4xl text-yellow-300" />
                 </div>
-                
+
                 <div className="text-center md:text-left flex-1">
                   <h2 className="text-2xl md:text-3xl font-black mb-1 tracking-tight">Test Completed</h2>
                   <p className="text-teal-100 font-bold text-xs md:text-sm tracking-wide">Score based on MCQs and AI-evaluated logic.</p>
                 </div>
-                
+
                 <div className="mt-2 md:mt-0 flex-shrink-0 bg-white/10 px-6 py-3 rounded-2xl shadow-inner border border-white/20">
                   <span className="text-5xl md:text-6xl font-black tracking-tighter drop-shadow-md">{activeResource.testData.score}%</span>
                 </div>

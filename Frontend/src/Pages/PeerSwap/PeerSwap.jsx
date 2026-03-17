@@ -46,7 +46,7 @@ const PeerSwap = () => {
         search: debouncedSearch
       });
 
-      const discoverRes = await axios.get(`http://localhost:8000/user/discover?${queryParams}`, { withCredentials: true });
+      const discoverRes = await axios.get(`/user/discover?${queryParams}`, { withCredentials: true });
       const { users, pagination } = discoverRes.data.data;
 
       if (pageNum === 1) {
@@ -73,7 +73,7 @@ const PeerSwap = () => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const chatRes = await axios.get("http://localhost:8000/chat", { withCredentials: true });
+        const chatRes = await axios.get("/chat", { withCredentials: true });
         setExistingChats(chatRes.data.data || []);
       } catch (err) {
         console.warn("Could not fetch chats", err);
@@ -91,7 +91,7 @@ const PeerSwap = () => {
   useEffect(() => {
     const fetchSentRequests = async () => {
       try {
-        const { data } = await axios.get("http://localhost:8000/request/getSentRequests", { withCredentials: true });
+        const { data } = await axios.get("/request/getSentRequests", { withCredentials: true });
         if (data.success) {
           const sentIds = new Set(data.data.map(req => req.receiver));
           setSentRequests(sentIds);
@@ -105,7 +105,7 @@ const PeerSwap = () => {
 
   const handleConnect = async (peerId) => {
     try {
-      await axios.post("http://localhost:8000/request/create", { receiverID: peerId }, { withCredentials: true });
+      await axios.post("/request/create", { receiverID: peerId }, { withCredentials: true });
       toast.success("Connection request sent!");
       setSentRequests(prev => new Set(prev).add(peerId));
     } catch (error) {
@@ -121,7 +121,7 @@ const PeerSwap = () => {
 
   const handleUnsendRequest = async (peerId) => {
     try {
-      await axios.post("http://localhost:8000/request/cancel", { receiverID: peerId }, { withCredentials: true });
+      await axios.post("/request/cancel", { receiverID: peerId }, { withCredentials: true });
       toast.info("Connection request canceled.");
       setSentRequests(prev => {
         const next = new Set(prev);

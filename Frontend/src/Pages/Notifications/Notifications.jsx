@@ -13,7 +13,7 @@ const Notifications = () => {
 
     const fetchRequests = async () => {
         try {
-            const { data } = await axios.get("http://localhost:8000/request/getRequests", {
+            const { data } = await axios.get("/request/getRequests", {
                 withCredentials: true
             });
             setRequests(data.data || []);
@@ -30,7 +30,7 @@ const Notifications = () => {
 
     const handleAccept = async (senderId) => {
         try {
-            await axios.post("http://localhost:8000/request/acceptRequest",
+            await axios.post("/request/acceptRequest",
                 { requestId: senderId },
                 { withCredentials: true }
             );
@@ -44,7 +44,7 @@ const Notifications = () => {
 
     const handleReject = async (senderId) => {
         try {
-            await axios.post("http://localhost:8000/request/rejectRequest",
+            await axios.post("/request/rejectRequest",
                 { requestId: senderId },
                 { withCredentials: true }
             );

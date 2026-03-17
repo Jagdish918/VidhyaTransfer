@@ -171,7 +171,7 @@ const PostCard = ({ post }) => {
   const handleConnect = async () => {
     setConnectStatus("Pending"); // optimistic update
     try {
-      await axios.post("http://localhost:8000/request/create", { receiverID: post.author._id }, { withCredentials: true });
+      await axios.post("/request/create", { receiverID: post.author._id }, { withCredentials: true });
       toast.success(`Connection request sent to ${post.author?.name}`);
     } catch (error) {
       if (error.response?.status === 400 && error.response.data.message.includes("Request already exists")) {
@@ -187,7 +187,7 @@ const PostCard = ({ post }) => {
   const handleCancelRequest = async () => {
     setConnectStatus("Connect"); // optimistic revert
     try {
-      await axios.post("http://localhost:8000/request/cancel", { receiverID: post.author._id }, { withCredentials: true });
+      await axios.post("/request/cancel", { receiverID: post.author._id }, { withCredentials: true });
       toast.success("Request cancelled");
     } catch (error) {
       toast.error("Failed to cancel request");

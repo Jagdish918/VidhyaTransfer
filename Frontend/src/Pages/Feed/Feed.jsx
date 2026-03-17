@@ -341,7 +341,7 @@ const Feed = () => {
 
             <div className="p-6 rounded-[2rem] bg-amber-50 border border-amber-100/50">
               <p className="text-[11px] text-amber-700 font-semibold leading-relaxed">
-                <span className="font-black uppercase tracking-wider text-[9px] block mb-2 opacity-70">Did you know?</span> 
+                <span className="font-black uppercase tracking-wider text-[9px] block mb-2 opacity-70">Did you know?</span>
                 Verified profiles get 3x more connection requests. Complete your profile today!
               </p>
             </div>
@@ -357,7 +357,7 @@ const Feed = () => {
       )}
 
       {/* Floating Daily Quiz Button */}
-      <button 
+      <button
         onClick={() => setShowQuizModal(true)}
         className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-br from-[#013e38] to-[#3bb4a1] rounded-full shadow-2xl flex items-center justify-center text-white text-2xl hover:scale-110 transition-transform z-50 group border-4 border-white"
       >
@@ -365,9 +365,9 @@ const Feed = () => {
         <FaQuestion className="group-hover:rotate-12 transition-transform" />
       </button>
 
-      <DailyQuizModal 
-        isOpen={showQuizModal} 
-        onClose={() => setShowQuizModal(false)} 
+      <DailyQuizModal
+        isOpen={showQuizModal}
+        onClose={() => setShowQuizModal(false)}
       />
     </div>
   );

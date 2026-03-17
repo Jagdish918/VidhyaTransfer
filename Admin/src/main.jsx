@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { AuthProvider } from './context/AuthContext'
 
 // Configure Axios
-axios.defaults.baseURL = 'http://localhost:8000';
+axios.defaults.baseURL = 'https://vidhyatransfer-backend.onrender.com';
 axios.defaults.withCredentials = true;
 
 ReactDOM.createRoot(document.getElementById('root')).render(

@@ -34,7 +34,7 @@ const Chat = () => {
 
     // Socket Initialization
     useEffect(() => {
-        const newSocket = io("http://localhost:8000");
+        const newSocket = io(axios.defaults.baseURL);
         setSocket(newSocket);
         newSocket.emit("setup", user);
         newSocket.on("connected", () => console.log("Socket connected"));
@@ -66,7 +66,7 @@ const Chat = () => {
         const fetchChats = async () => {
             setLoadingChats(true);
             try {
-                const { data } = await axios.get("http://localhost:8000/chat", { withCredentials: true });
+                const { data } = await axios.get("/chat", { withCredentials: true });
                 const fetchedChats = data.data || [];
                 setChats(fetchedChats);
                 const newUnreadIds = new Set();
@@ -102,7 +102,7 @@ const Chat = () => {
         const fetchMessages = async () => {
             setLoadingMessages(true);
             try {
-                const { data } = await axios.get(`http://localhost:8000/message/getMessages/${selectedChatId}`, { withCredentials: true });
+                const { data } = await axios.get(`/message/getMessages/${selectedChatId}`, { withCredentials: true });
                 setMessages(data.data || []);
             } catch (error) {
                 console.error("Error fetching messages:", error);
@@ -148,7 +148,7 @@ const Chat = () => {
         setReplyingTo(null);
 
         try {
-            const { data } = await axios.post("http://localhost:8000/message/sendMessage", {
+            const { data } = await axios.post("/message/sendMessage", {
                 chatId: selectedChatId,
                 content: optimisticMessage.content,
                 replyTo: replyingTo?._id || null
@@ -166,7 +166,7 @@ const Chat = () => {
     const handleDeleteMessage = async (msgId) => {
         setContextMenu(null);
         try {
-            const { data } = await axios.delete(`http://localhost:8000/message/${msgId}`, { withCredentials: true });
+            const { data } = await axios.delete(`/message/${msgId}`, { withCredentials: true });
             setMessages(prev => prev.map(m => m._id === msgId ? { ...m, deleted: true, content: "This message was deleted" } : m));
         } catch (error) {
             console.error("Error deleting message:", error);
@@ -178,7 +178,7 @@ const Chat = () => {
         setEmojiPickerFor(null);
         setContextMenu(null);
         try {
-            const { data } = await axios.patch(`http://localhost:8000/message/${msgId}/react`, { emoji }, { withCredentials: true });
+            const { data } = await axios.patch(`/message/${msgId}/react`, { emoji }, { withCredentials: true });
             setMessages(prev => prev.map(m => m._id === msgId ? { ...m, reactions: data.data.reactions } : m));
         } catch (error) {
             console.error("Error reacting:", error);
@@ -199,8 +199,8 @@ const Chat = () => {
         };
         setMessages(prev => [...prev, optimisticMessage]);
         try {
-            const { data } = await axios.post("http://localhost:8000/message/sendMessage", { chatId: selectedChatId, content: meetingMessage }, { withCredentials: true });
-            await axios.post("http://localhost:8000/events/schedule", { chatId: selectedChatId, title, date, time, type, link }, { withCredentials: true });
+            const { data } = await axios.post("/message/sendMessage", { chatId: selectedChatId, content: meetingMessage }, { withCredentials: true });
+            await axios.post("/events/schedule", { chatId: selectedChatId, title, date, time, type, link }, { withCredentials: true });
             setMessages(prev => prev.map(msg => msg._id === tempId ? data.data : msg));
             setChats(prev => prev.map(c => c._id === selectedChatId ? { ...c, latestMessage: data.data } : c));
         } catch (error) {

@@ -29,7 +29,7 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
         setLoading(true);
         setStatus("loading");
         try {
-            const response = await axios.get("http://localhost:8000/quiz/daily", { withCredentials: true });
+            const response = await axios.get("/quiz/daily", { withCredentials: true });
             setStatus(response.data.status); // 'active' or 'completed'
             setStreak(response.data.streak);
             if (response.data.status === "active") {
@@ -48,10 +48,10 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
         if (selectedOption === null) return;
         setSubmitting(true);
         try {
-            const response = await axios.post("http://localhost:8000/quiz/daily", { answerIndex: selectedOption }, { withCredentials: true });
+            const response = await axios.post("/quiz/daily", { answerIndex: selectedOption }, { withCredentials: true });
             setResultData(response.data);
             setStreak(response.data.streak);
-            
+
             // Update user context streak visually if we want
             if (user) {
                 setUser({
@@ -80,7 +80,7 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 font-['Montserrat']">
             <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={onClose}></div>
-            
+
             <div className="relative bg-white w-full max-w-lg max-h-[90vh] rounded-[2.5rem] shadow-[0_20px_50px_rgba(59,180,161,0.12)] animate-fade-in flex flex-col overflow-hidden border border-gray-50">
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-orange-400 to-red-500 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
                 <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-tr from-[#3bb4a1] to-[#2c9886] rounded-full blur-3xl opacity-20 pointer-events-none"></div>
@@ -126,7 +126,7 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
                             <div className="inline-flex items-center justify-center w-24 h-24 rounded-full mb-6 bg-gradient-to-br from-orange-400 to-red-500 shadow-xl border-4 border-white transform hover:scale-105 transition-transform">
                                 <FaFire className="text-5xl text-white" />
                             </div>
-                            
+
                             {resultData ? (
                                 // Show immediate result feedback
                                 <div className="mb-6 text-left w-full">
@@ -135,18 +135,18 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
                                             {resultData.isCorrect ? "Brilliant!" : "Ouch!"}
                                         </h3>
                                     </div>
-                                    
+
                                     <div className="bg-[#fafafa] p-5 rounded-[1.5rem] border border-gray-100 mb-6">
                                         <p className="text-gray-900 font-bold mb-4">{quizData?.question}</p>
-                                        
+
                                         <div className="space-y-2">
                                             {quizData?.options.map((opt, idx) => {
                                                 const isUserChoice = selectedOption === idx;
                                                 const isCorrectChoice = resultData.correctAnswer === idx;
-                                                
+
                                                 let stateClass = "bg-white border-gray-200 text-gray-500";
                                                 let icon = null;
-                                                
+
                                                 if (isCorrectChoice) {
                                                     stateClass = "bg-green-50 border-green-400 text-green-800 font-semibold";
                                                     icon = <FaCheckCircle className="text-green-500 text-lg" />;
@@ -174,8 +174,8 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
 
                                     <div className="text-center">
                                         <p className="text-gray-600 font-medium">
-                                            {resultData.isCorrect 
-                                                ? `Your streak is now alive at ${streak} 🔥` 
+                                            {resultData.isCorrect
+                                                ? `Your streak is now alive at ${streak} 🔥`
                                                 : `Your streak broke and returned to 0 🧊`}
                                         </p>
                                     </div>
@@ -209,8 +209,8 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
                                         onClick={() => setSelectedOption(index)}
                                         disabled={submitting}
                                         className={`w-full text-left px-5 py-4 rounded-xl border-2 font-semibold transition-all duration-200 flex justify-between items-center group
-                                            ${selectedOption === index 
-                                                ? 'border-[#3bb4a1] bg-[#3bb4a1]/5 text-[#013e38] shadow-sm' 
+                                            ${selectedOption === index
+                                                ? 'border-[#3bb4a1] bg-[#3bb4a1]/5 text-[#013e38] shadow-sm'
                                                 : 'border-gray-100 bg-white text-gray-600 hover:border-[#3bb4a1]/50 hover:bg-gray-50'}`}
                                     >
                                         <span className="flex-1 pr-4">{option}</span>
@@ -227,7 +227,7 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
                                 disabled={selectedOption === null || submitting}
                                 className={`w-full py-4 uppercase font-black tracking-[0.25em] text-[10px] rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2
                                     ${selectedOption !== null && !submitting
-                                        ? 'bg-[#013e38] text-white hover:bg-[#3bb4a1] shadow-[#013e38]/20 hover:shadow-[#3bb4a1]/30' 
+                                        ? 'bg-[#013e38] text-white hover:bg-[#3bb4a1] shadow-[#013e38]/20 hover:shadow-[#3bb4a1]/30'
                                         : 'bg-white border border-gray-100 text-gray-400 cursor-not-allowed shadow-none'}`}
                             >
                                 {submitting ? <FaSpinner className="animate-spin text-xl" /> : "Submit Answer"}
