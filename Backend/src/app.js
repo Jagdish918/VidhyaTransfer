@@ -5,29 +5,50 @@ import passport from "passport";
 
 const app = express();
 
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
-    credentials: true,
-  })
-);
+// ✅ Allowed origins
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://vidhya-transfer.vercel.app"
+];
 
-app.use(express.json({ limit: "10mb" })); // to parse json in body
-app.use(express.urlencoded({ extended: true, limit: "10mb" })); // to parse url
-app.use(express.static("public")); // to use static public folder
-app.use(cookieParser()); // to enable CRUD operation on browser cookies
+// ✅ CORS config (IMPORTANT)
+const corsOptions = {
+  origin: function (origin, callback) {
+    // allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
 
-// app.use(function (req, res, next) {
-//   res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-//   res.setHeader("Access-Control-Allow-Creden tials", "true");
-//   // Add other CORS headers as needed
-//   next();
-// });
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS: " + origin));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+// ✅ Apply CORS middleware
+app.use(cors(corsOptions));
+
+// ✅ Handle preflight requests PROPERLY
+app.options("*", cors(corsOptions));
+
+
+// ------------------ BODY + MIDDLEWARE ------------------
+
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.static("public"));
+app.use(cookieParser());
 
 // Passport middleware
 app.use(passport.initialize());
 
-// Importing routes
+
+// ------------------ ROUTES ------------------
+
 import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import chatRouter from "./routes/chat.routes.js";
@@ -44,7 +65,6 @@ import eventRouter from "./routes/event.routes.js";
 import resourceRouter from "./routes/resource.routes.js";
 import quizRouter from "./routes/quiz.routes.js";
 
-// Using routes
 app.use("/user", userRouter);
 app.use("/auth", authRouter);
 app.use("/chat", chatRouter);
