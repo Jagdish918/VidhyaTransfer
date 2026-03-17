@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaUser, FaBell, FaLock, FaPalette, FaMoon, FaSun, FaTrash } from "react-icons/fa";
 import { useUser } from "../../util/UserContext";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 // Helper to manage dark mode
 const useDarkMode = () => {
@@ -21,9 +22,11 @@ const useDarkMode = () => {
 };
 
 const Settings = () => {
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const [activeTab, setActiveTab] = useState("Account");
   const [theme, setTheme] = useDarkMode();
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordState, setPasswordState] = useState({ current: "", new: "", confirm: "" });
 
   // Settings State
   const [settings, setSettings] = useState({
@@ -40,10 +43,62 @@ const Settings = () => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSaveAccount = (e) => {
+  const handleSaveAccount = async (e) => {
     e.preventDefault();
-    // Simulate API call
-    toast.success("Account info updated successfully!");
+    try {
+      if (!settings.name.trim()) {
+        toast.error("Name cannot be empty");
+        return;
+      }
+
+      const payload = {
+        name: settings.name,
+        username: user.username,
+        linkedinLink: user.linkedinLink || "",
+        githubLink: user.githubLink || "",
+        portfolioLink: user.portfolioLink || "",
+        skillsProficientAt: user.skillsProficientAt || [],
+        skillsToLearn: user.skillsToLearn || [],
+        picture: user.picture || ""
+      };
+
+      const { data } = await axios.post("/user/registered/saveRegDetails", payload);
+
+      if (data.success && data.data) {
+        setUser(data.data);
+        // Also update local storage sanitized data if needed
+        try {
+          const { storeSanitizedUserData } = await import("../../util/sanitizeUserData");
+          storeSanitizedUserData(data.data);
+        } catch (e) { console.warn("Could not update sanitised data", e); }
+        toast.success("Account info updated successfully!");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to update account info");
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (passwordState.new !== passwordState.confirm) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    try {
+      const { data } = await axios.post("/auth/change-password", {
+        currentPassword: passwordState.current,
+        newPassword: passwordState.new
+      });
+      if (data.success) {
+        toast.success("Password changed successfully!");
+        setIsChangingPassword(false);
+        setPasswordState({ current: "", new: "", confirm: "" });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to change password");
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -117,14 +172,53 @@ const Settings = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                      <button type="button" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">Change</button>
+                      <button 
+                        type="button" 
+                        onClick={() => setIsChangingPassword(!isChangingPassword)}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {isChangingPassword ? "Cancel" : "Change"}
+                      </button>
                     </div>
-                    <input
-                      type="password"
-                      value="********"
-                      disabled
-                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400"
-                    />
+                    {isChangingPassword ? (
+                      <div className="space-y-3 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <input
+                          type="password"
+                          placeholder="Current Password"
+                          value={passwordState.current}
+                          onChange={(e) => setPasswordState({ ...passwordState, current: e.target.value })}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <input
+                          type="password"
+                          placeholder="New Password (min 8 chars)"
+                          value={passwordState.new}
+                          onChange={(e) => setPasswordState({ ...passwordState, new: e.target.value })}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <input
+                          type="password"
+                          placeholder="Confirm New Password"
+                          value={passwordState.confirm}
+                          onChange={(e) => setPasswordState({ ...passwordState, confirm: e.target.value })}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={handleChangePassword}
+                          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm text-sm"
+                        >
+                          Save New Password
+                        </button>
+                      </div>
+                    ) : (
+                      <input
+                        type="password"
+                        value="********"
+                        disabled
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                      />
+                    )}
                   </div>
                   <div className="pt-4">
                     <button type="submit" className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
@@ -283,7 +377,6 @@ const PreferenceSettings = ({ user }) => {
 
       // Note: In real app, we should probably have a dedicated settings endpoint, but this might work if auth matches.
       // However, onboarding/preferences might force onboardingCompleted=true etc. which is fine.
-      const axios = (await import("axios")).default;
       const { data } = await axios.post("/onboarding/registered/preferences", payload);
 
       if (data.success && data.data.user) {

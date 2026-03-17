@@ -160,6 +160,16 @@ const PeerSwap = () => {
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#3bb4a1]/5 rounded-bl-[6rem] -mr-6 -mt-6 transition-all duration-700 group-hover:bg-[#3bb4a1]/10 group-hover:scale-110" />
 
+        {/* Best Match Badge */}
+        {peer.matchScore > 0 && (
+          <div className="absolute top-6 left-6 z-20">
+            <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-orange-200 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+              {peer.matchScore >= 4 ? "Mutual Peer Match" : "Skill Match"}
+            </span>
+          </div>
+        )}
+
         <div className="relative z-10 flex flex-col items-center text-center">
           <div className="relative mb-5">
             <img
@@ -173,7 +183,18 @@ const PeerSwap = () => {
           <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#3bb4a1] transition-colors mb-0.5">{peer.name}</h3>
           <p className="text-[10px] text-gray-400 font-bold tracking-tight mb-4">{role}</p>
 
-          <div className="space-y-3 w-full mb-6">
+          <div className="space-y-3 w-full mb-6 relative">
+            {/* Matching Highlight */}
+            {peer.matchScore > 0 && (
+              <div className="flex flex-wrap justify-center gap-1 mb-2">
+                {peer.skillsProficientAt.filter(s => user.skillsToLearn.some(ws => ws.name === s.name)).map((s, i) => (
+                  <span key={i} className="bg-amber-100 text-amber-700 text-[7px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-200">
+                    Matches your goal: {s.name}
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="bg-emerald-50/50 rounded-2xl p-3.5 border border-emerald-100/50 group-hover:bg-emerald-50 transition-colors">
               <div className="flex items-center gap-2 text-[8px] font-black text-[#3bb4a1] mb-1.5 uppercase tracking-[0.2em]">
                 <FaChalkboardTeacher size={10} /> Offering

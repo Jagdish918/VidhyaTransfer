@@ -699,63 +699,95 @@ export const uploadVid = asyncHandler(async (req, res) => {
 
 
 export const discoverUsers = asyncHandler(async (req, res) => {
-  console.log("******** Inside discoverUsers Function *******");
-
   const page = parseInt(req.query.page) || 1;
-  const limit = Math.min(parseInt(req.query.limit) || 20, 100); // ✅ FIX: cap at 100 to prevent DoS
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
-  const query = {
-    username: { $ne: req.user.username },
+  const currentUser = req.user;
+  const myTeachableSkills = currentUser.skillsProficientAt.map(s => s.name);
+  const myWantedSkills = currentUser.skillsToLearn.map(s => s.name);
+
+  // Base query: excluded self, banned, deleted
+  const baseQuery = {
+    username: { $ne: currentUser.username },
     role: { $ne: "admin" },
-    status: { $nin: ["banned", "deleted"] }, // Allow active or missing
-    isDeleted: { $ne: true } // Allow false or missing
+    status: { $nin: ["banned", "deleted"] },
+    isDeleted: { $ne: true }
   };
 
   if (search) {
-    // ✅ FIX: Escape regex special chars — prevents ReDoS attack
-    const safeSearch = escapeRegex(search.slice(0, 100)); // also cap length
+    const safeSearch = escapeRegex(search.slice(0, 100));
     const searchRegex = new RegExp(safeSearch, "i");
-    query.$or = [
+    baseQuery.$or = [
       { name: searchRegex },
       { username: searchRegex },
       { "skillsProficientAt.name": searchRegex }
     ];
   }
 
-  // Fetch users excluding current user
-  const users = await User.find(query)
-    .select("-password -phone -personalInfo -resetPasswordToken -resetPasswordExpires -__v")
-    .skip(skip)
-    .limit(limit);
+  // We use aggregation to add a "matchScore"
+  // Match Score Calculation:
+  // +2 for each skill they teach that I want to learn
+  // +1 for each skill they want to learn that I teach
+  // This prioritizes users who can actually help me (Mutual Swap)
+  
+  const users = await User.aggregate([
+    { $match: baseQuery },
+    {
+      $addFields: {
+        matchScore: {
+          $add: [
+            {
+              $multiply: [
+                {
+                  $size: {
+                    $setIntersection: ["$skillsProficientAt.name", myWantedSkills]
+                  }
+                },
+                2 // Higher weight for what they teach and I want
+              ]
+            },
+            {
+              $size: {
+                $setIntersection: ["$skillsToLearn.name", myTeachableSkills]
+              }
+            }
+          ]
+        }
+      }
+    },
+    { $sort: { matchScore: -1, rating: -1, createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $project: {
+        password: 0,
+        phone: 0,
+        personalInfo: 0,
+        resetPasswordToken: 0,
+        resetPasswordExpires: 0,
+        __v: 0
+      }
+    }
+  ]);
 
-  const total = await User.countDocuments(query);
+  const total = await User.countDocuments(baseQuery);
 
-  if (!users) {
-    throw new ApiError(500, "Error in fetching users");
-  }
-
-  // Optional: Simple randomization or relevance sorting could be added here, 
-  // but standard pagination conflicts with random shuffling unless seeded.
-  // For now, we return valid paginated data.
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          users,
-          pagination: {
-            current: page,
-            pages: Math.ceil(total / limit),
-            total
-          }
-        },
-        "Users fetched successfully"
-      )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        users,
+        pagination: {
+          current: page,
+          pages: Math.ceil(total / limit),
+          total
+        }
+      },
+      "Recommended users fetched successfully"
+    )
+  );
 });
 
 export const sendScheduleMeet = asyncHandler(async (req, res) => {
@@ -802,32 +834,62 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
 // Skill Gain: Find mentors/teachers
 export const getSkillGainExperts = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = Math.min(parseInt(req.query.limit) || 20, 100); // ✅ FIX: cap at 100
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
-  const query = {
-    username: { $ne: req.user.username },
+  const currentUser = req.user;
+  const myWantedSkills = currentUser.skillsToLearn.map(s => s.name);
+
+  const baseQuery = {
+    username: { $ne: currentUser.username },
     status: { $nin: ["banned", "deleted"] },
     isDeleted: { $ne: true },
-    // Logic: User wants to TEACH (mentorship rate > 0)
     "preferences.rates.mentorship": { $gt: 0 }
   };
 
   if (search) {
-    // ✅ FIX: Escape regex special chars — prevents ReDoS attack
-    query["skillsProficientAt.name"] = { $regex: escapeRegex(search.slice(0, 100)), $options: "i" };
+    baseQuery["skillsProficientAt.name"] = { $regex: escapeRegex(search.slice(0, 100)), $options: "i" };
   }
 
-  const users = await User.find(query)
-    .select("name username picture skillsProficientAt preferences.rates.mentorship rating")
-    .skip(skip)
-    .limit(limit);
+  // Use aggregation to prioritize experts who teach what I want to learn
+  const users = await User.aggregate([
+    { $match: baseQuery },
+    {
+      $addFields: {
+        relevanceScore: {
+          $size: {
+            $setIntersection: ["$skillsProficientAt.name", myWantedSkills]
+          }
+        }
+      }
+    },
+    { $sort: { relevanceScore: -1, rating: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $project: {
+        name: 1,
+        username: 1,
+        picture: 1,
+        skillsProficientAt: 1,
+        "preferences.rates.mentorship": 1,
+        rating: 1
+      }
+    }
+  ]);
 
-  const total = await User.countDocuments(query);
+  const total = await User.countDocuments(baseQuery);
 
   return res.status(200).json(
-    new ApiResponse(200, { users, pagination: { current: page, pages: Math.ceil(total / limit), total } }, "Mentors fetched successfully")
+    new ApiResponse(
+      200, 
+      { 
+        users, 
+        pagination: { current: page, pages: Math.ceil(total / limit), total } 
+      }, 
+      "Mentors matched to your goals fetched successfully"
+    )
   );
 });
 

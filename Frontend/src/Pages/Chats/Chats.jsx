@@ -106,7 +106,7 @@ const Chats = () => {
     try {
       setChatMessageLoading(true);
       const { data } = await axios.get(`/message/getMessages/${chatId}`);
-      setChatMessages(data.data);
+      setChatMessages(data?.data?.messages || data?.data || []);
       //       setMessage("");
       //       const chatDetails = chats.find((chat) => chat.id === chatId);
       setSelectedChat(chatDetails);

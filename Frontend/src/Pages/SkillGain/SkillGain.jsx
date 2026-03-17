@@ -48,6 +48,16 @@ const SkillGain = () => {
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#3bb4a1]/5 rounded-bl-[6rem] -mr-6 -mt-6 transition-all duration-700 group-hover:bg-[#3bb4a1]/10 group-hover:scale-110" />
 
+      {/* Recommended Badge */}
+      {mentor.relevanceScore > 0 && (
+        <div className="absolute top-6 left-6 z-20">
+          <span className="bg-[#3bb4a1] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-[#3bb4a1]/20 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+            Recommended
+          </span>
+        </div>
+      )}
+
       <div className="relative z-10 flex flex-col items-center text-center">
         <div className="relative mb-4">
           <img

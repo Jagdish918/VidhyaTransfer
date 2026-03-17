@@ -8,6 +8,7 @@ import {
   loginWithEmailPassword,
   forgotPassword,
   resetPassword,
+  changePassword,
   sendRegistrationOtp,
   verifyRegistrationOtp,
   sendLoginOtp,
@@ -31,6 +32,7 @@ router.post("/register", authLimiter, registerWithEmailPassword);
 router.post("/login", authLimiter, loginWithEmailPassword);
 router.post("/forgot-password", emailLimiter, forgotPassword);
 router.post("/reset-password", authLimiter, resetPassword);
+router.post("/change-password", verifyJWT_username, authLimiter, changePassword);
 router.post("/send-registration-otp", emailLimiter, sendRegistrationOtp);
 router.post("/verify-registration-otp", authLimiter, verifyRegistrationOtp);
 

@@ -29,7 +29,7 @@ const Utilization = () => {
             if (activeTab === "Events") {
                 const { data } = await axios.get("/events");
                 if (data.success) {
-                    setEvents(data.data);
+                    setEvents(data.data?.events || data.data || []);
                 }
             } else {
                 const { data } = await axios.get("/user/providers", {

@@ -373,6 +373,39 @@ export const resetPassword = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, null, "Password reset successful. Please login again."));
 });
 
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(400, "Current and new passwords are required");
+  }
+
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "New password must be at least 8 characters long");
+  }
+
+  // The request will have req.user from verifyJWT_username
+  const user = await User.findById(req.user._id);
+
+  if (!user || !user.password) {
+    throw new ApiError(400, "User not found or password not set");
+  }
+
+  const isPasswordValid = await verifyPassword(currentPassword, user.password);
+  
+  if (!isPasswordValid) {
+    throw new ApiError(400, "Invalid current password");
+  }
+
+  user.password = await hashPassword(newPassword);
+  user.passwordChangedAt = new Date();
+  
+  // Optionally revoke tokens here, but keeping session alive is often user preference on change.
+  await user.save();
+
+  return res.status(200).json(new ApiResponse(200, null, "Password changed successfully."));
+});
+
 // ─── REGISTRATION OTP ─────────────────────────────────────────────────────────
 
 export const sendRegistrationOtp = asyncHandler(async (req, res) => {
