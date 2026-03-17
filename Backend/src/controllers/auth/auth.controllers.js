@@ -47,9 +47,9 @@ export const handleGoogleLoginCallback = asyncHandler(async (req, res) => {
 
     const jwtToken = generateJWTToken_username(existingUser);
     const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
-    res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
+    res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: true, sameSite: "None", path: "/" });
     // Set a non-httpOnly hint for the frontend to avoid unnecessary 401 calls
-    res.cookie("hasSession", "true", { expires: expiryDate, secure: false, httpOnly: false });
+    res.cookie("hasSession", "true", { expires: expiryDate, secure: true, httpOnly: false, sameSite: "None", path: "/" });
     // Check if onboarding is completed
     if (existingUser.onboardingCompleted) {
       return res.redirect(`http://localhost:5173/feed`);
@@ -72,8 +72,8 @@ export const handleGoogleLoginCallback = asyncHandler(async (req, res) => {
   }
   const jwtToken = generateJWTToken_email(unregisteredUser);
   const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
-  res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
-  res.cookie("hasSession", "true", { expires: expiryDate, secure: false, httpOnly: false });
+  res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: true, sameSite: "None", path: "/" });
+  res.cookie("hasSession", "true", { expires: expiryDate, secure: true, httpOnly: false, sameSite: "None", path: "/" });
   // New users should go to onboarding
   return res.redirect("http://localhost:5173/onboarding/personal-info");
 });
@@ -110,8 +110,8 @@ export const registerWithEmailPassword = asyncHandler(async (req, res) => {
   // Generate JWT token
   const jwtToken = generateJWTToken_email(unregisteredUser);
   const expiryDate = new Date(Date.now() + 0.5 * 60 * 60 * 1000);
-  res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
-  res.cookie("hasSession", "true", { expires: expiryDate, secure: false, httpOnly: false });
+  res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: true, sameSite: "None", path: "/" });
+  res.cookie("hasSession", "true", { expires: expiryDate, secure: true, httpOnly: false, sameSite: "None", path: "/" });
 
   // Return user data without password
   const userData = { ...unregisteredUser.toObject() };
@@ -154,8 +154,8 @@ export const loginWithEmailPassword = asyncHandler(async (req, res) => {
 
       const jwtToken = generateJWTToken_username(registeredUser);
       const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
-      res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false, sameSite: "Lax", path: "/" });
-      res.cookie("hasSession", "true", { expires: expiryDate, secure: false, httpOnly: false, sameSite: "Lax", path: "/" });
+      res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: true, sameSite: "None", path: "/" });
+      res.cookie("hasSession", "true", { expires: expiryDate, secure: true, httpOnly: false, sameSite: "None", path: "/" });
       // Return user data without password
       const userData = { ...registeredUser.toObject() };
       delete userData.password;
@@ -184,8 +184,8 @@ export const loginWithEmailPassword = asyncHandler(async (req, res) => {
     if (await verifyPassword(password, unregisteredUser.password)) {
       const jwtToken = generateJWTToken_email(unregisteredUser);
       const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
-      res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: false, sameSite: "Lax", path: "/" });
-      res.cookie("hasSession", "true", { expires: expiryDate, secure: false, httpOnly: false, sameSite: "Lax", path: "/" });
+      res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: true, sameSite: "None", path: "/" });
+      res.cookie("hasSession", "true", { expires: expiryDate, secure: true, httpOnly: false, sameSite: "None", path: "/" });
       // Return user data without password
       const userData = { ...unregisteredUser.toObject() };
       delete userData.password;
@@ -226,7 +226,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
 
     // Cookie settings might need to be specific for admin if needed, but standard is fine
-    res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false, sameSite: "Lax", path: "/" });
+    res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: true, sameSite: "None", path: "/" });
 
     const userData = { ...user.toObject() };
     delete userData.password;
@@ -394,8 +394,8 @@ export const verifyRegistrationOtp = asyncHandler(async (req, res) => {
 
   const jwtToken = generateJWTToken_email(unregisteredUser);
   const expiryDate = new Date(Date.now() + 0.5 * 60 * 60 * 1000);
-  res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
-  res.cookie("hasSession", "true", { expires: expiryDate, secure: false, httpOnly: false });
+  res.cookie("accessTokenRegistration", jwtToken, { httpOnly: true, expires: expiryDate, secure: true, sameSite: "None", path: "/" });
+  res.cookie("hasSession", "true", { expires: expiryDate, secure: true, httpOnly: false, sameSite: "None", path: "/" });
 
   const userData = { ...unregisteredUser.toObject() };
   delete userData.password;
@@ -454,8 +454,8 @@ export const loginWithOtp = asyncHandler(async (req, res) => {
   // Login Success
   const jwtToken = generateJWTToken_username(user);
   const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
-  res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false, sameSite: "Lax", path: "/" });
-  res.cookie("hasSession", "true", { expires: expiryDate, secure: false, httpOnly: false, sameSite: "Lax", path: "/" });
+  res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: true, sameSite: "None", path: "/" });
+  res.cookie("hasSession", "true", { expires: expiryDate, secure: true, httpOnly: false, sameSite: "None", path: "/" });
 
   user.otp = undefined;
   user.otpExpires = undefined;

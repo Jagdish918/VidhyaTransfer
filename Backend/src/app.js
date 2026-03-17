@@ -9,6 +9,8 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
+  "https://vidhyatransfer-frontend.vercel.app",
+  "https://vidhyatransfer-admin.vercel.app",
   "https://vidhya-transfer.vercel.app"
 ];
 
