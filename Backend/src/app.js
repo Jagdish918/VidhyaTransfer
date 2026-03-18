@@ -50,6 +50,8 @@ import postRouter from "./routes/post.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import eventRouter from "./routes/event.routes.js";
+import resourceRouter from "./routes/resource.routes.js";
+import quizRouter from "./routes/quiz.routes.js";
 
 app.use("/user", userRouter);
 app.use("/auth", authRouter);
@@ -64,5 +66,7 @@ app.use("/post", postRouter);
 app.use("/payment", paymentRouter);
 app.use("/admin", adminRouter);
 app.use("/events", eventRouter);
+app.use("/resources", resourceRouter);
+app.use("/quiz", quizRouter);
 
 export { app };

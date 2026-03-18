@@ -31,6 +31,7 @@ import ForgotPassword from "./Pages/Login/ForgotPassword";
 import ResetPassword from "./Pages/Login/ResetPassword";
 
 import ScrollToTop from "./Components/ScrollToTop";
+import GlobalCallNotification from "./Components/GlobalCallNotification";
 
 const App = () => {
   const location = useLocation();
@@ -39,7 +40,9 @@ const App = () => {
     <>
       <ScrollToTop />
       <Header />
+      <GlobalCallNotification />
       <ToastContainer position="top-right" />
+
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
@@ -85,7 +88,7 @@ const App = () => {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {location.pathname !== '/chat' && <Footer />}
+      {!['/chat', '/feed'].includes(location.pathname) && <Footer />}
     </>
   );
 };

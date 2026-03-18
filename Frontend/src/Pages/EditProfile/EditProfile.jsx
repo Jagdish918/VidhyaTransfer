@@ -464,24 +464,24 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#fafafa] py-10 font-['Montserrat'] px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Edit Profile</h1>
-            <p className="text-gray-600">Update your information and showcase your skills</p>
+            <h1 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Edit Profile</h1>
+            <p className="text-[10px] uppercase font-black tracking-widest text-gray-400">Update your information and showcase your skills</p>
           </div>
           <button
             onClick={() => navigate("/profile")}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-[#fafafa] text-gray-600 hover:text-[#013e38] hover:bg-white border border-transparent hover:border-gray-100 rounded-[1.2rem] shadow-sm hover:shadow-md transition-all text-[10px] uppercase tracking-widest font-black"
           >
             <FaArrowLeft /> Back to Profile
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6 bg-white rounded-t-xl shadow-sm overflow-hidden">
+        <div className="flex gap-2 mb-6 bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 p-2 overflow-x-auto relative z-10">
           {[
             { id: "basic", label: "Basic Info", icon: "👤" },
             { id: "education", label: "Education", icon: "🎓" },
@@ -490,9 +490,9 @@ const EditProfile = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-4 px-6 text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeTab === tab.id
-                ? "bg-blue-600 text-white shadow-lg"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              className={`flex-1 min-w-[120px] py-4 px-6 text-[10px] uppercase tracking-widest font-black transition-all flex items-center justify-center gap-2 rounded-[1.5rem] ${activeTab === tab.id
+                ? "bg-[#013e38] text-white shadow-lg shadow-[#013e38]/20"
+                : "text-gray-500 hover:text-gray-900 hover:bg-[#fafafa]"
                 }`}
             >
               <span className="text-lg">{tab.icon}</span>
@@ -502,7 +502,7 @@ const EditProfile = () => {
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8">
+        <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 p-8 sm:p-10 mb-10">
 
           {/* BASIC INFO TAB */}
           {activeTab === "basic" && (
@@ -557,35 +557,35 @@ const EditProfile = () => {
               {/* Basic Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Full Name</label>
                   <input
                     type="text"
                     value={form.name}
                     disabled
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed"
+                    className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] text-gray-400 font-bold cursor-not-allowed"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Name cannot be changed</p>
+                  <p className="text-[9px] uppercase tracking-widest font-bold text-gray-400 mt-2">Name cannot be changed</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Email</label>
                   <input
                     type="text"
                     value={form.email}
                     disabled
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed"
+                    className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] text-gray-400 font-bold cursor-not-allowed"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+                  <p className="text-[9px] uppercase tracking-widest font-bold text-gray-400 mt-2">Email cannot be changed</p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Username *</label>
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Username *</label>
                 <input
                   type="text"
                   name="username"
                   value={form.username}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] focus:border-transparent outline-none transition-all font-bold text-gray-900 shadow-sm"
                   placeholder="your-username"
                 />
               </div>
@@ -593,62 +593,62 @@ const EditProfile = () => {
               <hr className="border-gray-200" />
 
               {/* Social Links */}
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Social Links *</h3>
-                <p className="text-sm text-gray-600 mb-4">Add at least one social link</p>
-                <div className="space-y-4">
+              <div className="bg-[#fafafa] p-8 rounded-[2.5rem] border border-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <h3 className="text-xl font-black text-gray-900 mb-2 tracking-tight">Social Links *</h3>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">Add at least one social link</p>
+                <div className="space-y-5">
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <FaLinkedin className="text-blue-600" /> LinkedIn
+                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">
+                      <FaLinkedin className="text-[#0077b5] text-sm" /> LinkedIn
                     </label>
                     <input
                       type="url"
                       name="linkedinLink"
                       value={form.linkedinLink}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.2rem] focus:ring-2 focus:ring-[#0077b5] focus:border-transparent outline-none transition-all shadow-sm font-medium text-gray-900"
                       placeholder="https://linkedin.com/in/your-profile"
                     />
                   </div>
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <FaGithub className="text-gray-800" /> GitHub
+                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">
+                      <FaGithub className="text-gray-900 text-sm" /> GitHub
                     </label>
                     <input
                       type="url"
                       name="githubLink"
                       value={form.githubLink}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.2rem] focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all shadow-sm font-medium text-gray-900"
                       placeholder="https://github.com/your-username"
                     />
                   </div>
                   <div>
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <FaLink className="text-green-600" /> Portfolio
+                    <label className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">
+                      <FaLink className="text-[#3bb4a1] text-sm" /> Portfolio
                     </label>
                     <input
                       type="url"
                       name="portfolioLink"
                       value={form.portfolioLink}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full px-5 py-4 bg-white border border-gray-100 rounded-[1.2rem] focus:ring-2 focus:ring-[#3bb4a1] focus:border-transparent outline-none transition-all shadow-sm font-medium text-gray-900"
                       placeholder="https://your-portfolio.com"
                     />
                   </div>
                 </div>
               </div>
 
-              <hr className="border-gray-200" />
+              <hr className="border-gray-100" />
 
               {/* Skills */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Proficient Skills */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Skills I Can Teach *</label>
-                  <div className="flex gap-2 mb-3">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Skills I Can Teach *</label>
+                  <div className="flex gap-3 mb-4">
                     <select
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                      className="flex-1 px-5 py-3 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-gray-900 shadow-sm"
                       value={skillProficientInput}
                       onChange={(e) => setSkillProficientInput(e.target.value)}
                     >
@@ -657,19 +657,19 @@ const EditProfile = () => {
                     </select>
                     <button
                       onClick={() => addSkill('proficient', skillProficientInput)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      className="px-6 py-3 bg-blue-50 text-blue-700 rounded-[1.2rem] hover:bg-blue-100 transition-colors shadow-sm flex items-center justify-center font-black"
                     >
                       <FaPlus />
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2 min-h-[60px] p-3 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 border border-gray-100 rounded-[1.5rem] bg-[#fafafa]">
                     {form.skillsProficientAt.length === 0 ? (
-                      <p className="text-sm text-gray-400 italic">No skills added yet</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">No skills added yet</p>
                     ) : (
                       form.skillsProficientAt.map((skill, idx) => (
-                        <span key={idx} className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-sm font-medium border border-green-200">
+                        <span key={idx} className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-[1rem] text-[10px] uppercase tracking-widest font-black shadow-sm transition-all hover:bg-blue-200 cursor-default">
                           {typeof skill === 'string' ? skill : skill.name}
-                          <FaTrash className="ml-2 text-xs cursor-pointer hover:text-green-900" onClick={() => removeSkill('proficient', skill)} />
+                          <FaTrash className="ml-3 text-[10px] cursor-pointer text-blue-400 hover:text-red-500 transition-colors" onClick={() => removeSkill('proficient', skill)} />
                         </span>
                       ))
                     )}
@@ -677,11 +677,11 @@ const EditProfile = () => {
                 </div>
 
                 {/* Skills to Learn */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Skills I Want to Learn</label>
-                  <div className="flex gap-2 mb-3">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Skills I Want to Learn</label>
+                  <div className="flex gap-3 mb-4">
                     <select
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="flex-1 px-5 py-3 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none transition-all font-bold text-gray-900 shadow-sm"
                       value={skillLearnInput}
                       onChange={(e) => setSkillLearnInput(e.target.value)}
                     >
@@ -690,19 +690,19 @@ const EditProfile = () => {
                     </select>
                     <button
                       onClick={() => addSkill('learn', skillLearnInput)}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                      className="px-6 py-3 bg-purple-50 text-purple-700 rounded-[1.2rem] hover:bg-purple-100 transition-colors shadow-sm flex items-center justify-center font-black"
                     >
                       <FaPlus />
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2 min-h-[60px] p-3 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 border border-gray-100 rounded-[1.5rem] bg-[#fafafa]">
                     {form.skillsToLearn.length === 0 ? (
-                      <p className="text-sm text-gray-400 italic">No skills added yet</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">No skills added yet</p>
                     ) : (
                       form.skillsToLearn.map((skill, idx) => (
-                        <span key={idx} className="inline-flex items-center px-3 py-1.5 bg-purple-100 text-purple-800 rounded-full text-sm font-medium border border-purple-200">
+                        <span key={idx} className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-800 rounded-[1rem] text-[10px] uppercase tracking-widest font-black shadow-sm transition-all hover:bg-purple-200 cursor-default">
                           {typeof skill === 'string' ? skill : skill.name}
-                          <FaTrash className="ml-2 text-xs cursor-pointer hover:text-purple-900" onClick={() => removeSkill('learn', skill)} />
+                          <FaTrash className="ml-3 text-[10px] cursor-pointer text-purple-400 hover:text-red-500 transition-colors" onClick={() => removeSkill('learn', skill)} />
                         </span>
                       ))
                     )}
@@ -710,15 +710,15 @@ const EditProfile = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end items-center pt-6 border-t border-gray-200">
+              <div className="flex justify-end items-center pt-8 mt-4 border-t border-gray-100">
                 <button
                   onClick={async () => {
                     const ok = await saveBasicInfo();
                     if (ok) setActiveTab('education');
                   }}
-                  className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                  className="px-8 py-4 bg-[#013e38] text-white font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
                 >
-                  Next: Education <FaArrowRight />
+                  Next: Education <FaArrowRight className="text-sm" />
                 </button>
               </div>
             </div>
@@ -726,99 +726,99 @@ const EditProfile = () => {
 
           {/* EDUCATION TAB */}
           {activeTab === "education" && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold text-gray-900">Education History</h3>
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Education History</h3>
                 <button
                   onClick={addEducation}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-md"
+                  className="px-6 py-3 bg-[#013e38] text-white rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl text-[10px] uppercase tracking-widest font-black"
                 >
-                  <FaPlus /> Add Education
+                  <FaPlus className="text-sm" /> Add Education
                 </button>
               </div>
 
               {form.education.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
-                  <p className="text-gray-500 mb-4">No education entries yet</p>
+                <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-[2.5rem] bg-[#fafafa]">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic mb-6">No education entries yet</p>
                   <button
                     onClick={addEducation}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-8 py-4 bg-[#013e38] text-white text-[10px] uppercase tracking-widest font-black rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg mx-auto block"
                   >
                     Add Your First Education
                   </button>
                 </div>
               ) : (
                 form.education.map((edu, index) => (
-                  <div key={edu.id || index} className="p-6 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-white to-gray-50 relative shadow-sm hover:shadow-md transition-shadow">
+                  <div key={edu.id || index} className="p-8 border border-gray-50 rounded-[2.5rem] bg-white relative shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-lg transition-all mb-6">
                     <button
                       onClick={() => removeEducation(index)}
-                      className="absolute top-4 right-4 text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                      className="absolute top-6 right-6 text-red-300 hover:text-white p-3 rounded-[1rem] bg-transparent hover:bg-red-500 transition-all shadow-sm"
                       title="Remove"
                     >
-                      <FaTrash />
+                      <FaTrash className="text-sm" />
                     </button>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5 mt-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Institution *</label>
+                        <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Institution *</label>
                         <input
                           type="text"
                           value={edu.institution}
                           onChange={(e) => handleEducationChange(index, "institution", e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                           placeholder="University/School Name"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Degree *</label>
+                        <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Degree *</label>
                         <input
                           type="text"
                           value={edu.degree}
                           onChange={(e) => handleEducationChange(index, "degree", e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                           placeholder="B.Tech, MBA, etc."
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Start Date</label>
+                        <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Start Date</label>
                         <input
                           type="date"
                           value={formatDate(edu.startDate)}
                           onChange={(e) => handleEducationChange(index, "startDate", e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 uppercase mb-2">End Date</label>
+                        <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">End Date</label>
                         <input
                           type="date"
                           value={formatDate(edu.endDate)}
                           onChange={(e) => handleEducationChange(index, "endDate", e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Score / GPA</label>
+                        <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Score / GPA</label>
                         <input
                           type="number"
                           step="0.01"
                           value={edu.score}
                           onChange={(e) => handleEducationChange(index, "score", e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                           placeholder="8.5"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Description</label>
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Description</label>
                       <textarea
                         value={edu.description}
                         onChange={(e) => handleEducationChange(index, "description", e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900 resize-none"
                         rows="3"
                         placeholder="Major projects, achievements, coursework..."
                       />
@@ -827,12 +827,12 @@ const EditProfile = () => {
                 ))
               )}
 
-              <div className="flex justify-between items-center pt-6 border-t border-gray-200 gap-4">
+              <div className="flex justify-between items-center pt-8 mt-4 border-t border-gray-100 gap-4">
                 <button
                   onClick={() => setActiveTab('basic')}
-                  className="px-6 py-3 text-gray-600 font-semibold hover:text-gray-900 transition-colors flex items-center gap-2"
+                  className="px-6 py-4 bg-[#fafafa] text-gray-600 hover:text-[#013e38] hover:bg-white border border-transparent hover:border-gray-100 rounded-[1.2rem] shadow-sm hover:shadow-md transition-all text-[10px] uppercase tracking-widest font-black flex items-center gap-2"
                 >
-                  <FaArrowLeft /> Back
+                  <FaArrowLeft className="text-sm" /> Back
                 </button>
 
                 <button
@@ -840,9 +840,9 @@ const EditProfile = () => {
                     const ok = await saveEducation();
                     if (ok) setActiveTab('portfolio');
                   }}
-                  className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                  className="px-8 py-4 bg-[#013e38] text-white font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
                 >
-                  Next: Portfolio <FaArrowRight />
+                  Next: Portfolio <FaArrowRight className="text-sm" />
                 </button>
               </div>
             </div>
@@ -850,39 +850,39 @@ const EditProfile = () => {
 
           {/* PORTFOLIO TAB */}
           {activeTab === "portfolio" && (
-            <div className="space-y-8">
+            <div className="space-y-10">
               {/* Bio */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Bio</label>
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Bio</label>
                 <textarea
                   value={form.bio}
                   onChange={handleInputChange}
                   name="bio"
                   maxLength={500}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                  className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.5rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900 resize-none"
                   rows="5"
                   placeholder="Tell us about yourself, your interests, and what you're passionate about..."
                 />
-                <div className="flex justify-between items-center mt-1">
-                  <p className="text-xs text-gray-400">Share your story</p>
-                  <p className={`text-xs font-medium ${form.bio.length > 450 ? 'text-red-500' : 'text-gray-400'}`}>
+                <div className="flex justify-between items-center mt-3 px-2">
+                  <p className="text-[9px] uppercase tracking-widest font-black text-gray-400">Share your story</p>
+                  <p className={`text-[9px] uppercase tracking-widest font-black ${form.bio.length > 450 ? 'text-red-500' : 'text-gray-400'}`}>
                     {form.bio.length}/500
                   </p>
                 </div>
               </div>
 
-              <hr className="border-gray-200" />
+              <hr className="border-gray-100" />
 
               {/* Tutorial Video */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Video Introduction (Tutorial)</label>
-                <div className="flex flex-col md:flex-row gap-6 items-start">
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Video Introduction (Tutorial)</label>
+                <div className="flex flex-col md:flex-row gap-8 items-start bg-white p-8 border border-gray-50 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                   <div className="flex-1 w-full">
-                    <p className="text-sm text-gray-600 mb-4">Showcase your teaching style or introduce yourself with a short video.</p>
+                    <p className="text-sm font-medium text-gray-600 mb-6">Showcase your teaching style or introduce yourself with a short video.</p>
                     <div className="flex gap-4 items-center">
-                      <label className={`px-6 py-3 rounded-lg font-bold cursor-pointer transition-all flex items-center gap-2 ${uploadingVideo ? 'bg-gray-100 text-gray-400' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}>
+                      <label className={`px-6 py-4 rounded-[1.2rem] text-[10px] uppercase font-black tracking-widest cursor-pointer transition-all flex items-center gap-3 shadow-sm hover:shadow-md ${uploadingVideo ? 'bg-gray-100 text-gray-400' : 'bg-[#013e38] text-white hover:bg-[#3bb4a1]'}`}>
                         {uploadingVideo ? (
-                          <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div> Uploading...</>
+                          <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Uploading...</>
                         ) : (
                           <>📹 {form.tutorialVideo ? 'Change Video' : 'Upload Video'}</>
                         )}
@@ -891,43 +891,43 @@ const EditProfile = () => {
                       {form.tutorialVideo && (
                         <button
                           onClick={() => setForm(prev => ({ ...prev, tutorialVideo: "" }))}
-                          className="text-xs text-red-600 hover:underline font-medium"
+                          className="text-[10px] uppercase font-black tracking-widest text-red-500 hover:text-red-700 transition-colors"
                         >
                           Remove Video
                         </button>
                       )}
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-2 italic">MP4, WebM recommended (Max 50MB)</p>
+                    <p className="text-[9px] uppercase font-black tracking-widest text-gray-400 mt-4">MP4, WebM recommended (Max 50MB)</p>
                   </div>
 
                   {form.tutorialVideo && (
-                    <div className="w-full md:w-64 aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                    <div className="w-full md:w-64 aspect-video bg-black rounded-[1.5rem] overflow-hidden shadow-lg border border-gray-100">
                       <video src={form.tutorialVideo} className="w-full h-full object-cover" />
                     </div>
                   )}
                 </div>
               </div>
 
-              <hr className="border-gray-200" />
+              <hr className="border-gray-100" />
 
               {/* Projects */}
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-2xl font-bold text-gray-900">Projects</h3>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">Projects</h3>
                   <button
                     onClick={addProject}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-md"
+                    className="px-6 py-3 bg-[#013e38] text-white rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl text-[10px] uppercase tracking-widest font-black"
                   >
-                    <FaPlus /> Add Project
+                    <FaPlus className="text-sm" /> Add Project
                   </button>
                 </div>
 
                 {form.projects.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
-                    <p className="text-gray-500 mb-4">No projects yet</p>
+                  <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-[2.5rem] bg-[#fafafa]">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic mb-6">No projects yet</p>
                     <button
                       onClick={addProject}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="px-8 py-4 bg-[#013e38] text-white text-[10px] uppercase tracking-widest font-black rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg mx-auto block"
                     >
                       Add Your First Project
                     </button>
@@ -935,76 +935,76 @@ const EditProfile = () => {
                 ) : (
                   <div className="space-y-6">
                     {form.projects.map((proj, index) => (
-                      <div key={proj.id || index} className="p-6 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-white to-blue-50 relative shadow-sm hover:shadow-md transition-shadow">
+                      <div key={proj.id || index} className="p-8 border border-gray-50 rounded-[2.5rem] bg-white relative shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-lg transition-all mb-6">
                         <button
                           onClick={() => removeProject(index)}
-                          className="absolute top-4 right-4 text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                          className="absolute top-6 right-6 text-red-300 hover:text-white p-3 rounded-[1rem] bg-transparent hover:bg-red-500 transition-all shadow-sm"
                           title="Remove"
                         >
-                          <FaTrash />
+                          <FaTrash className="text-sm" />
                         </button>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5 mt-4">
                           <div>
-                            <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Project Title</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Project Title</label>
                             <input
                               type="text"
                               value={proj.title}
                               onChange={(e) => handleProjectChange(index, "title", e.target.value)}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                              className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                               placeholder="My Awesome Project"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Project Link</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Project Link</label>
                             <input
                               type="url"
                               value={proj.projectLink}
                               onChange={(e) => handleProjectChange(index, "projectLink", e.target.value)}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                              className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                               placeholder="https://github.com/..."
                             />
                           </div>
                         </div>
 
-                        <div className="mb-4">
-                          <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Description</label>
+                        <div className="mb-5">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Description</label>
                           <textarea
                             value={proj.description}
                             onChange={(e) => handleProjectChange(index, "description", e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900 resize-none"
                             rows="3"
                             placeholder="Describe what you built and the impact it had..."
                           />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                           <div>
-                            <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Start Date</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Start Date</label>
                             <input
                               type="date"
                               value={formatDate(proj.startDate)}
                               onChange={(e) => handleProjectChange(index, "startDate", e.target.value)}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                              className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-bold text-gray-600 uppercase mb-2">End Date</label>
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">End Date</label>
                             <input
                               type="date"
                               value={formatDate(proj.endDate)}
                               onChange={(e) => handleProjectChange(index, "endDate", e.target.value)}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                              className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
                             />
                           </div>
                         </div>
 
                         {/* Tech Stack */}
                         <div>
-                          <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Tech Stack</label>
-                          <div className="flex gap-2 mb-3">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Tech Stack</label>
+                          <div className="flex gap-3 mb-4">
                             <select
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                              className="flex-1 px-5 py-3 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all font-bold text-gray-900 shadow-sm"
                               onChange={(e) => {
                                 addTechStack(index, e.target.value);
                                 e.target.value = "";
@@ -1015,14 +1015,14 @@ const EditProfile = () => {
                               {availableSkills.map((s, i) => <option key={i} value={s}>{s}</option>)}
                             </select>
                           </div>
-                          <div className="flex flex-wrap gap-2 min-h-[40px] p-3 border border-gray-200 rounded-lg bg-white">
+                          <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 border border-gray-100 rounded-[1.5rem] bg-[#fafafa]">
                             {proj.techStack?.length === 0 || !proj.techStack ? (
-                              <p className="text-sm text-gray-400 italic">No technologies added</p>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">No technologies added</p>
                             ) : (
                               proj.techStack.map((t, ti) => (
-                                <span key={ti} className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium border border-blue-200">
+                                <span key={ti} className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-[1rem] text-[10px] uppercase tracking-widest font-black shadow-sm transition-all hover:bg-blue-200 cursor-default">
                                   {t}
-                                  <FaTrash className="ml-2 cursor-pointer hover:text-blue-900" onClick={() => removeTechStack(index, t)} />
+                                  <FaTrash className="ml-3 text-[10px] cursor-pointer text-blue-400 hover:text-red-500 transition-colors" onClick={() => removeTechStack(index, t)} />
                                 </span>
                               ))
                             )}
@@ -1035,19 +1035,19 @@ const EditProfile = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <div className="flex justify-between items-center pt-8 mt-4 border-t border-gray-100 gap-4">
                 <button
                   onClick={() => setActiveTab('education')}
-                  className="px-6 py-3 text-gray-600 font-semibold hover:text-gray-900 transition-colors flex items-center gap-2"
+                  className="px-6 py-4 bg-[#fafafa] text-gray-600 hover:text-[#013e38] hover:bg-white border border-transparent hover:border-gray-100 rounded-[1.2rem] shadow-sm hover:shadow-md transition-all text-[10px] uppercase tracking-widest font-black flex items-center gap-2"
                 >
-                  <FaArrowLeft /> Back
+                  <FaArrowLeft className="text-sm" /> Back
                 </button>
                 <button
                   onClick={saveAllChanges}
-                  className="px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 text-lg"
+                  className="px-10 py-4 bg-[#013e38] text-white font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg hover:shadow-xl flex items-center gap-3 disabled:opacity-50"
                   disabled={loading}
                 >
-                  {loading ? "Saving..." : <><FaSave /> Save All & Finish</>}
+                  {loading ? "Saving..." : <><FaSave className="text-lg" /> Save All & Finish</>}
                 </button>
               </div>
             </div>

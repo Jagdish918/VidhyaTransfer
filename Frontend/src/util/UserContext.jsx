@@ -3,12 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { storeSanitizedUserData, getSanitizedUserData } from "./sanitizeUserData";
+import { io } from "socket.io-client";
 
 const UserContext = createContext();
 
 const UserContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [wasAccepted, setWasAccepted] = useState(false);
+  const socketRef = React.useRef(null);
 
   const navigate = useNavigate();
 
@@ -88,29 +93,34 @@ const UserContextProvider = ({ children }) => {
     fetchUserData();
   }, []); // navigate is stable, no need to include in deps
 
-  // Global Axios Interceptor for 401 (Session expired) and 403 (Banned) handling
+  // Global Axios Interceptor for 403 (Banned) handling
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        const status = error.response?.status;
-        const errorMessage = String(error.response?.data?.message || "").toLowerCase();
-
-        // ✅ FIX: Handle 401 — token expired or revoked (logout/ban/password reset on another device)
-        if (status === 401) {
-          setUser(null);
-          localStorage.removeItem("userInfo");
-          document.cookie = "hasSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-          navigate("/login");
-        }
-
-        // Handle 403 with ban-specific message
-        if (status === 403 && (errorMessage.includes("banned") || errorMessage.includes("suspended"))) {
-          toast.error("Your account has been banned. You have been logged out.");
-          setUser(null);
-          localStorage.removeItem("userInfo");
-          document.cookie = "hasSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-          navigate("/login");
+        if (error.response) {
+          if (error.response.status === 403) {
+            // Check for specific ban message if possible
+            const errorMessage = String(error.response.data?.message || "").toLowerCase();
+            if (errorMessage.includes("banned") || errorMessage.includes("suspended")) {
+              toast.error("Your account has been banned. You have been logged out.");
+              setUser(null);
+              localStorage.removeItem("userInfo");
+              // Clear cookies just in case (though httpOnly can't be cleared from JS, backend should clear them)
+              document.cookie = "hasSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+              navigate("/login");
+            }
+          } else if (error.response.status === 401) {
+            // If token has expired or is invalid, force logout
+            const errorMessage = String(error.response.data?.message || "").toLowerCase();
+            if (errorMessage.includes("login") || errorMessage.includes("expired") || errorMessage.includes("invalid")) {
+              toast.error("Session expired. Please log in again.");
+              setUser(null);
+              localStorage.removeItem("userInfo");
+              document.cookie = "hasSession=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+              navigate("/login");
+            }
+          }
         }
 
         return Promise.reject(error);
@@ -131,11 +141,84 @@ const UserContextProvider = ({ children }) => {
     }
   }, [user]);
 
+  // ✅ Socket Initialization
+  useEffect(() => {
+    if (!user) {
+      if (socketRef.current) {
+        console.log("[Socket] User logged out, disconnecting...");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
+      }
+      return;
+    }
+
+    if (socketRef.current) return;
+
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const host = window.location.hostname;
+    // Fallback for different dev environments
+    const backendUrl = host === 'localhost' ? `${protocol}//localhost:8000` : `${protocol}//${host}:8000`;
+
+    console.log(`[Socket] Initializing connection to ${backendUrl}...`);
+    
+    const newSocket = io(backendUrl, {
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+      forceNew: true // Ensures a fresh connection
+    });
+
+    newSocket.on("connect", () => {
+      console.log("[Socket] Connected! ID:", newSocket.id);
+      console.log("[Socket] Sending setup for user:", user.username);
+      newSocket.emit("setup", { userId: user._id, username: user.username });
+    });
+
+    newSocket.on("connected", () => {
+      console.log("[Socket] Backend confirmed setup!");
+    });
+
+    newSocket.on("connect_error", (err) => {
+      console.error("[Socket] Connection Error:", err.message);
+    });
+
+    newSocket.on("callUser", (data) => {
+      console.log("[Socket] GLOBAL INCOMING CALL RECEIVED from:", data.name);
+      console.log("[Socket] Signal snapshot:", data.signal ? "Present" : "Missing");
+      setIncomingCall(data);
+    });
+
+    newSocket.on("callEnded", () => {
+      console.log("[Socket] Global Call Ended signal");
+      setIncomingCall(null);
+    });
+
+    socketRef.current = newSocket;
+    setSocket(newSocket);
+
+    return () => {
+        // We keep the socket alive during minor re-renders. 
+        // It only disconnects if the user object changes (logout).
+    };
+  }, [user]);
+
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
   }
 
-  return <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={{ 
+      user, 
+      setUser, 
+      socket, 
+      incomingCall, 
+      setIncomingCall,
+      wasAccepted,
+      setWasAccepted
+    }}>
+      {children}
+    </UserContext.Provider>
+  );
 };
 
 const useUser = () => {

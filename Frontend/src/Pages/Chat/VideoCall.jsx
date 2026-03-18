@@ -13,8 +13,14 @@ import {
     FaUsers,
     FaCommentAlt,
     FaExpand,
-    FaCog
+    FaCog,
+    FaHandPaper,
+    FaRegDotCircle,
+    FaCircle,
+    FaSmile
 } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall }) => {
     const [stream, setStream] = useState(null);
@@ -24,7 +30,14 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
+    const [showParticipants, setShowParticipants] = useState(false);
     const [callDuration, setCallDuration] = useState(0);
+    const [isRecording, setIsRecording] = useState(false);
+    const [handRaised, setHandRaised] = useState(false);
+    const [partnerHandRaised, setPartnerHandRaised] = useState(false);
+    const [reactions, setReactions] = useState([]); // Array of { id, emoji, x, y }
+    const [mediaRecorder, setMediaRecorder] = useState(null);
+    const [recordedChunks, setRecordedChunks] = useState([]);
 
     const myVideo = useRef();
     const userVideo = useRef();
@@ -76,22 +89,66 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
             stopStream(streamRef.current);
             stopStream(screenStreamRef.current);
         }
-    }, [activeCall, incomingCall]);
+    }, []); // Only init once on mount
+
+    // Handle Socket Listeners for the Call Session
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleCallAccepted = (signal) => {
+            console.log("[VideoCall] Call Accepted");
+            setCallAccepted(true);
+            if (connectionRef.current) {
+                connectionRef.current.signal(signal);
+            }
+        };
+
+        const handleCallEnded = () => {
+            console.log("[VideoCall] Call ended by partner");
+            setCallEnded(true);
+            onEndCall();
+        };
+
+        const handleHandRaise = ({ raised }) => {
+            setPartnerHandRaised(raised);
+            if (raised) toast.info(`${partner.name} raised their hand`);
+        };
+
+        const handleReaction = ({ emoji }) => {
+            const id = Date.now() + Math.random();
+            setReactions(prev => [...prev.slice(-10), { id, emoji, x: 20 + Math.random() * 60 }]);
+            setTimeout(() => {
+                setReactions(prev => prev.filter(r => r.id !== id));
+            }, 3000);
+        };
+
+        socket.on("callAccepted", handleCallAccepted);
+        socket.on("callEnded", handleCallEnded);
+        socket.on("partnerHandRaised", handleHandRaise);
+        socket.on("partnerReaction", handleReaction);
+
+        return () => {
+            socket.off("callAccepted", handleCallAccepted);
+            socket.off("callEnded", handleCallEnded);
+            socket.off("partnerHandRaised", handleHandRaise);
+            socket.off("partnerReaction", handleReaction);
+        };
+    }, [socket, partner, onEndCall]);
 
     // Handle Initiating Call
     useEffect(() => {
-        if (activeCall && stream) {
+        if (activeCall && stream && !connectionRef.current) {
+            console.log("[VideoCall] Initiating call to:", partner.id);
             const peer = new Peer({ initiator: true, trickle: false, stream });
 
             peer.on("signal", (data) => {
-                if (partner && partner.id) {
-                    socket.emit("callUser", {
-                        userToCall: partner.id,
-                        signalData: data,
-                        from: user._id,
-                        name: user.name
-                    });
-                }
+                socket.emit("callUser", {
+                    userToCall: partner.id,
+                    signalData: data,
+                    from: user._id,
+                    name: user.name,
+                    avatar: user.picture
+                });
             });
 
             peer.on("stream", (currentStream) => {
@@ -100,23 +157,14 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                 }
             });
 
-            socket.on("callAccepted", (signal) => {
-                setCallAccepted(true);
-                peer.signal(signal);
-            });
-
-            socket.on("callEnded", () => {
-                console.log("Call ended by partner");
-                setCallEnded(true);
-                onEndCall();
-            });
-
             connectionRef.current = peer;
         }
-    }, [activeCall, stream]);
+    }, [activeCall, stream, partner, socket, user]);
 
     // Handle Incoming Call Acceptance
     const answerCall = () => {
+        if (!stream || !incomingCall) return;
+        console.log("[VideoCall] Answering call from:", incomingCall.from);
         setCallAccepted(true);
         const peer = new Peer({ initiator: false, trickle: false, stream });
 
@@ -133,6 +181,14 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
         peer.signal(incomingCall.signal);
         connectionRef.current = peer;
     };
+
+    // Auto-answer if stream is ready
+    useEffect(() => {
+        if (incomingCall && stream && !callAccepted && !activeCall) {
+            console.log("[VideoCall] Auto-triggering answerCall because stream is ready");
+            answerCall();
+        }
+    }, [incomingCall, stream, callAccepted, activeCall]);
 
     const leaveCall = () => {
         console.log("Leaving call...");
@@ -155,6 +211,73 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
             streamRef.current.getAudioTracks().forEach(track => track.enabled = !nextMute);
         }
     }
+
+    const toggleHandRaise = () => {
+        const nextState = !handRaised;
+        setHandRaised(nextState);
+        socket.emit("raiseHand", { to: partner.id, raised: nextState });
+    };
+
+    const sendReaction = (emoji) => {
+        socket.emit("sendReaction", { to: partner.id, emoji });
+        const id = Date.now() + Math.random();
+        setReactions(prev => [...prev.slice(-10), { id, emoji, x: 20 + Math.random() * 60 }]);
+        setTimeout(() => {
+            setReactions(prev => prev.filter(r => r.id !== id));
+        }, 3000);
+    };
+
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    const startRecording = () => {
+        if (!streamRef.current || !userVideo.current?.srcObject) {
+            toast.error("No stream found to record");
+            return;
+        }
+
+        const chunks = [];
+        // Combine audio and video streams if possible, or just video
+        const combinedStream = new MediaStream([
+            ...streamRef.current.getTracks(),
+            ...(userVideo.current.srcObject.getTracks())
+        ]);
+
+        const recorder = new MediaRecorder(combinedStream);
+        recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunks.push(e.data);
+        };
+        recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `meeting_record_${Date.now()}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success("Recording saved successfully");
+        };
+
+        recorder.start();
+        setMediaRecorder(recorder);
+        setIsRecording(true);
+        toast.info("Recording started");
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            setIsRecording(false);
+            setMediaRecorder(null);
+        }
+    };
 
     const toggleVideo = () => {
         const nextVideoOff = !isVideoOff;
@@ -247,7 +370,7 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
             <div className="relative w-full h-full flex flex-col md:flex-row p-4 md:p-6 pb-24 md:pb-28">
 
                 {/* Main Content Area (Partner Video) */}
-                <div className="relative flex-1 bg-[#3c4043] rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center group overflow-hidden">
+                <div className="relative flex-1 bg-[#3c4043] rounded-2xl flex items-center justify-center group overflow-hidden shadow-2xl">
                     {callAccepted && !callEnded ? (
                         <video
                             playsInline
@@ -279,8 +402,29 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                         <div className="absolute bottom-6 left-6 flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-xl text-white font-semibold text-sm border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
                             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
                             {partner?.name}
+                            {partnerHandRaised && (
+                                <span className="bg-amber-500 text-white p-1 rounded-md animate-bounce">
+                                    <FaHandPaper size={12} />
+                                </span>
+                            )}
                         </div>
                     )}
+
+                    {/* Floating Reactions Layer */}
+                    <AnimatePresence>
+                        {reactions.map(r => (
+                            <motion.div
+                                key={r.id}
+                                initial={{ y: '100vh', opacity: 0, x: `${r.x}vw` }}
+                                animate={{ y: '-10vh', opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 3, ease: 'easeOut' }}
+                                className="absolute pointer-events-none text-4xl z-[150]"
+                            >
+                                {r.emoji}
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
                 </div>
 
                 {/* Local Video - Picture in Picture Style */}
@@ -315,7 +459,12 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
 
                         {/* Overlay Controls for Local View */}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                            <button className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all"><FaExpand size={14} /></button>
+                            <button onClick={toggleFullscreen} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all"><FaExpand size={14} /></button>
+                            {handRaised && (
+                                <div className="p-2 bg-amber-500 rounded-full text-white shadow-lg animate-pulse">
+                                    <FaHandPaper size={14} />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -365,6 +514,36 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                         </span>
                     </button>
 
+                    {/* Hand Raise */}
+                    <button
+                        onClick={toggleHandRaise}
+                        className={`group relative p-3.5 md:p-4 rounded-full transition-all duration-300 ${handRaised
+                            ? 'bg-amber-400 text-amber-900'
+                            : 'bg-[#3c4043] hover:bg-[#4a4e51] text-white'
+                            }`}
+                        title="Raise Hand"
+                    >
+                        <FaHandPaper className="text-lg md:text-xl" />
+                        <span className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-gray-800 text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-8 after:border-transparent after:border-t-gray-800">
+                            {handRaised ? "Lower Hand" : "Raise Hand"}
+                        </span>
+                    </button>
+
+                    {/* Recording Toggle */}
+                    <button
+                        onClick={isRecording ? stopRecording : startRecording}
+                        className={`group relative p-3.5 md:p-4 rounded-full transition-all duration-300 ${isRecording
+                            ? 'bg-red-600 text-white animate-pulse'
+                            : 'bg-[#3c4043] hover:bg-[#4a4e51] text-white'
+                            }`}
+                        title={isRecording ? "Stop Recording" : "Start Recording"}
+                    >
+                        {isRecording ? <FaCircle className="text-xs" /> : <FaRegDotCircle className="text-xl" />}
+                        <span className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-gray-800 text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-8 after:border-transparent after:border-t-gray-800">
+                            {isRecording ? "Stop Recording" : "Record Call"}
+                        </span>
+                    </button>
+
                     {/* Screen Share */}
                     <button
                         onClick={handleScreenShare}
@@ -380,13 +559,18 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                         </span>
                     </button>
 
-                    {/* Settings / Cog */}
-                    <button className="hidden sm:flex group relative p-3.5 md:p-4 rounded-full bg-[#3c4043] hover:bg-[#4a4e51] text-white transition-all duration-300">
-                        <FaCog size={20} />
-                        <span className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-gray-800 text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-8 after:border-transparent after:border-t-gray-800">
-                            More options
-                        </span>
-                    </button>
+                    {/* Reactions - Quick Emoji Bar */}
+                    <div className="hidden lg:flex items-center bg-[#3c4043] rounded-full px-2 py-1 gap-1 border border-white/5">
+                        {['👍', '🔥', '❤️', '👏', '😂'].map(emoji => (
+                            <button
+                                key={emoji}
+                                onClick={() => sendReaction(emoji)}
+                                className="hover:bg-white/10 p-2 rounded-full transition-colors text-lg"
+                            >
+                                {emoji}
+                            </button>
+                        ))}
+                    </div>
 
                     {/* End Call */}
                     <button
@@ -404,46 +588,54 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                 {/* Right: Feature Toggles */}
                 <div className="hidden md:flex items-center gap-2 w-1/4 justify-end">
                     <button
-                        onClick={() => setShowDetails(!showDetails)}
+                        onClick={() => { setShowDetails(!showDetails); setShowParticipants(false); }}
                         className={`p-3 rounded-full transition-colors ${showDetails ? 'bg-[#8ab4f8]/20 text-[#8ab4f8]' : 'text-gray-400 hover:bg-white/5'}`}
+                        title="Meeting Details"
                     >
                         <FaInfoCircle size={22} />
                     </button>
-                    <button className="p-3 text-gray-400 hover:bg-white/5 rounded-full transition-colors"><FaUsers size={22} /></button>
-                    <button className="p-3 text-gray-400 hover:bg-white/5 rounded-full transition-colors"><FaCommentAlt size={20} /></button>
+                    <button 
+                        onClick={() => { setShowParticipants(!showParticipants); setShowDetails(false); }}
+                        className={`p-3 rounded-full transition-colors ${showParticipants ? 'bg-[#8ab4f8]/20 text-[#8ab4f8]' : 'text-gray-400 hover:bg-white/5'}`}
+                        title="Participants"
+                    >
+                        <FaUsers size={22} />
+                    </button>
+                    <button className="p-3 text-gray-400 hover:bg-white/5 rounded-full transition-colors" title="Chat"><FaCommentAlt size={20} /></button>
                 </div>
             </div>
 
-            {/* Meeting Details Sidebar (Slide In) */}
+            {/* Participants Sidebar (Slide In) */}
             <div className={`
                 fixed top-0 right-0 bottom-24 w-80 bg-white shadow-2xl z-[120] transition-transform duration-500 ease-in-out p-6 rounded-l-3xl
-                ${showDetails ? 'translate-x-0' : 'translate-x-full'}
+                ${showParticipants ? 'translate-x-0' : 'translate-x-full'}
             `}>
                 <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-800">Meeting Details</h2>
-                    <button onClick={() => setShowDetails(false)} className="text-gray-400 hover:text-gray-600 text-2xl font-light">×</button>
+                    <h2 className="text-2xl font-bold text-gray-800">Participants</h2>
+                    <button onClick={() => setShowParticipants(false)} className="text-gray-400 hover:text-gray-600 text-2xl font-light">×</button>
                 </div>
 
-                <div className="space-y-6">
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Joining info</p>
-                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <p className="text-sm font-medium text-gray-800 mb-1">Meet Link</p>
-                            <p className="text-xs text-blue-600 truncate break-all">https://peer-swap.com/meeting/{partner?.id || 'room'}</p>
+                <div className="space-y-4">
+                    {/* Partner */}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-3">
+                            <img src={partner?.avatar} className="w-10 h-10 rounded-full object-cover" alt="" />
+                            <p className="font-bold text-gray-900 text-sm">{partner?.name}</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-400">
+                            <FaMicrophone size={12} />
+                            <FaVideo size={12} />
                         </div>
                     </div>
-
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Participant</p>
-                        <div className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer">
-                            <img src={partner?.avatar} className="w-12 h-12 rounded-full object-cover shadow-sm" alt="" />
-                            <div>
-                                <p className="font-bold text-gray-900">{partner?.name}</p>
-                                <p className="text-xs text-green-500 font-medium flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                    In the call
-                                </p>
-                            </div>
+                    {/* You */}
+                    <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                        <div className="flex items-center gap-3">
+                            <img src={user?.picture} className="w-10 h-10 rounded-full object-cover" alt="" />
+                            <p className="font-bold text-blue-900 text-sm">You (Host)</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-blue-400">
+                            {isMuted ? <FaMicrophoneSlash size={12} className="text-red-400" /> : <FaMicrophone size={12} />}
+                            {isVideoOff ? <FaVideoSlash size={12} className="text-red-400" /> : <FaVideo size={12} />}
                         </div>
                     </div>
                 </div>

@@ -49,11 +49,11 @@ const SkillGain = () => {
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#3bb4a1]/5 rounded-bl-[6rem] -mr-6 -mt-6 transition-all duration-700 group-hover:bg-[#3bb4a1]/10 group-hover:scale-110" />
 
       {/* Recommended Badge */}
-      {mentor.relevanceScore > 0 && (
+      {mentor.matchScore > 0 && (
         <div className="absolute top-6 left-6 z-20">
-          <span className="bg-[#3bb4a1] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-[#3bb4a1]/20 flex items-center gap-1.5">
+          <span className="bg-gradient-to-r from-[#3bb4a1] to-[#013e38] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-[#3bb4a1]/20 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-            Recommended
+            Skill Match
           </span>
         </div>
       )}
@@ -90,13 +90,13 @@ const SkillGain = () => {
       <div className="mt-auto pt-5 border-t border-gray-50 flex justify-between items-center relative z-10">
         <div>
           <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1.5">Mentorship</p>
-          <p className="text-[#3bb4a1] font-black text-lg">{mentor.preferences?.rates?.mentorship || 0}<span className="text-[10px] ml-1 font-bold">Cr/hr</span></p>
+          <p className="text-[#3bb4a1] font-black text-lg">{mentor.preferences?.rates?.mentorship || 0}<span className="text-[10px] ml-1 font-bold">Credits/hour</span></p>
         </div>
         <Link
           to={`/profile/${mentor.username}`}
           className="bg-[#013e38] text-white text-[9px] uppercase font-black tracking-[0.2em] px-6 py-3 rounded-xl hover:bg-[#3bb4a1] hover:shadow-[0_15px_30px_rgba(59,180,161,0.3)] transition-all no-underline flex items-center gap-2 group/btn"
         >
-          Explore <FaArrowRight size={8} className="group-hover/btn:translate-x-1 transition-transform" />
+          Connect <FaArrowRight size={8} className="group-hover/btn:translate-x-1 transition-transform" />
         </Link>
       </div>
     </motion.div>

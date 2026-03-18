@@ -272,6 +272,15 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    dailyQuiz: {
+      streak: { type: Number, default: 0 },
+      lastAttemptDate: { type: Date, default: null },
+      lastGeneratedDate: { type: Date, default: null },
+      currentQuestion: {
+        type: Object,
+        default: null, // { question: "", options: [], correctAnswer: 0 }
+      }
+    }
   },
   { timestamps: true }
 );

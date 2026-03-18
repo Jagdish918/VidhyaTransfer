@@ -107,7 +107,7 @@ const Utilization = () => {
                 <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center relative z-10">
                     <div>
                         <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">{label}</p>
-                        <p className="text-[#3bb4a1] font-black text-base">{rate || 0}<span className="text-[10px] ml-1 font-bold">Cr</span></p>
+                        <p className="text-[#3bb4a1] font-black text-base">{rate || 0}<span className="text-[10px] ml-1 font-bold">Credits</span></p>
                     </div>
                     <Link
                         to={`/profile/${user.username}`}

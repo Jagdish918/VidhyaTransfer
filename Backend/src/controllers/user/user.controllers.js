@@ -699,17 +699,21 @@ export const uploadVid = asyncHandler(async (req, res) => {
 
 
 export const discoverUsers = asyncHandler(async (req, res) => {
+  console.log("******** Inside discoverUsers Function *******");
+
   const page = parseInt(req.query.page) || 1;
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
   const currentUser = req.user;
-  const myTeachableSkills = currentUser.skillsProficientAt.map(s => s.name);
-  const myWantedSkills = currentUser.skillsToLearn.map(s => s.name);
+  if (!currentUser) throw new ApiError(401, "Unauthorized access");
 
-  // Base query: excluded self, banned, deleted
-  const baseQuery = {
+  const myTeachableSkills = (currentUser.skillsProficientAt || []).map(s => s.name);
+  const myWantedSkills = (currentUser.skillsToLearn || []).map(s => s.name);
+
+  // Base match query
+  const matchQuery = {
     username: { $ne: currentUser.username },
     role: { $ne: "admin" },
     status: { $nin: ["banned", "deleted"] },
@@ -719,40 +723,36 @@ export const discoverUsers = asyncHandler(async (req, res) => {
   if (search) {
     const safeSearch = escapeRegex(search.slice(0, 100));
     const searchRegex = new RegExp(safeSearch, "i");
-    baseQuery.$or = [
+    matchQuery.$or = [
       { name: searchRegex },
       { username: searchRegex },
       { "skillsProficientAt.name": searchRegex }
     ];
   }
 
-  // We use aggregation to add a "matchScore"
-  // Match Score Calculation:
-  // +2 for each skill they teach that I want to learn
-  // +1 for each skill they want to learn that I teach
-  // This prioritizes users who can actually help me (Mutual Swap)
-  
+  // Aggregation for scoring and sorting
   const users = await User.aggregate([
-    { $match: baseQuery },
+    { $match: matchQuery },
     {
       $addFields: {
+        // How many skills they offer that I want
+        wantMatchCount: {
+          $size: { $setIntersection: ["$skillsProficientAt.name", myWantedSkills] }
+        },
+        // How many skills I offer that they want
+        teachMatchCount: {
+          $size: { $setIntersection: ["$skillsToLearn.name", myTeachableSkills] }
+        }
+      }
+    },
+    {
+      $addFields: {
+        // High score for mutual match, medium for "they have what I want"
         matchScore: {
           $add: [
-            {
-              $multiply: [
-                {
-                  $size: {
-                    $setIntersection: ["$skillsProficientAt.name", myWantedSkills]
-                  }
-                },
-                2 // Higher weight for what they teach and I want
-              ]
-            },
-            {
-              $size: {
-                $setIntersection: ["$skillsToLearn.name", myTeachableSkills]
-              }
-            }
+            { $cond: [{ $and: [{ $gt: ["$wantMatchCount", 0] }, { $gt: ["$teachMatchCount", 0] }] }, 10, 0] },
+            { $multiply: ["$wantMatchCount", 5] },
+            { $multiply: ["$teachMatchCount", 2] }
           ]
         }
       }
@@ -762,17 +762,12 @@ export const discoverUsers = asyncHandler(async (req, res) => {
     { $limit: limit },
     {
       $project: {
-        password: 0,
-        phone: 0,
-        personalInfo: 0,
-        resetPasswordToken: 0,
-        resetPasswordExpires: 0,
-        __v: 0
+        password: 0, phone: 0, personalInfo: 0, resetPasswordToken: 0, resetPasswordExpires: 0, __v: 0, email: 0
       }
     }
   ]);
 
-  const total = await User.countDocuments(baseQuery);
+  const total = await User.countDocuments(matchQuery);
 
   return res.status(200).json(
     new ApiResponse(
@@ -785,7 +780,7 @@ export const discoverUsers = asyncHandler(async (req, res) => {
           total
         }
       },
-      "Recommended users fetched successfully"
+      "Peers discovered successfully"
     )
   );
 });
@@ -839,9 +834,9 @@ export const getSkillGainExperts = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const currentUser = req.user;
-  const myWantedSkills = currentUser.skillsToLearn.map(s => s.name);
+  const myWantedSkills = (currentUser.skillsToLearn || []).map(s => s.name);
 
-  const baseQuery = {
+  const matchQuery = {
     username: { $ne: currentUser.username },
     status: { $nin: ["banned", "deleted"] },
     isDeleted: { $ne: true },
@@ -849,47 +844,32 @@ export const getSkillGainExperts = asyncHandler(async (req, res) => {
   };
 
   if (search) {
-    baseQuery["skillsProficientAt.name"] = { $regex: escapeRegex(search.slice(0, 100)), $options: "i" };
+    matchQuery["skillsProficientAt.name"] = { $regex: escapeRegex(search.slice(0, 100)), $options: "i" };
   }
 
-  // Use aggregation to prioritize experts who teach what I want to learn
   const users = await User.aggregate([
-    { $match: baseQuery },
+    { $match: matchQuery },
     {
       $addFields: {
-        relevanceScore: {
-          $size: {
-            $setIntersection: ["$skillsProficientAt.name", myWantedSkills]
-          }
+        matchScore: {
+          $size: { $setIntersection: ["$skillsProficientAt.name", myWantedSkills] }
         }
       }
     },
-    { $sort: { relevanceScore: -1, rating: -1 } },
+    { $sort: { matchScore: -1, rating: -1, createdAt: -1 } },
     { $skip: skip },
     { $limit: limit },
     {
       $project: {
-        name: 1,
-        username: 1,
-        picture: 1,
-        skillsProficientAt: 1,
-        "preferences.rates.mentorship": 1,
-        rating: 1
+        name: 1, username: 1, picture: 1, skillsProficientAt: 1, "preferences.rates.mentorship": 1, rating: 1, matchScore: 1
       }
     }
   ]);
 
-  const total = await User.countDocuments(baseQuery);
+  const total = await User.countDocuments(matchQuery);
 
   return res.status(200).json(
-    new ApiResponse(
-      200, 
-      { 
-        users, 
-        pagination: { current: page, pages: Math.ceil(total / limit), total } 
-      }, 
-      "Mentors matched to your goals fetched successfully"
-    )
+    new ApiResponse(200, { users, pagination: { current: page, pages: Math.ceil(total / limit), total } }, "Mentors fetched successfully")
   );
 });
 

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from "axios";
 import { useUser } from "../../util/UserContext";
-import { FaVideo, FaSearch, FaPaperPlane, FaCalendarAlt, FaTrash, FaReply, FaTimes } from "react-icons/fa";
+import { FaVideo, FaSearch, FaPaperPlane, FaCalendarAlt, FaTrash, FaReply, FaTimes, FaCoins } from "react-icons/fa";
+import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 import InfiniteScroll from "react-infinite-scroll-component";
 import VideoCall from "./VideoCall";
@@ -11,7 +12,7 @@ import ScheduleMeeting from "./ScheduleMeeting";
 const EMOJIS = ['❤️', '😂', '😮', '😢', '👍', '🙏'];
 
 const Chat = () => {
-    const { user } = useUser();
+    const { user, setUser, socket, incomingCall, setIncomingCall, wasAccepted, setWasAccepted } = useUser();
     const [chats, setChats] = useState([]);
     const [selectedChatId, setSelectedChatId] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -28,23 +29,18 @@ const Chat = () => {
     const [emojiPickerFor, setEmojiPickerFor] = useState(null); // msgId
 
     const messagesEndRef = useRef(null);
-    const contextMenuRef = useRef(null);
-
-    const [socket, setSocket] = useState(null);
+    const contextMenuRef = useRef(null); // Socket Initialization moved to UserContext
     const [activeCall, setActiveCall] = useState(false);
-    const [incomingCall, setIncomingCall] = useState(null);
     const [isScheduleOpen, setIsScheduleOpen] = useState(false);
 
-    // Socket Initialization
+    // Auto-answer if arrived via notification
     useEffect(() => {
-        const newSocket = io("http://localhost:8000");
-        setSocket(newSocket);
-        newSocket.emit("setup", user);
-        newSocket.on("connected", () => console.log("Socket connected"));
-        newSocket.on("callUser", (data) => setIncomingCall(data));
-        newSocket.on("callEnded", () => { setIncomingCall(null); setActiveCall(false); });
-        return () => newSocket.disconnect();
-    }, [user]);
+        if (wasAccepted && incomingCall) {
+            console.log("[Chat] Auto-accepting call from notification");
+            setActiveCall(true);
+            setWasAccepted(false);
+        }
+    }, [wasAccepted, incomingCall, setWasAccepted]);
 
     // Close context menu on outside click
     useEffect(() => {
@@ -246,6 +242,56 @@ const Chat = () => {
         }
     };
 
+    // ── Transfer Credits ──────────────────────────────────────
+    const handleTransferCredits = async () => {
+        if (!selectedChatId || !partner._id) return;
+
+        const amount = prompt(`How many credits would you like to pay to ${partner.name}?`);
+        if (!amount || isNaN(amount) || Number(amount) <= 0) {
+            if (amount !== null) toast.error("Please enter a valid amount");
+            return;
+        }
+
+        try {
+            const { data } = await axios.post("http://localhost:8000/payment/transfer-credits", {
+                receiverId: partner._id,
+                amount: Number(amount)
+            }, { withCredentials: true });
+
+            if (data.success) {
+                toast.success(`Successfully paid ${amount} credits to ${partner.name}`);
+                
+                // Update local user state if setUser is available
+                if (setUser && data.senderCredits !== undefined) {
+                    setUser(prev => ({ ...prev, credits: data.senderCredits }));
+                }
+                
+                // Send a message to the chat about the payment
+                const paymentMessage = `💰 Sent ${amount} credits to ${partner.name}`;
+                const tempId = Date.now();
+                const optimisticMessage = {
+                    _id: tempId,
+                    content: paymentMessage,
+                    sender: { _id: user._id, name: user.name, picture: user.picture },
+                    reactions: [],
+                    createdAt: new Date().toISOString()
+                };
+                
+                setMessages(prev => [optimisticMessage, ...prev]);
+                
+                const msgRes = await axios.post("http://localhost:8000/message/sendMessage", {
+                    chatId: selectedChatId,
+                    content: paymentMessage
+                }, { withCredentials: true });
+                
+                setMessages(prev => prev.map(msg => msg._id === tempId ? msgRes.data.data : msg));
+            }
+        } catch (error) {
+            console.error("Error transferring credits:", error);
+            toast.error(error.response?.data?.message || "Failed to transfer credits");
+        }
+    };
+
     // ── Right-click / long-press context menu ─────────────────
     const handleMessageContextMenu = (e, msg, isMe) => {
         e.preventDefault();
@@ -271,8 +317,8 @@ const Chat = () => {
     );
 
     const videoCallPartner = incomingCall
-        ? { id: incomingCall.from, name: incomingCall.name, avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png" }
-        : { id: getChatPartner(activeChat)._id, name: getChatPartner(activeChat).name, avatar: getChatPartner(activeChat).avatar };
+        ? { id: incomingCall.from, name: incomingCall.name, avatar: incomingCall.avatar || "https://ui-avatars.com/api/?background=random" }
+        : { id: getChatPartner(activeChat)._id, name: getChatPartner(activeChat).name, avatar: getChatPartner(activeChat).picture || getChatPartner(activeChat).avatar };
 
     return (
         <div className="h-[calc(100vh-65px)] bg-gray-50 flex flex-col p-4 md:p-6 overflow-hidden">
@@ -400,6 +446,9 @@ const Chat = () => {
                                     </div>
                                 </Link>
                                 <div className="flex gap-2">
+                                    <button onClick={handleTransferCredits} className="px-3 py-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors flex items-center gap-2 text-xs font-semibold">
+                                        <FaCoins /> Pay Credits
+                                    </button>
                                     <button onClick={() => setIsScheduleOpen(true)} className="px-3 py-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-2 text-xs font-semibold">
                                         <FaCalendarAlt /> Schedule
                                     </button>

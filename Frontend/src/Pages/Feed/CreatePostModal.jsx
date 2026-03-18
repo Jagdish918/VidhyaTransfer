@@ -106,11 +106,11 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
 
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 transition-all duration-300" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-fadeIn flex flex-col max-h-[90vh] border border-gray-100"
+        className="bg-[#fafafa] rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.1)] w-full max-w-xl overflow-hidden animate-fadeIn flex flex-col max-h-[90vh] border border-gray-50"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 flex-shrink-0">
-          <h2 className="text-lg font-bold text-gray-800">Create Post</h2>
+        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100 bg-white flex-shrink-0">
+          <h2 className="text-xl font-black text-gray-900 tracking-tight">Create Post</h2>
           <button
             className="text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none cursor-pointer p-2 hover:bg-gray-50 rounded-full"
             onClick={onClose}
@@ -123,15 +123,15 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
           {/* Post Type Selector */}
           <div className="mb-6">
             <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Category</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {postTypes.slice(0, 4).map(type => (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setPostType(type)}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold transition-all border ${postType === type
-                    ? "bg-[#3f51b5] text-white border-[#3f51b5]"
-                    : "bg-white text-gray-500 border-gray-200 hover:border-[#3f51b5] hover:text-[#3f51b5]"
+                  className={`px-5 py-2.5 rounded-[1.2rem] text-[9px] uppercase font-black tracking-widest transition-all border-2 ${postType === type
+                    ? "bg-[#013e38] text-white border-[#013e38] shadow-lg shadow-[#013e38]/20"
+                    : "bg-white text-gray-400 border-transparent hover:border-gray-100 hover:text-gray-900"
                     }`}
                 >
                   {type}
@@ -147,7 +147,7 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
               placeholder="Share what's on your mind..."
               rows="4"
               maxLength={1000}
-              className="w-full text-base text-gray-700 placeholder-gray-400 bg-transparent border-none focus:ring-0 p-0 resize-none outline-none leading-relaxed"
+              className="w-full text-lg font-medium text-gray-900 placeholder-gray-300 bg-transparent border-none focus:ring-0 p-2 resize-none outline-none leading-relaxed"
             />
             {attachments.length > 0 && (
               <div className="grid grid-cols-2 gap-3 mt-4">
@@ -176,21 +176,21 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             )}
           </div>
 
-          <div className="flex items-center gap-3 py-4 border-t border-gray-50 mb-6 flex-shrink-0">
+          <div className="flex items-center gap-4 py-5 border-t border-gray-100 mb-6 flex-shrink-0">
             <button
               type="button"
               onClick={() => fileInputRef.current.click()}
-              className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all border border-transparent group"
+              className="flex items-center gap-3 px-5 py-3 text-gray-500 hover:text-gray-900 bg-white hover:bg-white rounded-[1.2rem] transition-all border-2 border-transparent hover:border-gray-50 shadow-sm group"
             >
-              <FaImage size={16} className="text-blue-500" />
-              <span className="text-xs font-bold">Photo / Video</span>
+              <FaImage size={18} className="text-[#3bb4a1]" />
+              <span className="text-[10px] uppercase font-black tracking-widest">Photo / Video</span>
             </button>
             <button
               type="button"
-              className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all border border-transparent group"
+              className="flex items-center gap-3 px-5 py-3 text-gray-500 hover:text-gray-900 bg-white hover:bg-white rounded-[1.2rem] transition-all border-2 border-transparent hover:border-gray-50 shadow-sm group hidden"
             >
-              <FaPaperclip size={16} className="text-purple-500" />
-              <span className="text-xs font-bold">File</span>
+              <FaPaperclip size={18} className="text-[#013e38]" />
+              <span className="text-[10px] uppercase font-black tracking-widest">File</span>
             </button>
 
             <input
@@ -203,17 +203,17 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             />
           </div>
 
-          <div className="flex justify-end gap-3 flex-shrink-0 mt-auto pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-4 flex-shrink-0 mt-auto pt-6 border-t border-gray-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-all text-xs uppercase tracking-wide"
+              className="px-8 py-3.5 text-gray-400 font-black hover:text-gray-900 bg-transparent hover:bg-gray-100/50 rounded-[1.2rem] transition-all text-[10px] uppercase tracking-[0.2em]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-8 py-2.5 bg-[#3f51b5] text-white font-bold rounded-xl hover:bg-[#303f9f] shadow-md transition-all disabled:opacity-50 text-xs uppercase tracking-wide"
+              className="px-10 py-3.5 bg-[#013e38] text-white font-black rounded-[1.2rem] hover:bg-[#3bb4a1] shadow-xl shadow-[#013e38]/20 hover:shadow-[#3bb4a1]/30 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
               disabled={loading}
             >
               {loading ? "Posting..." : "Post"}

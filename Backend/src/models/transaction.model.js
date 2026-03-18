@@ -9,8 +9,9 @@ const transactionSchema = new Schema(
         },
         orderId: {
             type: String,
-            required: true,
+            required: false,
             unique: true,
+            sparse: true,
         },
         paymentId: {
             type: String,
@@ -26,8 +27,12 @@ const transactionSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ["created", "paid", "failed"],
+            enum: ["created", "paid", "failed", "transfer_sent", "transfer_received"],
             default: "created",
+        },
+        description: {
+            type: String,
+            default: "",
         },
     },
     { timestamps: true }

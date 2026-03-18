@@ -46,8 +46,13 @@ const PeerSwap = () => {
         search: debouncedSearch
       });
 
-      const discoverRes = await axios.get(`http://localhost:8000/user/discover?${queryParams}`, { withCredentials: true });
-      const { users, pagination } = discoverRes.data.data;
+      const discoverRes = await axios.get(`/user/discover?${queryParams}`, { withCredentials: true });
+      const responseData = discoverRes.data?.data || {};
+      const users = responseData.users || [];
+      const pagination = responseData.pagination || { pages: 1 };
+
+      console.log("Fetched PeerSwap Users:", users.length, "Pagination:", pagination);
+      console.log("Fetched Users:", users, "Total Pages:", pagination.pages);
 
       if (pageNum === 1) {
         setPeers(users);
@@ -73,7 +78,7 @@ const PeerSwap = () => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const chatRes = await axios.get("http://localhost:8000/chat", { withCredentials: true });
+        const chatRes = await axios.get("/chat", { withCredentials: true });
         setExistingChats(chatRes.data.data || []);
       } catch (err) {
         console.warn("Could not fetch chats", err);
@@ -91,7 +96,7 @@ const PeerSwap = () => {
   useEffect(() => {
     const fetchSentRequests = async () => {
       try {
-        const { data } = await axios.get("http://localhost:8000/request/getSentRequests", { withCredentials: true });
+        const { data } = await axios.get("/request/getSentRequests", { withCredentials: true });
         if (data.success) {
           const sentIds = new Set(data.data.map(req => req.receiver));
           setSentRequests(sentIds);
@@ -105,7 +110,7 @@ const PeerSwap = () => {
 
   const handleConnect = async (peerId) => {
     try {
-      await axios.post("http://localhost:8000/request/create", { receiverID: peerId }, { withCredentials: true });
+      await axios.post("/request/create", { receiverID: peerId }, { withCredentials: true });
       toast.success("Connection request sent!");
       setSentRequests(prev => new Set(prev).add(peerId));
     } catch (error) {
@@ -121,7 +126,7 @@ const PeerSwap = () => {
 
   const handleUnsendRequest = async (peerId) => {
     try {
-      await axios.post("http://localhost:8000/request/cancel", { receiverID: peerId }, { withCredentials: true });
+      await axios.post("/request/cancel", { receiverID: peerId }, { withCredentials: true });
       toast.info("Connection request canceled.");
       setSentRequests(prev => {
         const next = new Set(prev);
@@ -163,9 +168,9 @@ const PeerSwap = () => {
         {/* Best Match Badge */}
         {peer.matchScore > 0 && (
           <div className="absolute top-6 left-6 z-20">
-            <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-orange-200 flex items-center gap-1.5">
+            <span className={`text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 ${peer.matchScore >= 10 ? "bg-gradient-to-r from-teal-500 to-[#013e38] shadow-teal-200" : "bg-gradient-to-r from-amber-400 to-orange-500 shadow-orange-200"}`}>
               <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-              {peer.matchScore >= 4 ? "Mutual Peer Match" : "Skill Match"}
+              {peer.matchScore >= 10 ? "Mutual Peer Match" : "Skill Match"}
             </span>
           </div>
         )}
@@ -185,9 +190,9 @@ const PeerSwap = () => {
 
           <div className="space-y-3 w-full mb-6 relative">
             {/* Matching Highlight */}
-            {peer.matchScore > 0 && (
+            {(peer.matchScore > 0 && user?.skillsToLearn) && (
               <div className="flex flex-wrap justify-center gap-1 mb-2">
-                {peer.skillsProficientAt.filter(s => user.skillsToLearn.some(ws => ws.name === s.name)).map((s, i) => (
+                {peer.skillsProficientAt?.filter(s => user.skillsToLearn.some(ws => ws.name === s.name)).map((s, i) => (
                   <span key={i} className="bg-amber-100 text-amber-700 text-[7px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-200">
                     Matches your goal: {s.name}
                   </span>
@@ -219,7 +224,7 @@ const PeerSwap = () => {
             to={`/profile/${peer.username || peer._id}`}
             className="py-3.5 text-center text-[#013e38] font-black text-[10px] uppercase tracking-widest bg-gray-50 rounded-xl hover:bg-gray-100 transition-all border border-transparent no-underline"
           >
-            Bio
+            Profile
           </Link>
           {connected ? (
             <button
@@ -243,7 +248,7 @@ const PeerSwap = () => {
               onClick={() => handleConnect(peer._id)}
               className="py-3.5 flex items-center justify-center gap-2 bg-[#013e38] text-white rounded-xl hover:bg-[#3bb4a1] transition-all shadow-xl shadow-[#013e38]/10 hover:shadow-[#3bb4a1]/30 font-black text-[10px] uppercase tracking-widest group/btn"
             >
-              <FaUserPlus className="group-hover/btn:scale-110 transition-transform" /> Swap
+              <FaUserPlus className="group-hover/btn:scale-110 transition-transform" /> Connect
             </button>
           )}
         </div>

@@ -139,28 +139,28 @@ const Notifications = () => {
             : allNotifications.filter(n => n.tag === activeTab);
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 font-sans">
-            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+        <div className="min-h-screen bg-[#fafafa] py-10 px-4 sm:px-6 lg:px-8 font-['Montserrat']">
+            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-10">
 
                 {/* Main Content - Notification List */}
                 <div className="flex-1">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-                            <p className="text-gray-500 text-sm mt-1">Stay updated with your learning activities</p>
+                            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Notifications</h1>
+                            <p className="text-gray-400 font-medium text-sm mt-2">Stay updated with your learning activities</p>
                         </div>
-                        <button className="text-sm text-blue-600 font-medium hover:text-blue-700">Mark all as read</button>
+                        <button className="text-[10px] uppercase tracking-widest text-[#3bb4a1] font-black hover:text-[#013e38] transition-colors">Mark all as read</button>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex gap-2 overflow-x-auto pb-4 mb-2 no-scrollbar">
+                    <div className="flex gap-2.5 overflow-x-auto pb-6 mb-4 scrollbar-hide">
                         {["All", "Unread", "Peer Swap", "Learning", "System"].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab
-                                    ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-                                    : "bg-white text-gray-600 hover:bg-gray-100 border border-transparent"
+                                className={`px-6 py-2.5 rounded-[1.2rem] text-[10px] uppercase tracking-widest font-black whitespace-nowrap transition-all duration-300 ${activeTab === tab
+                                    ? "bg-[#013e38] text-white shadow-xl shadow-[#013e38]/20"
+                                    : "bg-white text-gray-400 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent hover:border-gray-100"
                                     }`}
                             >
                                 {tab}
@@ -168,64 +168,64 @@ const Notifications = () => {
                         ))}
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                         {loading ? (
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-pulse h-32"></div>
+                                    <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 animate-pulse h-32"></div>
                                 ))}
                             </div>
                         ) : filteredNotifications.length === 0 ? (
-                            <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <FaBell className="text-gray-300 text-2xl" />
+                            <div className="bg-white p-16 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-dashed border-gray-100 text-center">
+                                <div className="w-20 h-20 bg-[#fafafa] rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <FaBell className="text-gray-300 text-3xl" />
                                 </div>
-                                <h3 className="text-gray-900 font-medium">No notifications found</h3>
-                                <p className="text-gray-500 text-sm mt-1">You're all caught up!</p>
+                                <h3 className="text-xl font-black text-gray-900 tracking-tight">No notifications found</h3>
+                                <p className="text-gray-400 font-medium text-sm mt-3">You're all caught up!</p>
                             </div>
                         ) : (
                             filteredNotifications.map(notification => (
-                                <div key={notification.id} className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 transition-all hover:shadow-md ${!notification.read ? 'bg-blue-50/30 border-blue-100' : ''}`}>
-                                    <div className="flex items-start gap-4">
-                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${notification.color}`}>
+                                <div key={notification.id} className={`bg-white p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(59,180,161,0.08)] ${!notification.read ? 'bg-teal-50/30 border-teal-100/50' : ''}`}>
+                                    <div className="flex items-start gap-5">
+                                        <div className={`w-14 h-14 rounded-[1.2rem] flex items-center justify-center flex-shrink-0 shadow-inner ${notification.color}`}>
                                             {notification.type === 'peer_request' && notification.data?.picture ? (
-                                                <img src={notification.data.picture} alt="" className="w-full h-full rounded-full object-cover" />
+                                                <img src={notification.data.picture} alt="" className="w-full h-full rounded-[1.2rem] object-cover" />
                                             ) : (
-                                                <notification.icon size={20} />
+                                                <notification.icon size={22} />
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="font-bold text-gray-900 text-base">{notification.title}</h3>
-                                                    <p className="text-gray-600 text-sm mt-1 leading-relaxed">{notification.description}</p>
+                                                    <h3 className="font-black text-gray-900 text-lg tracking-tight">{notification.title}</h3>
+                                                    <p className="text-gray-500 font-medium text-sm mt-1.5 leading-relaxed">{notification.description}</p>
                                                 </div>
-                                                <div className="flex flex-col items-end gap-2 ml-4">
-                                                    <span className="text-xs text-gray-400 whitespace-nowrap">{notification.time}</span>
-                                                    {!notification.read && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full"></div>}
+                                                <div className="flex flex-col items-end gap-3 ml-4">
+                                                    <span className="text-[9px] uppercase font-black tracking-widest text-gray-400 whitespace-nowrap">{notification.time}</span>
+                                                    {!notification.read && <div className="w-3 h-3 bg-[#3bb4a1] rounded-full shadow-sm shadow-[#3bb4a1]/50 animate-pulse"></div>}
                                                 </div>
                                             </div>
 
-                                            <div className="mt-3 flex items-center justify-between">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${notification.tag === 'Learning' ? 'bg-blue-50 text-blue-700' :
+                                            <div className="mt-5 flex items-center justify-between">
+                                                <span className={`inline-flex items-center px-4 py-1.5 rounded-[1rem] text-[9px] uppercase tracking-widest font-black ${notification.tag === 'Learning' ? 'bg-blue-50 text-blue-700' :
                                                     notification.tag === 'Peer Swap' ? 'bg-purple-50 text-purple-700' :
                                                         notification.tag === 'Resources' ? 'bg-yellow-50 text-yellow-700' :
-                                                            'bg-gray-100 text-gray-700'
+                                                            'bg-gray-50 text-gray-600'
                                                     }`}>
                                                     {notification.tag}
                                                 </span>
 
                                                 {notification.type === 'peer_request' && (
-                                                    <div className="flex gap-3 mt-2 sm:mt-0">
+                                                    <div className="flex gap-3 mt-3 sm:mt-0">
                                                         <button
                                                             onClick={() => handleAccept(notification.data._id)}
-                                                            className="px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200"
+                                                            className="px-6 py-2 bg-[#013e38] text-white text-[9px] uppercase tracking-widest font-black rounded-[1rem] hover:bg-[#3bb4a1] hover:shadow-lg transition-all"
                                                         >
                                                             Accept
                                                         </button>
                                                         <button
                                                             onClick={() => handleReject(notification.data._id)}
-                                                            className="px-4 py-1.5 bg-white border border-gray-200 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                                                            className="px-6 py-2 bg-[#fafafa] border-2 border-transparent text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 text-[9px] uppercase tracking-widest font-black rounded-[1rem] transition-all"
                                                         >
                                                             Decline
                                                         </button>
@@ -241,54 +241,54 @@ const Notifications = () => {
                 </div>
 
                 {/* Right Sidebar - Stats & Settings */}
-                <div className="w-full lg:w-80 space-y-6">
+                <div className="w-full lg:w-96 space-y-8">
                     {/* Quick Stats */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="font-bold text-gray-900 mb-4">Quick Stats</h3>
-                        <div className="space-y-4">
+                    <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
+                        <h3 className="font-black text-lg text-gray-900 mb-6 tracking-tight">Quick Stats</h3>
+                        <div className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                                        <FaBell size={14} />
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-[1rem] bg-teal-50 text-[#3bb4a1] flex items-center justify-center">
+                                        <FaBell size={16} />
                                     </div>
                                     <div className="text-sm">
-                                        <p className="font-semibold text-gray-900">Unread</p>
-                                        <p className="text-xs text-gray-500">Notifications</p>
+                                        <p className="font-black text-gray-900 tracking-tight">Unread</p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Notifications</p>
                                     </div>
                                 </div>
-                                <span className="font-bold text-blue-600">12</span>
+                                <span className="text-xl font-black text-[#3bb4a1]">12</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
-                                        <FaTrophy size={14} />
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-[1rem] bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                        <FaTrophy size={16} />
                                     </div>
                                     <div className="text-sm">
-                                        <p className="font-semibold text-gray-900">Achievements</p>
-                                        <p className="text-xs text-gray-500">This week</p>
+                                        <p className="font-black text-gray-900 tracking-tight">Achievements</p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">This week</p>
                                     </div>
                                 </div>
-                                <span className="font-bold text-green-600">3</span>
+                                <span className="text-xl font-black text-indigo-600">3</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-                                        <FaUserPlus size={14} />
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-[1rem] bg-purple-50 text-purple-600 flex items-center justify-center">
+                                        <FaUserPlus size={16} />
                                     </div>
                                     <div className="text-sm">
-                                        <p className="font-semibold text-gray-900">Requests</p>
-                                        <p className="text-xs text-gray-500">Pending</p>
+                                        <p className="font-black text-gray-900 tracking-tight">Requests</p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pending</p>
                                     </div>
                                 </div>
-                                <span className="font-bold text-purple-600">{requests.length}</span>
+                                <span className="text-xl font-black text-purple-600">{requests.length}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Notification Settings */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="font-bold text-gray-900 mb-4">Notification Settings</h3>
-                        <div className="space-y-4">
+                    <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
+                        <h3 className="font-black text-lg text-gray-900 mb-6 tracking-tight">Notification Settings</h3>
+                        <div className="space-y-5">
                             {[
                                 { label: "Email Notifications", active: true },
                                 { label: "Push Notifications", active: true },
@@ -296,9 +296,9 @@ const Notifications = () => {
                                 { label: "Learning Updates", active: true },
                             ].map((setting, idx) => (
                                 <div key={idx} className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-600 font-medium">{setting.label}</span>
-                                    <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${setting.active ? 'bg-blue-600' : 'bg-gray-200'}`}>
-                                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${setting.active ? 'translate-x-4' : ''}`}></div>
+                                    <span className="text-[11px] uppercase tracking-widest font-bold text-gray-500">{setting.label}</span>
+                                    <div className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${setting.active ? 'bg-[#3bb4a1]' : 'bg-gray-200'}`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${setting.active ? 'translate-x-6' : ''}`}></div>
                                     </div>
                                 </div>
                             ))}
@@ -306,21 +306,21 @@ const Notifications = () => {
                     </div>
 
                     {/* Upcoming */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="font-bold text-gray-900 mb-4">Upcoming Sessions</h3>
+                    <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
+                        <h3 className="font-black text-lg text-gray-900 mb-6 tracking-tight">Upcoming Sessions</h3>
                         <div className="space-y-4">
-                            <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-10 h-10 rounded-full object-cover" />
+                            <div className="flex items-center gap-4 bg-[#fafafa] p-4 rounded-[1.5rem] border border-gray-100 hover:border-[#3bb4a1]/30 transition-colors">
+                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-12 h-12 rounded-[1rem] object-cover" />
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-900">Sarah Williams</p>
-                                    <p className="text-xs text-gray-500">Tomorrow, 3:00 PM</p>
+                                    <p className="text-sm font-black text-gray-900 tracking-tight">Sarah Williams</p>
+                                    <p className="text-[9px] uppercase tracking-widest font-black text-[#3bb4a1] mt-1">Tomorrow, 3:00 PM</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" className="w-10 h-10 rounded-full object-cover" />
+                            <div className="flex items-center gap-4 bg-[#fafafa] p-4 rounded-[1.5rem] border border-gray-100 hover:border-[#3bb4a1]/30 transition-colors">
+                                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" className="w-12 h-12 rounded-[1rem] object-cover" />
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-900">Alex Johnson</p>
-                                    <p className="text-xs text-gray-500">Friday, 10:00 AM</p>
+                                    <p className="text-sm font-black text-gray-900 tracking-tight">Alex Johnson</p>
+                                    <p className="text-[9px] uppercase tracking-widest font-black text-[#3bb4a1] mt-1">Friday, 10:00 AM</p>
                                 </div>
                             </div>
                         </div>

@@ -2,7 +2,7 @@ import React from "react";
 
 const PostSkeleton = () => {
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 animate-pulse">
+        <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 p-8 mb-8 animate-pulse">
             {/* Header */}
             <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-4">

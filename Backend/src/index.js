@@ -65,11 +65,17 @@ connectDB()
     io.on("connection", (socket) => {
       console.log("Connected to socket — user:", socket.user?.username || "unknown");
 
-      // Setup: join a room keyed to the verified user's ID (not client-supplied)
-      socket.on("setup", () => {
-        socket.join(socket.user._id);
-        socket.emit("connected");
-        console.log("Socket setup for user:", socket.user.username);
+      // Setup: join a room keyed to the verified user's ID
+      socket.on("setup", (data) => {
+        const userId = socket.user?.id || socket.user?._id || data?.userId;
+        if (userId) {
+          const room = userId.toString();
+          socket.join(room);
+          socket.emit("connected");
+          console.log(`[Socket] Setup success for user: ${socket.user?.username || data?.username} Room: ${room}`);
+        } else {
+          console.error("[Socket] Setup error: No user ID found in token or payload");
+        }
       });
 
       // Join chat: ensure the user's verified _id matches a participant in the chat
@@ -100,17 +106,40 @@ connectDB()
         socket.broadcast.emit("callEnded");
       });
 
-      // Video Call Events — use verified socket.user._id as the caller identity
-      socket.on("callUser", ({ userToCall, signalData, name }) => {
-        io.to(userToCall).emit("callUser", {
-          signal: signalData,
-          from: socket.user._id, // Use server-verified ID, not client-supplied "from"
-          name,
-        });
+      // Video Call Events — use verified socket.user.id as the caller identity
+      socket.on("callUser", ({ userToCall, signalData, name, avatar }) => {
+        const callerId = socket.user?.id || socket.user?._id;
+        const targetRoom = userToCall?.toString();
+        
+        console.log(`[Socket] Routing call from ${name} (${callerId}) to room: ${targetRoom}`);
+        
+        if (targetRoom) {
+          io.to(targetRoom).emit("callUser", {
+            signal: signalData,
+            from: callerId?.toString(),
+            name,
+            avatar
+          });
+          console.log(`[Socket] Call emitted to room ${targetRoom}`);
+        } else {
+          console.error("[Socket] Failed to route call: No targetRoom specified");
+        }
       });
 
       socket.on("answerCall", (data) => {
         io.to(data.to).emit("callAccepted", data.signal);
+      });
+
+      socket.on("endCall", ({ to }) => {
+        io.to(to).emit("callEnded");
+      });
+
+      socket.on("raiseHand", ({ to, raised }) => {
+        io.to(to).emit("partnerHandRaised", { raised });
+      });
+
+      socket.on("sendReaction", ({ to, emoji }) => {
+        io.to(to).emit("partnerReaction", { emoji });
       });
     });
 

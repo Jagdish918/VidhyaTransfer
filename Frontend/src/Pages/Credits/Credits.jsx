@@ -108,27 +108,27 @@ const Credits = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-8 pb-12">
+        <div className="min-h-screen bg-[#fafafa] pt-12 pb-16 font-['Montserrat']">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Header Section */}
-                <div className="text-center mb-12">
-                    <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">My Credits</h1>
-                    <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
+                <div className="text-center mb-16">
+                    <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight">My Credits</h1>
+                    <p className="mt-3 max-w-2xl mx-auto text-[11px] font-bold text-gray-500 uppercase tracking-widest">
                         Manage and purchase credits to learn new skills
                     </p>
                 </div>
 
                 {/* Current Balance Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-12 max-w-md mx-auto text-center transform transition-all hover:scale-105 duration-300">
-                    <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-3xl">💎</span>
+                <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 p-10 mb-16 max-w-md mx-auto text-center transform transition-all hover:scale-[1.02] duration-300">
+                    <div className="flex justify-center mb-6">
+                        <div className="w-20 h-20 bg-[#fafafa] rounded-full flex items-center justify-center shadow-inner">
+                            <span className="text-4xl">💎</span>
                         </div>
                     </div>
-                    <p className="text-gray-500 font-medium mb-2">You have</p>
-                    <h2 className="text-5xl font-extrabold text-blue-600 mb-2">{user?.credits || 0}</h2>
-                    <p className="text-gray-400 font-medium">credits</p>
+                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">You have</p>
+                    <h2 className="text-6xl font-black text-[#013e38] mb-2">{user?.credits || 0}</h2>
+                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">credits</p>
                 </div>
 
                 {/* Credit Packs */}
@@ -136,24 +136,24 @@ const Credits = () => {
                     {creditPacks.map((pack, index) => (
                         <div
                             key={index}
-                            className={`relative bg-white rounded-2xl p-6 shadow-sm border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${pack.recommended ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-20' : 'border-gray-100'}`}
+                            className={`relative bg-white rounded-[2rem] p-8 shadow-sm border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${pack.recommended ? 'border-[#3bb4a1] ring-2 ring-[#3bb4a1] ring-opacity-20 transform scale-105 z-10' : 'border-gray-50'}`}
                         >
                             {pack.recommended && (
-                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#3bb4a1] text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-md">
                                     Most Popular
                                 </div>
                             )}
                             <div className="text-center">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">{pack.credits} Credits</h3>
-                                <div className="flex justify-center items-baseline mb-4">
-                                    <span className="text-3xl font-extrabold text-gray-900">₹{pack.price}</span>
+                                <h3 className="text-lg font-black text-gray-900 mb-2">{pack.credits} Credits</h3>
+                                <div className="flex justify-center items-baseline mb-6">
+                                    <span className="text-4xl font-black text-[#013e38]">₹{pack.price}</span>
                                 </div>
                                 <button
                                     onClick={() => handlePayment(pack.price, pack.credits)}
                                     disabled={loading}
-                                    className={`w-full py-3 px-4 rounded-xl font-semibold transition-colors duration-200 ${pack.recommended
-                                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200'
-                                        : 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'
+                                    className={`w-full py-4 px-4 rounded-[1.2rem] text-[10px] uppercase font-black tracking-widest transition-all duration-200 ${pack.recommended
+                                        ? 'bg-[#013e38] text-white hover:bg-[#3bb4a1] shadow-lg'
+                                        : 'bg-[#fafafa] border border-gray-200 text-[#013e38] hover:bg-white shadow-sm hover:shadow-md'
                                         }`}
                                 >
                                     {loading ? 'Processing...' : 'Buy Now'}
@@ -164,49 +164,49 @@ const Credits = () => {
                 </div>
 
                 {/* Transaction History */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 overflow-hidden">
+                    <div className="px-8 py-6 border-b border-gray-50 bg-[#fafafa] flex items-center gap-3">
                         <FaHistory className="text-gray-400" />
-                        <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+                        <h3 className="text-[11px] font-black uppercase tracking-widest text-[#013e38]">Recent Transactions</h3>
                     </div>
                     <div className="p-0">
                         {transactions.length === 0 ? (
-                            <div className="text-center text-gray-500 py-8">
-                                <p>No recent transactions to show.</p>
-                                <p className="text-sm mt-2 opacity-60">(Transaction history will appear here once you make a purchase)</p>
+                            <div className="text-center text-gray-400 py-12">
+                                <p className="font-bold text-sm">No recent transactions to show.</p>
+                                <p className="text-[10px] mt-3 uppercase tracking-widest font-black opacity-60">(Transaction history will appear here once you make a purchase)</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
+                            <div className="overflow-x-auto p-4">
+                                <table className="min-w-full divide-y divide-gray-100">
+                                    <thead className="bg-[#fafafa] rounded-[1rem] overflow-hidden">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest rounded-tl-[1rem] rounded-bl-[1rem]">Date</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Order ID</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Credits</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</th>
+                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest rounded-tr-[1rem] rounded-br-[1rem]">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                                    <tbody className="bg-white divide-y divide-gray-50">
                                         {transactions.map((tx) => (
-                                            <tr key={tx._id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <tr key={tx._id} className="hover:bg-[#fafafa] transition-colors">
+                                                <td className="px-6 py-5 whitespace-nowrap text-[11px] font-bold text-gray-500">
                                                     {new Date(tx.createdAt).toLocaleDateString()}{" "}
-                                                    <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleTimeString()}</span>
+                                                    <span className="text-[10px] text-gray-400 ml-1">{new Date(tx.createdAt).toLocaleTimeString()}</span>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                                                <td className="px-6 py-5 whitespace-nowrap text-[11px] font-mono font-bold text-gray-400">
                                                     {tx.orderId}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
+                                                <td className="px-6 py-5 whitespace-nowrap text-[11px] font-black text-[#3bb4a1]">
                                                     +{tx.credits}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td className="px-6 py-5 whitespace-nowrap text-[11px] font-black text-[#013e38]">
                                                     ₹{tx.amount}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tx.status === 'paid' ? 'bg-green-100 text-green-800' :
-                                                        tx.status === 'failed' ? 'bg-red-100 text-red-800' :
-                                                            'bg-yellow-100 text-yellow-800'
+                                                <td className="px-6 py-5 whitespace-nowrap">
+                                                    <span className={`px-3 py-1 inline-flex text-[9px] uppercase tracking-widest font-black rounded-[0.8rem] ${tx.status === 'paid' ? 'bg-green-50 text-green-600' :
+                                                        tx.status === 'failed' ? 'bg-red-50 text-red-600' :
+                                                            'bg-yellow-50 text-yellow-600'
                                                         }`}>
                                                         {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                                                     </span>
