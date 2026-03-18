@@ -141,41 +141,52 @@ const UserContextProvider = ({ children }) => {
     }
   }, [user]);
 
-  // ✅ Socket Initialization
+  // ✅ Socket Initialization — use user._id as stable dependency
+  const userIdRef = React.useRef(null);
+  
   useEffect(() => {
-    if (!user) {
+    const userId = user?._id;
+    
+    // User logged out
+    if (!userId) {
       if (socketRef.current) {
         console.log("[Socket] User logged out, disconnecting...");
         socketRef.current.disconnect();
         socketRef.current = null;
         setSocket(null);
+        userIdRef.current = null;
       }
       return;
     }
 
-    if (socketRef.current) return;
+    // Already connected for this user
+    if (socketRef.current && userIdRef.current === userId) return;
+    
+    // Different user or first connection — clean up old if needed
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
 
     const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
     const host = window.location.hostname;
-    // Fallback for different dev environments
     const backendUrl = host === 'localhost' ? `${protocol}//localhost:8000` : `${protocol}//${host}:8000`;
 
-    console.log(`[Socket] Initializing connection to ${backendUrl}...`);
+    console.log(`[Socket] Initializing connection to ${backendUrl} for user: ${user.username}...`);
     
     const newSocket = io(backendUrl, {
       withCredentials: true,
       transports: ['websocket', 'polling'],
-      forceNew: true // Ensures a fresh connection
+      forceNew: true
     });
 
     newSocket.on("connect", () => {
       console.log("[Socket] Connected! ID:", newSocket.id);
-      console.log("[Socket] Sending setup for user:", user.username);
       newSocket.emit("setup", { userId: user._id, username: user.username });
     });
 
     newSocket.on("connected", () => {
-      console.log("[Socket] Backend confirmed setup!");
+      console.log("[Socket] Backend confirmed setup! User room joined.");
     });
 
     newSocket.on("connect_error", (err) => {
@@ -183,24 +194,23 @@ const UserContextProvider = ({ children }) => {
     });
 
     newSocket.on("callUser", (data) => {
-      console.log("[Socket] GLOBAL INCOMING CALL RECEIVED from:", data.name);
-      console.log("[Socket] Signal snapshot:", data.signal ? "Present" : "Missing");
+      console.log("[Socket] INCOMING CALL from:", data.name, "signal:", data.signal ? "yes" : "no");
       setIncomingCall(data);
     });
 
     newSocket.on("callEnded", () => {
-      console.log("[Socket] Global Call Ended signal");
+      console.log("[Socket] Call Ended signal received");
       setIncomingCall(null);
     });
 
     socketRef.current = newSocket;
+    userIdRef.current = userId;
     setSocket(newSocket);
 
     return () => {
-        // We keep the socket alive during minor re-renders. 
-        // It only disconnects if the user object changes (logout).
+      // Only cleanup on true unmount (component destruction)
     };
-  }, [user]);
+  }, [user?._id]);
 
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;

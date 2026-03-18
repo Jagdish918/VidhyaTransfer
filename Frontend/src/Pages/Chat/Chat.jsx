@@ -33,14 +33,9 @@ const Chat = () => {
     const [activeCall, setActiveCall] = useState(false);
     const [isScheduleOpen, setIsScheduleOpen] = useState(false);
 
-    // Auto-answer if arrived via notification
-    useEffect(() => {
-        if (wasAccepted && incomingCall) {
-            console.log("[Chat] Auto-accepting call from notification");
-            setActiveCall(true);
-            setWasAccepted(false);
-        }
-    }, [wasAccepted, incomingCall, setWasAccepted]);
+    // Auto-answer if arrived via notification — keep for re-render trigger only
+    // The actual answer happens inside VideoCall when incomingCall is present
+    // We just ensure the VideoCall renders (it does via line 327's condition)
 
     // Close context menu on outside click
     useEffect(() => {
@@ -59,6 +54,33 @@ const Chat = () => {
 
     // Scroll variables
     const chatContainerRef = useRef(null);
+
+    // Socket: join chat room and listen for messages
+    useEffect(() => {
+        if (!socket || !selectedChatId) return;
+        
+        socket.emit("join chat", selectedChatId);
+        
+        const handleMessageReceived = (newMessage) => {
+            if (newMessage.chatId?._id === selectedChatId || newMessage.chatId === selectedChatId) {
+                setMessages(prev => [...prev, newMessage]);
+            }
+            // Update latest message in chat list
+            setChats(prev => prev.map(c => {
+                const chatId = newMessage.chatId?._id || newMessage.chatId;
+                if (c._id === chatId) {
+                    return { ...c, latestMessage: newMessage };
+                }
+                return c;
+            }));
+        };
+        
+        socket.on("message recieved", handleMessageReceived);
+        
+        return () => {
+            socket.off("message recieved", handleMessageReceived);
+        };
+    }, [socket, selectedChatId]);
 
     // Fetch Chats
     useEffect(() => {
@@ -316,9 +338,10 @@ const Chat = () => {
         </div>
     );
 
+    const chatPartnerData = activeChat ? getChatPartner(activeChat) : { _id: null, name: "Unknown", avatar: "", status: "" };
     const videoCallPartner = incomingCall
         ? { id: incomingCall.from, name: incomingCall.name, avatar: incomingCall.avatar || "https://ui-avatars.com/api/?background=random" }
-        : { id: getChatPartner(activeChat)._id, name: getChatPartner(activeChat).name, avatar: getChatPartner(activeChat).picture || getChatPartner(activeChat).avatar };
+        : { id: chatPartnerData._id, name: chatPartnerData.name, avatar: chatPartnerData.avatar };
 
     return (
         <div className="h-[calc(100vh-65px)] bg-gray-50 flex flex-col p-4 md:p-6 overflow-hidden">

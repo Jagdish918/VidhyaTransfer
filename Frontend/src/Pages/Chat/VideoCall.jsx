@@ -182,13 +182,9 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
         connectionRef.current = peer;
     };
 
-    // Auto-answer if stream is ready
-    useEffect(() => {
-        if (incomingCall && stream && !callAccepted && !activeCall) {
-            console.log("[VideoCall] Auto-triggering answerCall because stream is ready");
-            answerCall();
-        }
-    }, [incomingCall, stream, callAccepted, activeCall]);
+    // Auto-answer only when explicitly accepted (e.g., from global notification)
+    // The VideoCall component renders on both activeCall and incomingCall,
+    // but should only auto-connect for receivers when they've clicked Answer
 
     const leaveCall = () => {
         console.log("Leaving call...");

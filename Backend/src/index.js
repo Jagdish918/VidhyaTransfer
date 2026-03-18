@@ -103,7 +103,7 @@ connectDB()
 
       socket.on("disconnect", () => {
         console.log("Disconnected from socket — user:", socket.user?.username);
-        socket.broadcast.emit("callEnded");
+        // Don't broadcast callEnded to everyone — only specific endCall events should do this
       });
 
       // Video Call Events — use verified socket.user.id as the caller identity

@@ -1,42 +1,35 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useUser } from '../util/UserContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaVideo, FaTimes, FaPhone } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const GlobalCallNotification = () => {
-    const { incomingCall, setIncomingCall, setWasAccepted } = useUser();
+    const { incomingCall, setIncomingCall, socket } = useUser();
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Auto-dismiss if we are already on the chat page and the call is visible there
-    useEffect(() => {
-        if (location.pathname === '/chat' && incomingCall) {
-            // We keep it for now, but usually the Chat component handles the main UI
-        }
-    }, [location.pathname, incomingCall]);
+    // Don't show the notification if we're already on /chat — 
+    // the VideoCall component handles it there with its own overlay
+    const showNotification = incomingCall && location.pathname !== '/chat';
 
     const handleAnswer = () => {
-        setWasAccepted(true);
-        if (location.pathname === '/chat') {
-            // Already there, the Chat component will react to wasAccepted
-        } else {
-            navigate('/chat');
-        }
-        // Small delay to let the navigation happen before clearing
-        setTimeout(() => {
-            setIncomingCall(null);
-        }, 100);
+        // Navigate to chat — DO NOT clear incomingCall!
+        // VideoCall needs the signal data from incomingCall to establish the peer connection
+        navigate('/chat');
     };
 
     const handleDecline = () => {
+        // Notify the caller that the call was declined
+        if (socket && incomingCall?.from) {
+            socket.emit("endCall", { to: incomingCall.from });
+        }
         setIncomingCall(null);
-        setWasAccepted(false);
     };
 
     return (
         <AnimatePresence>
-            {incomingCall && (
+            {showNotification && (
                 <motion.div
                     initial={{ x: 400, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
