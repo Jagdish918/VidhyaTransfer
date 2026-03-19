@@ -7,6 +7,7 @@ import axios from "axios";
 import { useUserStore } from "../../store/useUserStore";
 import { useUser } from "../../util/UserContext";
 import { countries } from "../../util/countries";
+import OnboardingStepper from "./OnboardingStepper";
 
 const PersonalInfo = () => {
   const navigate = useNavigate();
@@ -45,16 +46,8 @@ const PersonalInfo = () => {
       // Update local store
       updatePersonalInfo(data);
 
-      // Backend sync (try registered first)
-      try {
-        await axios.post("/onboarding/registered/personal-info", data);
-      } catch (err) {
-        try {
-          await axios.post("/onboarding/personal-info", data);
-        } catch (innerErr) {
-          console.warn("Backend sync failed, proceeding with local state", innerErr);
-        }
-      }
+      // Backend sync
+      await axios.post("/onboarding/personal-info", data);
 
       toast.success("Personal info saved!");
       navigate("/onboarding/skills");
@@ -65,31 +58,29 @@ const PersonalInfo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Logo Header */}
-        <div className="flex justify-center mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-[10px] bg-blue-50 flex items-center justify-center">
-              <FaGraduationCap className="text-[28px] text-blue-500" />
+    <div className="min-h-screen bg-dark-bg py-8 px-4 font-sans">
+      <div className="max-w-[600px] mx-auto space-y-5">
+        <OnboardingStepper />
+
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
+              <FaGraduationCap className="text-xl text-indigo-600" />
             </div>
-            <span className="text-2xl font-bold text-gray-800 font-sans">VidhyaTransfer</span>
+            <span className="text-lg font-semibold text-slate-900 tracking-tight">VidhyaTransfer</span>
           </div>
+          <h2 className="mt-3 text-center text-2xl font-semibold text-slate-900 tracking-tight">
+            Basic information
+          </h2>
+          <p className="mt-1 text-center text-sm text-slate-600">
+            Tell us about yourself so we can personalize your experience.
+          </p>
         </div>
 
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Tell us about yourself
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Step 1 of 3: Personal Information
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
+        <div className="bg-dark-card p-6 shadow-card rounded-2xl border border-dark-border">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-xs font-semibold text-slate-700 mb-2">
                 Full Name
               </label>
               <div className="mt-1">
@@ -97,15 +88,15 @@ const PersonalInfo = () => {
                   id="name"
                   type="text"
                   {...register("name", { required: "Full name is required" })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
+                  className="appearance-none block w-full h-10 px-3 bg-white border border-dark-border rounded-lg shadow-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-indigo-200/60 focus:border-indigo-300 sm:text-sm transition-all"
                   placeholder="John Doe"
                 />
-                {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+                {errors.name && <p className="mt-1 text-xs font-bold text-red-400">{errors.name.message}</p>}
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-xs font-semibold text-slate-700 mb-2">
                 Email address
               </label>
               <div className="mt-1">
@@ -114,14 +105,14 @@ const PersonalInfo = () => {
                   type="email"
                   readOnly
                   {...register("email", { required: "Email is required" })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500 cursor-not-allowed sm:text-sm"
+                  className="appearance-none block w-full h-10 px-3 bg-slate-50 border border-dark-border rounded-lg shadow-sm text-slate-600 cursor-not-allowed sm:text-sm font-medium"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-5">
               <div>
-                <label htmlFor="age" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="age" className="block text-xs font-semibold text-slate-700 mb-2">
                   Age
                 </label>
                 <div className="mt-1">
@@ -132,37 +123,37 @@ const PersonalInfo = () => {
                       min: { value: 16, message: "Must be at least 16" },
                       max: { value: 100, message: "Must be under 100" }
                     })}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="appearance-none block w-full h-10 px-3 bg-white border border-dark-border rounded-lg shadow-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-indigo-200/60 focus:border-indigo-300 sm:text-sm transition-all"
                     placeholder="25"
                   />
-                  {errors.age && <p className="mt-1 text-xs text-red-500">{errors.age.message}</p>}
+                  {errors.age && <p className="mt-1 text-xs font-bold text-red-400">{errors.age.message}</p>}
                 </div>
               </div>
 
               <div>
-                <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="country" className="block text-xs font-semibold text-slate-700 mb-2">
                   Country
                 </label>
                 <div className="mt-1">
                   <select
                     id="country"
                     {...register("country", { required: "Country is required" })}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white"
+                    className="block w-full h-10 px-3 bg-white border border-dark-border rounded-lg shadow-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-200/60 focus:border-indigo-300 sm:text-sm transition-all appearance-none"
                   >
-                    <option value="">Select a country</option>
+                    <option value="" className="bg-white text-slate-600">Select a country</option>
                     {countries.map((c) => (
-                      <option key={c} value={c}>
+                      <option key={c} value={c} className="bg-white text-slate-900">
                         {c}
                       </option>
                     ))}
                   </select>
-                  {errors.country && <p className="mt-1 text-xs text-red-500">{errors.country.message}</p>}
+                  {errors.country && <p className="mt-1 text-xs font-bold text-red-400">{errors.country.message}</p>}
                 </div>
               </div>
             </div>
 
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="role" className="block text-xs font-semibold text-slate-700 mb-2">
                 Current Role/Title
               </label>
               <div className="mt-1">
@@ -170,15 +161,15 @@ const PersonalInfo = () => {
                   id="role"
                   type="text"
                   {...register("role", { required: "Role is required" })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="appearance-none block w-full h-10 px-3 bg-white border border-dark-border rounded-lg shadow-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-indigo-200/60 focus:border-indigo-300 sm:text-sm transition-all"
                   placeholder="e.g. Product Designer, Software Engineer"
                 />
-                {errors.role && <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>}
+                {errors.role && <p className="mt-1 text-xs font-bold text-red-400">{errors.role.message}</p>}
               </div>
             </div>
 
             <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="bio" className="block text-xs font-semibold text-slate-700 mb-2">
                 Short Bio
               </label>
               <div className="mt-1">
@@ -186,51 +177,34 @@ const PersonalInfo = () => {
                   id="bio"
                   rows={3}
                   {...register("bio")}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm resize-none"
+                  className="appearance-none block w-full px-3 py-2.5 bg-white border border-dark-border rounded-lg shadow-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-indigo-200/60 focus:border-indigo-300 sm:text-sm resize-none transition-all"
                   placeholder="Briefly describe your interests and goals..."
                 />
               </div>
             </div>
 
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-full h-10 flex justify-center items-center px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-200/60 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isSubmitting ? "Saving..." : "Save & Continue"}
               </button>
             </div>
 
-            <div className="mt-2 text-center">
+            <div className="mt-4 text-center">
               <button
                 type="button"
                 onClick={() => {
-                  // Assuming logout logic or just back to landing
-                  window.location.href = "/login"; // or trigger logout
+                  window.location.href = "/login";
                 }}
-                className="text-sm text-gray-500 hover:text-gray-700 underline"
+                className="text-sm font-medium text-slate-600 hover:text-indigo-700 transition-colors"
               >
                 Back to Login
               </button>
             </div>
           </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Step 1 of 3</span>
-              </div>
-            </div>
-            <div className="mt-4 flex gap-1 justify-center">
-              <div className="h-1.5 w-16 bg-blue-600 rounded-full"></div>
-              <div className="h-1.5 w-16 bg-gray-200 rounded-full"></div>
-              <div className="h-1.5 w-16 bg-gray-200 rounded-full"></div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

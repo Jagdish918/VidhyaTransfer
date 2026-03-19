@@ -1,0 +1,119 @@
+﻿
+> frontend@0.0.0 build
+> vite build
+
+[36mvite v5.1.3 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 640 modules transformed.
+node.exe : 
+[31mx[39m Build 
+failed in 9.50s
+At C:\Program Files\no
+dejs\npm.ps1:29 char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: ([31mx[39   
+ m Build failed in    
+ 9.50s:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+[31merror during 
+build:
+Error: [31m[vite]: 
+Rollup failed to 
+resolve import "vite-p
+lugin-node-polyfills/s
+hims/process" from "C:
+/Users/Jagdish/Desktop
+/Fx31 Labs/Project/nod
+e_modules/html2pdf.js/
+dist/html2pdf.js".
+This is most likely 
+unintended because it 
+can break your 
+application at 
+runtime.
+If you do want to 
+externalize this 
+module explicitly add 
+it to
+`build.rollupOptions.e
+xternal`[31m
+    at viteWarn (file:
+///C:/Users/Jagdish/De
+sktop/Fx31%20Labs/Proj
+ect/Frontend/node_modu
+les/vite/dist/node/chu
+nks/dep-stQc5rCc.js:67
+046:27)
+    at Object.onwarn (
+file:///C:/Users/Jagdi
+sh/Desktop/Fx31%20Labs
+/Project/Frontend/node
+_modules/@vitejs/plugi
+n-react/dist/index.mjs
+:250:9)
+    at file:///C:/User
+s/Jagdish/Desktop/Fx31
+%20Labs/Project/Fronte
+nd/node_modules/vite-p
+lugin-node-polyfills/d
+ist/index.js:74:48
+    at handleCircularD
+ependancyWarning (C:\U
+sers\Jagdish\Desktop\F
+x31 Labs\Project\Front
+end\node_modules\node-
+stdlib-browser\helpers
+\rollup\plugin.js:29:3
+)
+    at onwarn (file://
+/C:/Users/Jagdish/Desk
+top/Fx31%20Labs/Projec
+t/Frontend/node_module
+s/vite-plugin-node-pol
+yfills/dist/index.js:7
+2:15)
+    at 
+onRollupWarning (file:
+///C:/Users/Jagdish/De
+sktop/Fx31%20Labs/Proj
+ect/Frontend/node_modu
+les/vite/dist/node/chu
+nks/dep-stQc5rCc.js:67
+071:9)
+    at onwarn (file://
+/C:/Users/Jagdish/Desk
+top/Fx31%20Labs/Projec
+t/Frontend/node_module
+s/vite/dist/node/chunk
+s/dep-stQc5rCc.js:6677
+8:13)
+    at file:///C:/User
+s/Jagdish/Desktop/Fx31
+%20Labs/Project/Fronte
+nd/node_modules/rollup
+/dist/es/shared/node-e
+ntry.js:18308:13
+    at Object.logger 
+[as onLog] (file:///C:
+/Users/Jagdish/Desktop
+/Fx31%20Labs/Project/F
+rontend/node_modules/r
+ollup/dist/es/shared/n
+ode-entry.js:19965:9)
+    at ModuleLoader.ha
+ndleInvalidResolvedId 
+(file:///C:/Users/Jagd
+ish/Desktop/Fx31%20Lab
+s/Project/Frontend/nod
+e_modules/rollup/dist/
+es/shared/node-entry.j
+s:18909:26)[39m

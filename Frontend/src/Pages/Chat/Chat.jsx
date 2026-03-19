@@ -55,31 +55,45 @@ const Chat = () => {
     // Scroll variables
     const chatContainerRef = useRef(null);
 
-    // Socket: join chat room and listen for messages
+    // Keep a ref to selectedChatId so the socket listener always has the latest value
+    const selectedChatIdRef = useRef(selectedChatId);
     useEffect(() => {
-        if (!socket || !selectedChatId) return;
-        
-        socket.emit("join chat", selectedChatId);
+        selectedChatIdRef.current = selectedChatId;
+    }, [selectedChatId]);
+
+    // Socket: global listener for incoming messages (always active when socket exists)
+    useEffect(() => {
+        if (!socket) return;
         
         const handleMessageReceived = (newMessage) => {
-            if (newMessage.chatId?._id === selectedChatId || newMessage.chatId === selectedChatId) {
-                setMessages(prev => [...prev, newMessage]);
+            const msgChatId = (newMessage.chatId?._id || newMessage.chatId || "").toString();
+            console.log("[Socket] Message received for chat:", msgChatId, "current chat:", selectedChatIdRef.current);
+            
+            // Add message to the messages list if this chat is currently open
+            if (msgChatId === selectedChatIdRef.current) {
+                setMessages(prev => [newMessage, ...prev]);
             }
-            // Update latest message in chat list
+            
+            // Always update the chat list sidebar with the latest message
             setChats(prev => prev.map(c => {
-                const chatId = newMessage.chatId?._id || newMessage.chatId;
-                if (c._id === chatId) {
+                if (c._id === msgChatId) {
                     return { ...c, latestMessage: newMessage };
                 }
                 return c;
             }));
         };
         
-        socket.on("message recieved", handleMessageReceived);
+        socket.on("message received", handleMessageReceived);
         
         return () => {
-            socket.off("message recieved", handleMessageReceived);
+            socket.off("message received", handleMessageReceived);
         };
+    }, [socket]);
+
+    // Socket: join chat room when a chat is selected
+    useEffect(() => {
+        if (!socket || !selectedChatId) return;
+        socket.emit("join chat", selectedChatId);
     }, [socket, selectedChatId]);
 
     // Fetch Chats

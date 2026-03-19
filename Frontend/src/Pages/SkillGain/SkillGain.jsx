@@ -43,58 +43,58 @@ const SkillGain = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.05 }}
       key={mentor._id}
-      className="bg-white rounded-[2.5rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(59,180,161,0.12)] transition-all duration-500 border border-gray-50 flex flex-col group relative overflow-hidden"
+      className="bg-dark-card rounded-2xl p-4 shadow-card hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] transition-all duration-300 border border-dark-border flex flex-col justify-between group relative overflow-hidden hover:-translate-y-0.5 min-h-[260px]"
     >
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[#3bb4a1]/5 rounded-bl-[6rem] -mr-6 -mt-6 transition-all duration-700 group-hover:bg-[#3bb4a1]/10 group-hover:scale-110" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-bl-[6rem] -mr-6 -mt-6 transition-all duration-700 group-hover:bg-cyan-500/10 group-hover:scale-110" />
 
       {/* Recommended Badge */}
       {mentor.matchScore > 0 && (
         <div className="absolute top-6 left-6 z-20">
-          <span className="bg-gradient-to-r from-[#3bb4a1] to-[#013e38] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-[#3bb4a1]/20 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+          <span className="bg-gradient-to-r from-teal-400 to-cyan-500 text-dark-bg text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-cyan-500/20 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-dark-bg/80 rounded-full animate-pulse"></span>
             Skill Match
           </span>
         </div>
       )}
 
       <div className="relative z-10 flex flex-col items-center text-center">
-        <div className="relative mb-4">
+        <div className="relative mb-2 mt-1">
           <img
             src={mentor.picture || `https://ui-avatars.com/api/?name=${mentor.name}&background=random`}
             alt={mentor.name}
-            className="w-20 h-20 rounded-[2.2rem] object-cover ring-8 ring-gray-50 group-hover:ring-[#3bb4a1]/10 transition-all duration-500 shadow-xl"
+            className="w-14 h-14 rounded-xl object-cover ring-4 ring-white group-hover:ring-cyan-500/20 transition-all duration-300 shadow-sm"
           />
-          <div className="absolute -bottom-1 -right-1 bg-gradient-to-br from-[#3bb4a1] to-[#013e38] text-white p-2 rounded-xl shadow-lg border-2 border-white">
+          <div className="absolute -bottom-1 -right-1 bg-gradient-to-br from-cyan-400 to-cyan-500 text-dark-bg p-2 rounded-xl shadow-lg border-2 border-dark-card">
             <FaGraduationCap size={10} />
           </div>
         </div>
 
-        <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#3bb4a1] transition-colors mb-0.5">{mentor.name}</h3>
-        <p className="text-[10px] text-gray-400 font-bold tracking-tight mb-3">@{mentor.username}</p>
+        <h3 className="text-base font-semibold text-slate-900 group-hover:text-cyan-700 transition-colors mb-0.5 line-clamp-1">{mentor.name}</h3>
+        <p className="text-sm text-slate-600 font-medium mb-3 line-clamp-1">@{mentor.username}</p>
 
-        <div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest mb-4">
+        <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest mb-3 shadow-sm">
           <FaStar size={8} />
           <span>{mentor.rating || "New Master"}</span>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-1.5 mb-5 w-full">
+        <div className="flex flex-wrap justify-center gap-2 mb-3 w-full">
           {mentor.skillsProficientAt?.slice(0, 3).map((skill, idx) => (
-            <span key={idx} className="bg-gray-50 text-gray-500 text-[8px] uppercase tracking-[0.15em] px-2.5 py-1.5 rounded-lg font-black border border-gray-100 group-hover:border-[#3bb4a1]/30 group-hover:bg-[#3bb4a1]/5 transition-all">
+            <span key={idx} className="bg-white text-slate-700 text-[11px] px-2.5 py-1 rounded-lg font-medium border border-dark-border group-hover:border-cyan-500/30 group-hover:text-cyan-700 transition-colors">
               {skill.name || skill}
             </span>
           ))}
         </div>
       </div>
 
-      <div className="mt-auto pt-5 border-t border-gray-50 flex justify-between items-center relative z-10">
+      <div className="mt-auto pt-4 border-t border-dark-border flex justify-between items-center relative z-10">
         <div>
-          <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1.5">Mentorship</p>
-          <p className="text-[#3bb4a1] font-black text-lg">{mentor.preferences?.rates?.mentorship || 0}<span className="text-[10px] ml-1 font-bold">Credits/hour</span></p>
+          <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest leading-none mb-1.5">Mentorship</p>
+          <p className="text-cyan-400 font-black text-lg">{mentor.preferences?.rates?.mentorship || 0}<span className="text-[10px] ml-1 font-bold">Credits/h</span></p>
         </div>
         <Link
           to={`/profile/${mentor.username}`}
-          className="bg-[#013e38] text-white text-[9px] uppercase font-black tracking-[0.2em] px-6 py-3 rounded-xl hover:bg-[#3bb4a1] hover:shadow-[0_15px_30px_rgba(59,180,161,0.3)] transition-all no-underline flex items-center gap-2 group/btn"
+          className="bg-cyan-500 text-dark-bg text-[9px] uppercase font-black tracking-[0.2em] px-6 py-3 rounded-xl hover:bg-cyan-400 hover:shadow-lg hover:shadow-cyan-500/20 transition-all no-underline flex items-center gap-2 group/btn hover:-translate-y-0.5"
         >
           Connect <FaArrowRight size={8} className="group-hover/btn:translate-x-1 transition-transform" />
         </Link>
@@ -103,62 +103,56 @@ const SkillGain = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#fafafa] pt-10 pb-24 font-['Montserrat']">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-dark-bg pt-4 pb-12 font-sans">
+      <div className="max-w-[1280px] mx-auto px-6">
 
         {/* Header Content */}
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="inline-block bg-[#3bb4a1]/10 text-[#3bb4a1] px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.25em] mb-4"
-          >
-            Skill Gain Programs
-          </motion.div>
-          <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">
-            Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3bb4a1] to-[#013e38]">Master</span>
+        <div className="text-center mb-4 animate-fade-in">
+
+          <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-2 leading-tight tracking-tight">
+            Find your <span className="text-cyan-700">master</span>
           </h1>
-          <p className="text-gray-400 max-w-xl mx-auto text-sm font-medium leading-relaxed">
+          <p className="text-slate-600 max-w-2xl mx-auto text-base leading-relaxed">
             Connect with verified industry experts and accelerate your learning curve through personalized 1-on-1 mentorship.
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-xl mx-auto mb-12 relative group">
-          <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-            <FaSearch className="text-gray-300 group-focus-within:text-[#3bb4a1] transition-colors scale-110" />
+        <div className="max-w-3xl mx-auto mb-4 relative group animate-fade-in">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+            <FaSearch className="text-slate-600 group-focus-within:text-cyan-700 transition-colors" />
           </div>
           <input
             type="text"
             placeholder="Search masters by skill, domain or name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="block w-full pl-14 pr-7 py-3.5 border-none rounded-[2rem] bg-white text-gray-900 focus:ring-4 focus:ring-[#3bb4a1]/10 transition-all shadow-[0_15px_50px_rgba(0,0,0,0.03)] placeholder:text-gray-300 text-sm font-semibold"
+            className="block w-full pl-11 pr-4 py-2.5 bg-dark-card border border-dark-border rounded-xl text-slate-900 focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all shadow-sm placeholder:text-slate-600 text-base"
           />
         </div>
 
         {/* Content Area */}
         <AnimatePresence mode="wait">
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
               {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                <div key={i} className="bg-white rounded-[2.5rem] p-8 shadow-sm animate-pulse h-[450px] border border-gray-50"></div>
+                <div key={i} className="bg-dark-card rounded-2xl p-6 shadow-card animate-pulse h-[320px] border border-dark-border"></div>
               ))}
             </div>
           ) : mentors.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center py-24 bg-white rounded-[4rem] border border-gray-50 shadow-sm max-w-2xl mx-auto flex flex-col items-center"
+              className="text-center py-10 bg-dark-card rounded-2xl border border-dark-border shadow-card max-w-2xl mx-auto flex flex-col items-center"
             >
-              <div className="bg-gray-50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-10 text-gray-200">
+              <div className="bg-dark-bg border border-dark-border rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 text-slate-600 shadow-inner">
                 <FaChalkboardTeacher size={40} />
               </div>
-              <h3 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Expanding the Registry</h3>
-              <p className="text-gray-400 font-medium text-lg max-w-sm">We're currently onboarding new masters. Try adjusting your search filters.</p>
+              <h3 className="text-2xl font-semibold text-slate-900 mb-4 tracking-tight">No masters found</h3>
+              <p className="text-slate-600 text-base max-w-sm">Try adjusting your search filters to see more results.</p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
               {mentors.map(renderMentorCard)}
             </div>
           )}

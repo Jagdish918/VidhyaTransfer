@@ -5,7 +5,7 @@ const AboutUs = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-sky-100 to-gray-50 font-sans">
       {/* Hero Section */}
-      <div className="pt-24 px-6 pb-20 text-center max-w-[1200px] mx-auto">
+      <div className="pt-24 px-5 pb-20 text-center max-w-[1280px] mx-auto">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black bg-gradient-to-br from-teal-500 via-blue-500 to-emerald-500 bg-clip-text text-transparent mb-6 tracking-tighter">
           About Vidya Transfer
         </h1>
@@ -15,7 +15,7 @@ const AboutUs = () => {
       </div>
 
       {/* Main Content Section */}
-      <div className="px-6 pb-24 max-w-[1400px] mx-auto">
+      <div className="px-5 pb-24 max-w-[1280px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           {/* Left Side - Mission and Vision Cards */}
           <div className="flex flex-col gap-8">

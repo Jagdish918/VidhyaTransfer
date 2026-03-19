@@ -41,22 +41,16 @@ const OnboardingGuard = ({ children }) => {
       // Only make API call if we're unsure about onboarding status
       setChecking(true);
       try {
-        // Check onboarding status - try registered first (most common case)
+        // Check onboarding status
         let onboardingData;
         try {
-          const { data } = await axios.get("/onboarding/registered/status");
+          const { data } = await axios.get("/onboarding/status");
           onboardingData = data;
         } catch (error) {
-          // Try unregistered endpoint
-          try {
-            const { data } = await axios.get("/onboarding/status");
-            onboardingData = data;
-          } catch (err) {
-            console.error("Error checking onboarding:", err);
-            // If error, allow access (might be a network issue or user is already registered)
-            setChecking(false);
-            return;
-          }
+          console.error("Error checking onboarding:", error);
+          // If error, allow access (might be a network issue or user is already registered)
+          setChecking(false);
+          return;
         }
 
         if (onboardingData?.success) {

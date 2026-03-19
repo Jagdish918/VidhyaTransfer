@@ -51,6 +51,18 @@ export const sendMessage = asyncHandler(async (req, res) => {
     { latestMessage: message }
   );
 
+  // ✅ Emit real-time socket event from the server directly
+  // This is more reliable than relying on the frontend to emit
+  const io = req.app.get("io");
+  if (io && message.chatId && message.chatId.users) {
+    message.chatId.users.forEach((u) => {
+      // Skip the sender — they already see the message via optimistic update
+      if (u._id.toString() === sender.toString()) return;
+      io.to(u._id.toString()).emit("message received", message);
+      console.log("[Socket] Server emitted message to user:", u._id.toString());
+    });
+  }
+
   return res.status(201).json(new ApiResponse(201, message, "Message sent successfully"));
 });
 

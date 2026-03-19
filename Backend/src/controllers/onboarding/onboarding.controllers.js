@@ -218,6 +218,7 @@ export const updatePreferences = asyncHandler(async (req, res) => {
       password: user.password,
       picture: user.picture,
       username: username,
+      tokenVersion: 0, // Initial version
       personalInfo: user.personalInfo,
       skillsProficientAt: user.skillsProficientAt,
       skillsToLearn: user.skillsToLearn,
@@ -237,15 +238,25 @@ export const updatePreferences = asyncHandler(async (req, res) => {
   const jwtToken = generateJWTToken_username(finalUser);
   const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+  // Set the main login cookie
   res.cookie("accessToken", jwtToken, {
     httpOnly: true,
     expires: expiryDate,
-    secure: IS_PROD,                          // ✅ FIX: HTTPS-only in production
-    sameSite: IS_PROD ? "Strict" : "Lax",    // ✅ FIX: CSRF protection in production
+    secure: IS_PROD,
+    sameSite: IS_PROD ? "Strict" : "Lax",
     path: "/",
   });
-  // Clear registration token
-  res.clearCookie("accessTokenRegistration");
+
+  // Set a non-HTTP-only hint cookie for Frontend/Persistence
+  res.cookie("hasSession", "true", {
+    expires: expiryDate,
+    secure: IS_PROD,
+    sameSite: IS_PROD ? "Strict" : "Lax",
+    path: "/",
+  });
+
+  // Clear registration token with correct options
+  res.clearCookie("accessTokenRegistration", { path: "/" });
 
   // Remove ALL sensitive fields before sending
   const userData = { ...finalUser.toObject() };

@@ -4,27 +4,11 @@ import { useUser } from "../../util/UserContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 
-// Helper to manage dark mode
-const useDarkMode = () => {
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  return [theme, setTheme];
-};
+// Settings constant state moved to functional component
 
 const Settings = () => {
   const { user, setUser } = useUser();
   const [activeTab, setActiveTab] = useState("Account");
-  const [theme, setTheme] = useDarkMode();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordState, setPasswordState] = useState({ current: "", new: "", confirm: "" });
 
@@ -112,31 +96,30 @@ const Settings = () => {
     { id: "Notifications", icon: <FaBell />, label: "Notifications" },
     { id: "Preferences", icon: <FaPalette />, label: "Preferences" }, // Using FaPalette as placeholder
     { id: "Privacy", icon: <FaLock />, label: "Privacy" },
-    { id: "Appearance", icon: <FaMoon />, label: "Appearance" },
   ];
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-gray-900 transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 font-['Montserrat']">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-10 text-center lg:text-left">
-          <h1 className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight">Settings</h1>
-          <p className="mt-3 text-sm font-bold text-gray-400 uppercase tracking-widest">Manage your account preferences and app behavior</p>
+    <div className="min-h-screen bg-dark-bg py-4 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-500">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-6 text-center lg:text-left">
+          <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-br from-cyan-500 to-emerald-500 bg-clip-text text-transparent tracking-tight">Settings</h1>
+          <p className="mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Manage your account preferences and app behavior</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Sidebar */}
           <div className="w-full lg:w-72 flex-shrink-0">
-            <nav className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-700 p-2">
+            <nav className="bg-dark-card rounded-2xl shadow-card overflow-hidden border border-dark-border p-1.5">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-4 px-6 py-5 text-left transition-all rounded-[2rem] mb-1 last:mb-0 ${activeTab === tab.id
-                    ? "bg-[#013e38] text-white font-black shadow-md transform scale-[1.02]"
-                    : "bg-transparent text-gray-500 font-bold hover:bg-[#fafafa] dark:hover:bg-gray-700/50 hover:text-gray-900"
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all rounded-xl mb-1 last:mb-0 ${activeTab === tab.id
+                    ? "bg-cyan-500 text-dark-bg font-black shadow-lg shadow-cyan-500/20 transform scale-[1.02]"
+                    : "bg-transparent text-slate-500 font-bold hover:bg-dark-hover hover:text-slate-900"
                     }`}
                 >
-                  <span className={`text-xl ${activeTab === tab.id ? "text-[#3bb4a1]" : ""}`}>{tab.icon}</span>
+                  <span className={`text-xl ${activeTab === tab.id ? "text-dark-bg" : "text-cyan-500"}`}>{tab.icon}</span>
                   <span className="text-[11px] uppercase tracking-widest">{tab.label}</span>
                 </button>
               ))}
@@ -144,69 +127,69 @@ const Settings = () => {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 space-y-4">
 
             {/* Account Settings */}
             {activeTab === "Account" && (
-              <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-10 border border-gray-50 dark:border-gray-700 animate-fadeIn">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 border-b border-gray-100 dark:border-gray-700 pb-6 tracking-tight">Account Settings</h2>
-                <form onSubmit={handleSaveAccount} className="space-y-8">
+              <div className="bg-dark-card rounded-[2.5rem] shadow-card p-6 border border-dark-border animate-fadeIn">
+                <h2 className="text-xl font-bold text-slate-900 mb-4 border-b border-dark-border pb-3 tracking-tight">Account Settings</h2>
+                <form onSubmit={handleSaveAccount} className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Name</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Name</label>
                     <input
                       type="text"
-                      className="w-full px-5 py-4 bg-[#fafafa] dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900 dark:text-white"
+                      className="w-full px-5 py-2.5 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm font-medium text-slate-900"
                       value={settings.name}
                       onChange={(e) => setSettings({ ...settings, name: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Email</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Email</label>
                     <input
                       type="email"
-                      className="w-full px-5 py-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[1.2rem] text-gray-500 dark:text-gray-400 cursor-not-allowed font-medium shadow-inner"
+                      className="w-full px-5 py-2.5 bg-slate-50 border border-dark-border rounded-xl text-slate-500 cursor-not-allowed font-medium shadow-inner"
                       value={settings.email}
                       disabled
                     />
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                      <label className="block text-sm font-medium text-slate-700">Password</label>
                       <button
                         type="button"
                         onClick={() => setIsChangingPassword(!isChangingPassword)}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                        className="text-sm text-cyan-500 hover:underline"
                       >
                         {isChangingPassword ? "Cancel" : "Change"}
                       </button>
                     </div>
                     {isChangingPassword ? (
-                      <div className="space-y-3 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                      <div className="space-y-3 bg-slate-50 p-4 rounded-lg border border-dark-border">
                         <input
                           type="password"
                           placeholder="Current Password"
                           value={passwordState.current}
                           onChange={(e) => setPasswordState({ ...passwordState, current: e.target.value })}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-4 py-2 rounded-lg border border-dark-border bg-white text-slate-900 focus:ring-2 focus:ring-cyan-500 outline-none"
                         />
                         <input
                           type="password"
                           placeholder="New Password (min 8 chars)"
                           value={passwordState.new}
                           onChange={(e) => setPasswordState({ ...passwordState, new: e.target.value })}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-4 py-2 rounded-lg border border-dark-border bg-white text-slate-900 focus:ring-2 focus:ring-cyan-500 outline-none"
                         />
                         <input
                           type="password"
                           placeholder="Confirm New Password"
                           value={passwordState.confirm}
                           onChange={(e) => setPasswordState({ ...passwordState, confirm: e.target.value })}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full px-4 py-2 rounded-lg border border-dark-border bg-white text-slate-900 focus:ring-2 focus:ring-cyan-500 outline-none"
                         />
                         <button
                           type="button"
                           onClick={handleChangePassword}
-                          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm text-sm"
+                          className="px-4 py-2 bg-cyan-500 text-dark-bg font-medium rounded-md hover:bg-cyan-600 transition-colors shadow-sm text-sm"
                         >
                           Save New Password
                         </button>
@@ -216,12 +199,12 @@ const Settings = () => {
                         type="password"
                         value="********"
                         disabled
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                        className="w-full px-4 py-3 rounded-lg border border-dark-border bg-slate-50 text-slate-500 cursor-not-allowed"
                       />
                     )}
                   </div>
                   <div className="pt-6">
-                    <button type="submit" className="w-full sm:w-auto px-10 py-4 bg-[#013e38] text-white font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg hover:shadow-xl">
+                    <button type="submit" className="w-full sm:w-auto px-10 py-4 bg-cyan-500 text-dark-bg font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-cyan-600 transition-all shadow-lg shadow-cyan-500/20 hover:shadow-xl">
                       Update Account Info
                     </button>
                   </div>
@@ -231,22 +214,22 @@ const Settings = () => {
 
             {/* Notification Settings */}
             {activeTab === "Notifications" && (
-              <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-10 border border-gray-50 dark:border-gray-700 animate-fadeIn">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 border-b border-gray-100 dark:border-gray-700 pb-6 tracking-tight">Notification Settings</h2>
+              <div className="bg-dark-card rounded-[2.5rem] shadow-card p-6 border border-dark-border animate-fadeIn">
+                <h2 className="text-2xl font-black text-slate-900 mb-8 border-b border-dark-border pb-6 tracking-tight">Notification Settings</h2>
                 <div className="space-y-8">
                   {[
                     { key: "emailParam", label: "Email Notifications", desc: "Receive emails about your account activity and updates." }, // key changed from 'email' to 'emailParam' to avoid conflict
                     { key: "inAppNotifications", label: "In-App Notifications", desc: "Get notified when someone connects or messages you." },
                     { key: "chatAlerts", label: "Chat Alerts", desc: "Receive push notifications for new messages." }
                   ].map((item) => (
-                    <div key={item.key} className="flex items-center justify-between p-6 rounded-[1.5rem] bg-[#fafafa] dark:bg-gray-700/30 border border-gray-100 dark:border-gray-600 transition-all hover:shadow-md">
+                    <div key={item.key} className="flex items-center justify-between p-6 rounded-[1.5rem] bg-slate-50 border border-dark-border transition-all hover:shadow-md">
                       <div>
-                        <p className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-1">{item.label}</p>
-                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400">{item.desc}</p>
+                        <p className="font-black text-slate-900 text-sm uppercase tracking-wider mb-1">{item.label}</p>
+                        <p className="text-[10px] font-bold text-slate-500">{item.desc}</p>
                       </div>
                       <button
                         onClick={() => handleToggle(item.key)}
-                        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner ${settings[item.key] ? 'bg-[#3bb4a1]' : 'bg-gray-300 dark:bg-gray-600'
+                        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner ${settings[item.key] ? 'bg-cyan-500' : 'bg-slate-200'
                           }`}
                       >
                         <span
@@ -262,17 +245,17 @@ const Settings = () => {
 
             {/* Privacy Settings */}
             {activeTab === "Privacy" && (
-              <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-10 border border-gray-50 dark:border-gray-700 animate-fadeIn">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 border-b border-gray-100 dark:border-gray-700 pb-6 tracking-tight">Privacy Settings</h2>
+              <div className="bg-dark-card rounded-[2.5rem] shadow-card p-6 border border-dark-border animate-fadeIn">
+                <h2 className="text-2xl font-black text-slate-900 mb-8 border-b border-dark-border pb-6 tracking-tight">Privacy Settings</h2>
                 <div className="space-y-8">
-                  <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-[#fafafa] dark:bg-gray-700/30 border border-gray-100 dark:border-gray-600 transition-all hover:shadow-md">
+                  <div className="flex items-center justify-between p-6 rounded-[1.5rem] bg-slate-50 border border-dark-border transition-all hover:shadow-md">
                     <div>
-                      <p className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-1">Show my profile publicly</p>
-                      <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400">Allow other users to find your profile in search and discovery.</p>
+                      <p className="font-black text-slate-900 text-sm uppercase tracking-wider mb-1">Show my profile publicly</p>
+                      <p className="text-[10px] font-bold text-slate-500">Allow other users to find your profile in search and discovery.</p>
                     </div>
                     <button
                       onClick={() => handleToggle('publicProfile')}
-                      className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner ${settings.publicProfile ? 'bg-[#3bb4a1]' : 'bg-gray-300 dark:bg-gray-600'
+                      className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner ${settings.publicProfile ? 'bg-cyan-500' : 'bg-slate-200'
                         }`}
                     >
                       <span
@@ -282,9 +265,9 @@ const Settings = () => {
                     </button>
                   </div>
 
-                  <div className="pt-8 mt-4 border-t border-gray-100 dark:border-gray-700">
+                  <div className="pt-8 mt-4 border-t border-dark-border">
                     <h3 className="text-[11px] font-black uppercase tracking-widest text-red-500 mb-3">Danger Zone</h3>
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400 mb-6">Once you delete your account, there is no going back. Please be certain.</p>
+                    <p className="text-[10px] font-bold text-slate-500 mb-6">Once you delete your account, there is no going back. Please be certain.</p>
                     <button onClick={handleDeleteAccount} className="px-8 py-4 bg-red-50 text-red-600 border border-red-100 hover:bg-red-500 hover:text-white hover:border-red-500 text-[10px] uppercase tracking-widest font-black rounded-[1.2rem] transition-all shadow-sm">
                       Delete Account
                     </button>
@@ -298,49 +281,7 @@ const Settings = () => {
               <PreferenceSettings user={user} />
             )}
 
-            {/* Appearance Settings */}
-            {activeTab === "Appearance" && (
-              <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-10 border border-gray-50 dark:border-gray-700 animate-fadeIn">
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 border-b border-gray-100 dark:border-gray-700 pb-6 tracking-tight">Appearance Settings</h2>
 
-                <div className="space-y-8">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-[1.5rem] bg-[#fafafa] dark:bg-gray-700/30 border border-gray-100 dark:border-gray-600">
-                    <div>
-                      <p className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-1">Theme</p>
-                      <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400">Customize how the app looks on your device.</p>
-                    </div>
-                    <div className="flex bg-gray-200 dark:bg-gray-800 p-1.5 rounded-[1.2rem] shadow-inner">
-                      <button
-                        onClick={() => setTheme("light")}
-                        className={`flex items-center gap-3 px-6 py-3 rounded-[1rem] text-[10px] uppercase font-black tracking-widest transition-all ${theme === "light" ? "bg-white text-[#013e38] shadow-md" : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
-                          }`}
-                      >
-                        <FaSun className="text-lg" /> Light
-                      </button>
-                      <button
-                        onClick={() => setTheme("dark")}
-                        className={`flex items-center gap-3 px-6 py-3 rounded-[1rem] text-[10px] uppercase font-black tracking-widest transition-all ${theme === "dark" ? "bg-gray-700 text-white shadow-md" : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
-                          }`}
-                      >
-                        <FaMoon className="text-lg" /> Dark
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 rounded-[1.5rem] bg-[#fafafa] dark:bg-gray-700/30 border border-gray-100 dark:border-gray-600">
-                    <div>
-                      <p className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-1">Primary Color</p>
-                      <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400">Select the main accent color for buttons and links.</p>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="w-10 h-10 rounded-full bg-[#013e38] ring-4 ring-offset-2 ring-[#3bb4a1] cursor-pointer shadow-md"></div>
-                      <div className="w-10 h-10 rounded-full bg-blue-600 cursor-pointer opacity-50 hover:opacity-100 transition-all hover:scale-110 shadow-sm"></div>
-                      <div className="w-10 h-10 rounded-full bg-purple-600 cursor-pointer opacity-50 hover:opacity-100 transition-all hover:scale-110 shadow-sm"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -377,7 +318,7 @@ const PreferenceSettings = ({ user }) => {
 
       // Note: In real app, we should probably have a dedicated settings endpoint, but this might work if auth matches.
       // However, onboarding/preferences might force onboardingCompleted=true etc. which is fine.
-      const { data } = await axios.post("/onboarding/registered/preferences", payload);
+      const { data } = await axios.post("/onboarding/preferences", payload);
 
       if (data.success && data.data.user) {
         setUser(data.data.user);
@@ -422,23 +363,23 @@ const PreferenceSettings = ({ user }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-10 border border-gray-50 dark:border-gray-700 animate-fadeIn">
-      <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-8 border-b border-gray-100 dark:border-gray-700 pb-6 tracking-tight">Role & Preferences</h2>
+    <div className="bg-dark-card rounded-[2.5rem] shadow-card p-6 border border-dark-border animate-fadeIn">
+      <h2 className="text-2xl font-black text-slate-900 mb-8 border-b border-dark-border pb-6 tracking-tight">Role & Preferences</h2>
 
       <div className="space-y-8">
         {/* 1. Learning */}
-        <div className="p-6 rounded-[1.5rem] bg-[#fafafa] dark:bg-gray-700/30 border border-gray-100 dark:border-gray-600">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4">Learning Goal</h3>
+        <div className="p-6 rounded-[1.5rem] bg-slate-50 border border-dark-border">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Learning Goal</h3>
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <button
               onClick={() => setPreferences(p => ({ ...p, primaryGoal: "Skill Gain" }))}
-              className={`flex-1 w-full px-6 py-4 rounded-[1.2rem] transition-all shadow-sm text-[10px] uppercase font-black tracking-widest ${preferences.primaryGoal === "Skill Gain" ? "bg-[#013e38] text-white ring-2 ring-offset-2 ring-[#013e38] dark:ring-offset-gray-800 transform scale-[1.02]" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"}`}
+              className={`flex-1 w-full px-6 py-4 rounded-[1.2rem] transition-all shadow-sm text-[10px] uppercase font-black tracking-widest ${preferences.primaryGoal === "Skill Gain" ? "bg-cyan-900 text-white ring-2 ring-offset-2 ring-cyan-900 transform scale-[1.02]" : "bg-white text-slate-600 hover:bg-slate-50 border border-dark-border"}`}
             >
               I want to Learn (Skill Gain)
             </button>
             <button
               onClick={() => setPreferences(p => ({ ...p, primaryGoal: "Peer Swap" }))}
-              className={`flex-1 w-full px-6 py-4 rounded-[1.2rem] transition-all shadow-sm text-[10px] uppercase font-black tracking-widest ${preferences.primaryGoal === "Peer Swap" ? "bg-[#3bb4a1] text-white ring-2 ring-offset-2 ring-[#3bb4a1] dark:ring-offset-gray-800 transform scale-[1.02]" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"}`}
+              className={`flex-1 w-full px-6 py-4 rounded-[1.2rem] transition-all shadow-sm text-[10px] uppercase font-black tracking-widest ${preferences.primaryGoal === "Peer Swap" ? "bg-cyan-500 text-dark-bg ring-2 ring-offset-2 ring-cyan-500 transform scale-[1.02]" : "bg-white text-slate-600 hover:bg-slate-50 border border-dark-border"}`}
             >
               Peer Swap
             </button>
@@ -446,18 +387,18 @@ const PreferenceSettings = ({ user }) => {
         </div>
 
         {/* 2. Teaching */}
-        <div className="p-6 rounded-[1.5rem] bg-[#fafafa] dark:bg-gray-700/30 border border-gray-100 dark:border-gray-600">
+        <div className="p-6 rounded-[1.5rem] bg-slate-50 border border-dark-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-1">Teaching</p>
-              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-400">Enable this to appear in the "Mentors" section.</p>
+              <p className="font-black text-slate-900 text-sm uppercase tracking-wider mb-1">Teaching</p>
+              <p className="text-[10px] font-bold text-slate-500">Enable this to appear in the "Mentors" section.</p>
             </div>
             <button
               onClick={(e) => {
                 setWantToTeach(!wantToTeach);
                 if (wantToTeach) handleRateChange('mentorship', 0);
               }}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${wantToTeach ? 'bg-[#3bb4a1]' : 'bg-gray-300 dark:bg-gray-600'
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${wantToTeach ? 'bg-cyan-500' : 'bg-slate-200'
                 }`}
             >
               <span
@@ -467,33 +408,32 @@ const PreferenceSettings = ({ user }) => {
             </button>
           </div>
           {wantToTeach && (
-            <div className="mt-6 animate-fade-in bg-white dark:bg-gray-800 p-6 rounded-[1.2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
-              <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Hourly Rate (Credits)</label>
+            <div className="mt-6 animate-fade-in bg-white p-6 rounded-[1.2rem] border border-dark-border shadow-sm">
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Hourly Rate (Credits)</label>
               <div className="flex items-center gap-3">
-                <span className="text-gray-400 font-black">₹</span>
+                <span className="text-slate-400 font-black">₹</span>
                 <input
                   type="number"
                   min="0"
                   value={preferences.rates.mentorship}
                   onChange={(e) => handleRateChange('mentorship', e.target.value)}
-                  className="w-32 px-4 py-3 bg-[#fafafa] dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-inner font-bold text-gray-900 dark:text-white"
+                  className="w-32 px-4 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-inner font-bold text-slate-900"
                 />
               </div>
             </div>
           )}
         </div>
 
-        {/* 3. Utilization */}
-        <div className="p-6 rounded-[1.5rem] bg-white border border-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-gray-800 dark:border-gray-700 space-y-6">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Utilization Services</h3>
+        <div className="p-6 rounded-[1.5rem] bg-white border border-dark-border shadow-card space-y-6">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Utilization Services</h3>
 
           {/* Instant Help */}
-          <div className="bg-[#fafafa] dark:bg-gray-700/30 p-6 rounded-[1.5rem] border border-gray-100 dark:border-gray-600 transition-all hover:shadow-md">
+          <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-dark-border transition-all hover:shadow-md">
             <div className="flex items-center justify-between">
-              <label className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-1 cursor-pointer select-none">Instant Help Provider</label>
+              <label className="font-black text-slate-900 text-sm uppercase tracking-wider mb-1 cursor-pointer select-none">Instant Help Provider</label>
               <button
                 onClick={() => handleUtilizationToggle("Instant Help")}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${preferences.utilization.includes("Instant Help") ? 'bg-[#3bb4a1]' : 'bg-gray-300 dark:bg-gray-600'
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${preferences.utilization.includes("Instant Help") ? 'bg-cyan-500' : 'bg-slate-200'
                   }`}
               >
                 <span
@@ -503,15 +443,15 @@ const PreferenceSettings = ({ user }) => {
               </button>
             </div>
             {preferences.utilization.includes("Instant Help") && (
-              <div className="mt-5 animate-fade-in bg-white dark:bg-gray-800 p-5 rounded-[1.2rem] shadow-sm border border-gray-100 dark:border-gray-700">
-                <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Rate per Session</label>
+              <div className="mt-5 animate-fade-in bg-white p-5 rounded-[1.2rem] shadow-sm border border-dark-border">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Rate per Session</label>
                 <div className="flex items-center gap-3">
-                  <span className="text-gray-400 font-black">₹</span>
+                  <span className="text-slate-400 font-black">₹</span>
                   <input
                     type="number" min="0"
                     value={preferences.rates.instantHelp}
                     onChange={(e) => handleRateChange('instantHelp', e.target.value)}
-                    className="w-32 px-4 py-3 bg-[#fafafa] dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-inner font-bold text-gray-900 dark:text-white"
+                    className="w-32 px-4 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-inner font-bold text-slate-900"
                   />
                 </div>
               </div>
@@ -519,12 +459,12 @@ const PreferenceSettings = ({ user }) => {
           </div>
 
           {/* Expert */}
-          <div className="bg-[#fafafa] dark:bg-gray-700/30 p-6 rounded-[1.5rem] border border-gray-100 dark:border-gray-600 transition-all hover:shadow-md">
+          <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-dark-border transition-all hover:shadow-md">
             <div className="flex items-center justify-between">
-              <label className="font-black text-gray-900 dark:text-white text-sm uppercase tracking-wider mb-1 cursor-pointer select-none">Freelance Expert</label>
+              <label className="font-black text-slate-900 text-sm uppercase tracking-wider mb-1 cursor-pointer select-none">Freelance Expert</label>
               <button
                 onClick={() => handleUtilizationToggle("Hire Expert")}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${preferences.utilization.includes("Hire Expert") ? 'bg-[#3bb4a1]' : 'bg-gray-300 dark:bg-gray-600'
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${preferences.utilization.includes("Hire Expert") ? 'bg-cyan-500' : 'bg-slate-200'
                   }`}
               >
                 <span
@@ -534,15 +474,15 @@ const PreferenceSettings = ({ user }) => {
               </button>
             </div>
             {preferences.utilization.includes("Hire Expert") && (
-              <div className="mt-5 animate-fade-in bg-white dark:bg-gray-800 p-5 rounded-[1.2rem] shadow-sm border border-gray-100 dark:border-gray-700">
-                <label className="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Hourly/Project Rate</label>
+              <div className="mt-5 animate-fade-in bg-white p-5 rounded-[1.2rem] shadow-sm border border-dark-border">
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Hourly/Project Rate</label>
                 <div className="flex items-center gap-3">
-                  <span className="text-gray-400 font-black">₹</span>
+                  <span className="text-slate-400 font-black">₹</span>
                   <input
                     type="number" min="0"
                     value={preferences.rates.freelance}
                     onChange={(e) => handleRateChange('freelance', e.target.value)}
-                    className="w-32 px-4 py-3 bg-[#fafafa] dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-inner font-bold text-gray-900 dark:text-white"
+                    className="w-32 px-4 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-inner font-bold text-slate-900"
                   />
                 </div>
               </div>
@@ -550,11 +490,11 @@ const PreferenceSettings = ({ user }) => {
           </div>
         </div>
 
-        <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
+        <div className="pt-6 border-t border-dark-border">
           <button
             onClick={handleSave}
             disabled={loading}
-            className="w-full sm:w-auto px-10 py-4 bg-[#013e38] text-white font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
+            className="w-full sm:w-auto px-10 py-4 bg-cyan-900 text-white font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-cyan-950 transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
           >
             {loading ? "Saving..." : "Save Preferences"}
           </button>

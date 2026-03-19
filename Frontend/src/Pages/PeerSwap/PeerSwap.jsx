@@ -51,9 +51,6 @@ const PeerSwap = () => {
       const users = responseData.users || [];
       const pagination = responseData.pagination || { pages: 1 };
 
-      console.log("Fetched PeerSwap Users:", users.length, "Pagination:", pagination);
-      console.log("Fetched Users:", users, "Total Pages:", pagination.pages);
-
       if (pageNum === 1) {
         setPeers(users);
       } else {
@@ -160,59 +157,59 @@ const PeerSwap = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(idx * 0.03, 0.3) }}
         key={peer._id}
-        className="bg-white rounded-[2.5rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(59,180,161,0.12)] transition-all duration-500 border border-gray-50 flex flex-col group relative overflow-hidden h-full"
+        className="bg-dark-card rounded-xl p-4 shadow-card hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] transition-all duration-300 border border-dark-border flex flex-col justify-between group relative overflow-hidden h-full min-h-[280px] hover:-translate-y-0.5"
       >
         {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#3bb4a1]/5 rounded-bl-[6rem] -mr-6 -mt-6 transition-all duration-700 group-hover:bg-[#3bb4a1]/10 group-hover:scale-110" />
+        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-[3.5rem] -mr-5 -mt-5 transition-all duration-500 group-hover:bg-indigo-500/10 group-hover:scale-110" />
 
         {/* Best Match Badge */}
         {peer.matchScore > 0 && (
-          <div className="absolute top-6 left-6 z-20">
-            <span className={`text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 ${peer.matchScore >= 10 ? "bg-gradient-to-r from-teal-500 to-[#013e38] shadow-teal-200" : "bg-gradient-to-r from-amber-400 to-orange-500 shadow-orange-200"}`}>
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+          <div className="absolute top-4 left-4 z-20">
+            <span className={`text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 ${peer.matchScore >= 10 ? "text-indigo-700 bg-indigo-50 ring-1 ring-inset ring-indigo-100" : "text-amber-800 bg-amber-50 ring-1 ring-inset ring-amber-100"}`}>
+              <span className="w-1.5 h-1.5 bg-current rounded-full"></span>
               {peer.matchScore >= 10 ? "Mutual Peer Match" : "Skill Match"}
             </span>
           </div>
         )}
 
         <div className="relative z-10 flex flex-col items-center text-center">
-          <div className="relative mb-5">
+          <div className="relative mb-3 mt-1">
             <img
               src={peer.picture || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
               alt={peer.name}
-              className="w-20 h-20 rounded-[1.8rem] object-cover ring-8 ring-gray-50 group-hover:ring-[#3bb4a1]/10 transition-all duration-500 shadow-xl"
+              className="w-14 h-14 rounded-xl object-cover ring-4 ring-white group-hover:ring-indigo-200 transition-all duration-300 shadow-sm"
             />
-            <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm"></span>
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-dark-card rounded-full shadow-sm"></span>
           </div>
 
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#3bb4a1] transition-colors mb-0.5">{peer.name}</h3>
-          <p className="text-[10px] text-gray-400 font-bold tracking-tight mb-4">{role}</p>
+          <h3 className="text-base font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors mb-0.5 leading-tight line-clamp-1">{peer.name}</h3>
+          <p className="text-sm text-slate-600 font-medium mb-3 line-clamp-1">{role}</p>
 
-          <div className="space-y-3 w-full mb-6 relative">
+          <div className="space-y-3 w-full mb-5 relative">
             {/* Matching Highlight */}
             {(peer.matchScore > 0 && user?.skillsToLearn) && (
               <div className="flex flex-wrap justify-center gap-1 mb-2">
                 {peer.skillsProficientAt?.filter(s => user.skillsToLearn.some(ws => ws.name === s.name)).map((s, i) => (
-                  <span key={i} className="bg-amber-100 text-amber-700 text-[7px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-200">
-                    Matches your goal: {s.name}
+                  <span key={i} className="bg-amber-50 text-amber-800 text-[11px] font-medium px-2.5 py-1 rounded-lg ring-1 ring-inset ring-amber-100">
+                    Goal match: {s.name}
                   </span>
                 ))}
               </div>
             )}
 
-            <div className="bg-emerald-50/50 rounded-2xl p-3.5 border border-emerald-100/50 group-hover:bg-emerald-50 transition-colors">
-              <div className="flex items-center gap-2 text-[8px] font-black text-[#3bb4a1] mb-1.5 uppercase tracking-[0.2em]">
-                <FaChalkboardTeacher size={10} /> Offering
+            <div className="bg-slate-50 rounded-lg p-2.5 border border-dark-border group-hover:bg-dark-hover transition-colors">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-1">
+                <FaChalkboardTeacher size={12} className="text-indigo-600" /> Offering
               </div>
-              <p className="text-[11px] font-bold text-gray-700 text-left line-clamp-1">
+              <p className="text-sm font-medium text-slate-900 text-left line-clamp-1">
                 {peer.skillsProficientAt?.[0]?.name || "Expert Insights"}
               </p>
             </div>
-            <div className="bg-blue-50/50 rounded-2xl p-3.5 border border-blue-100/50 group-hover:bg-blue-50 transition-colors">
-              <div className="flex items-center gap-2 text-[8px] font-black text-blue-500 mb-1.5 uppercase tracking-[0.2em]">
-                <FaUserGraduate size={10} /> Learning
+            <div className="bg-slate-50 rounded-lg p-2.5 border border-dark-border group-hover:bg-dark-hover transition-colors">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-1">
+                <FaUserGraduate size={12} className="text-indigo-600" /> Learning
               </div>
-              <p className="text-[11px] font-bold text-gray-700 text-left line-clamp-1">
+              <p className="text-sm font-medium text-slate-900 text-left line-clamp-1">
                 {peer.skillsToLearn?.[0]?.name || "New Frontiers"}
               </p>
             </div>
@@ -222,21 +219,21 @@ const PeerSwap = () => {
         <div className="mt-auto grid grid-cols-2 gap-3 relative z-10">
           <Link
             to={`/profile/${peer.username || peer._id}`}
-            className="py-3.5 text-center text-[#013e38] font-black text-[10px] uppercase tracking-widest bg-gray-50 rounded-xl hover:bg-gray-100 transition-all border border-transparent no-underline"
+            className="py-3 text-center text-slate-700 font-semibold text-sm bg-white rounded-xl hover:bg-slate-50 transition-colors border border-dark-border no-underline"
           >
             Profile
           </Link>
           {connected ? (
             <button
               onClick={() => navigate('/chat')}
-              className="py-3.5 flex items-center justify-center gap-2 bg-[#3bb4a1] text-white rounded-xl hover:bg-[#2fa08e] transition-all shadow-md hover:shadow-lg font-black text-[10px] uppercase tracking-widest"
+              className="py-3 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors shadow-sm font-semibold text-sm"
             >
               <FaComments /> Talk
             </button>
           ) : isSent ? (
             <button
               onClick={() => handleUnsendRequest(peer._id)}
-              className="py-3.5 flex items-center justify-center gap-2 bg-white border border-gray-100 text-gray-400 rounded-xl hover:bg-red-50 hover:border-red-100 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-widest group/unsend"
+              className="py-3 flex items-center justify-center gap-2 bg-white border border-dark-border text-slate-700 rounded-xl hover:bg-red-50 hover:border-red-200 hover:text-red-700 transition-colors font-semibold text-sm group/unsend"
             >
               <FaClock className="group-hover/unsend:hidden" />
               <span className="group-hover/unsend:hidden uppercase font-black">Hold</span>
@@ -246,7 +243,7 @@ const PeerSwap = () => {
           ) : (
             <button
               onClick={() => handleConnect(peer._id)}
-              className="py-3.5 flex items-center justify-center gap-2 bg-[#013e38] text-white rounded-xl hover:bg-[#3bb4a1] transition-all shadow-xl shadow-[#013e38]/10 hover:shadow-[#3bb4a1]/30 font-black text-[10px] uppercase tracking-widest group/btn"
+              className="py-3 flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors shadow-sm font-semibold text-sm group/btn"
             >
               <FaUserPlus className="group-hover/btn:scale-110 transition-transform" /> Connect
             </button>
@@ -257,51 +254,45 @@ const PeerSwap = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] pt-10 pb-32 font-['Montserrat']">
-      <div className="max-w-[1440px] mx-auto px-8">
+    <div className="min-h-screen bg-dark-bg pt-6 pb-16 font-sans">
+      <div className="max-w-[1280px] mx-auto px-6">
 
         {/* Header Content */}
-        <div className="text-center mb-10">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="inline-block bg-[#3bb4a1]/10 text-[#3bb4a1] px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.25em] mb-4"
-          >
-            Community Marketplace
-          </motion.div>
-          <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 leading-[1.1] tracking-tight">
-            Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3bb4a1] to-[#013e38]">Peer Match</span>
+        <div className="text-center mb-6 animate-fade-in">
+
+          <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 mb-3 leading-tight tracking-tight">
+            Find your next <span className="text-indigo-700">peer match</span>
           </h1>
-          <p className="text-gray-400 max-w-xl mx-auto text-sm font-medium leading-relaxed">
+          <p className="text-slate-600 max-w-2xl mx-auto text-base leading-relaxed">
             Connect with community members for mutual value exchange. Share your mastery and learn new frontiers through peer-to-peer collaboration.
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-xl mx-auto mb-12 relative group">
-          <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-            <FaSearch className="text-gray-300 group-focus-within:text-[#3bb4a1] transition-colors scale-110" />
+        <div className="max-w-3xl mx-auto mb-6 relative group animate-fade-in">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+            <FaSearch className="text-slate-600 group-focus-within:text-indigo-600 transition-colors" />
           </div>
           <input
             type="text"
             placeholder="Search peers by expertise, goal or name..."
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="block w-full pl-14 pr-7 py-3.5 border-none rounded-[2rem] bg-white text-gray-900 focus:ring-4 focus:ring-[#3bb4a1]/10 transition-all shadow-[0_20px_60px_rgba(0,0,0,0.035)] placeholder:text-gray-300 text-sm font-semibold"
+            className="block w-full pl-11 pr-4 py-3 bg-dark-card border border-dark-border rounded-2xl text-slate-900 focus:outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-200/60 transition-all shadow-sm placeholder:text-slate-600 text-base"
           />
         </div>
 
         {/* Peers Grid */}
         <AnimatePresence mode="wait">
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
               {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                <div key={i} className="bg-white rounded-[2.5rem] p-8 shadow-sm animate-pulse h-72 border border-gray-50">
-                  <div className="w-16 h-16 rounded-2xl bg-gray-100 mx-auto mb-4" />
-                  <div className="h-3 bg-gray-100 rounded-full w-3/4 mx-auto mb-2" />
-                  <div className="h-2 bg-gray-100 rounded-full w-1/2 mx-auto mb-6" />
-                  <div className="h-14 bg-gray-50 rounded-2xl mb-3" />
-                  <div className="h-14 bg-gray-50 rounded-2xl" />
+                <div key={i} className="bg-dark-card rounded-2xl p-6 shadow-card animate-pulse h-72 border border-dark-border">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto mb-4 border border-dark-border" />
+                  <div className="h-3 bg-slate-100 border border-dark-border rounded-full w-3/4 mx-auto mb-2" />
+                  <div className="h-2 bg-slate-100 border border-dark-border rounded-full w-1/2 mx-auto mb-5" />
+                  <div className="h-14 bg-slate-100 border border-dark-border rounded-xl mb-3" />
+                  <div className="h-14 bg-slate-100 border border-dark-border rounded-xl" />
                 </div>
               ))}
             </div>
@@ -309,16 +300,16 @@ const PeerSwap = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center py-32 bg-white rounded-[4rem] border border-gray-100 shadow-sm max-w-2xl mx-auto flex flex-col items-center"
+              className="text-center py-20 bg-dark-card rounded-3xl border border-dark-border shadow-card max-w-2xl mx-auto flex flex-col items-center"
             >
-              <div className="bg-gray-50 rounded-full w-28 h-28 flex items-center justify-center mx-auto mb-10 text-gray-200">
+              <div className="bg-slate-50 border border-dark-border rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 text-slate-600">
                 <FaUsers size={48} />
               </div>
-              <h3 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">The Crowd is Gathering</h3>
-              <p className="text-gray-400 font-medium text-lg max-w-sm">No peers currently match that signal. Try casting a wider net with your search.</p>
+              <h3 className="text-2xl font-semibold text-slate-900 mb-3 tracking-tight">No peers found</h3>
+              <p className="text-slate-600 text-base max-w-sm">Try a broader search (name, skill, or domain) to see more matches.</p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
               {peers.map(renderPeerCard)}
             </div>
           )}
@@ -326,20 +317,20 @@ const PeerSwap = () => {
 
         {/* Load More Button */}
         {page < totalPages && (
-          <div className="flex justify-center mt-20">
+          <div className="flex justify-center mt-10">
             <button
               onClick={handleLoadMore}
               disabled={loadingMore}
-              className="px-12 py-4 bg-[#013e38] text-white text-[10px] font-black uppercase tracking-[0.25em] rounded-2xl hover:bg-[#3bb4a1] hover:shadow-[#3bb4a1]/30 transition-all shadow-xl shadow-[#013e38]/20 disabled:opacity-50 flex items-center gap-4"
+              className="px-8 py-3 bg-white border border-dark-border text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-3"
             >
               {loadingMore ? (
                 <>
-                  <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <span className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></span>
                   Synchronizing...
                 </>
               ) : (
                 <>
-                  Discover More <FaArrowRight size={8} />
+                  Discover more <FaArrowRight size={12} className="text-indigo-600" />
                 </>
               )}
             </button>

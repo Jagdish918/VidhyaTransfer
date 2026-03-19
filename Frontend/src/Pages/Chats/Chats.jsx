@@ -54,13 +54,13 @@ const Chats = () => {
     if (user) {
       socket.emit("setup", user);
     }
-    socket.on("message recieved", (newMessageRecieved) => {
+    socket.on("message received", (newMessageRecieved) => {
       if (selectedChat && selectedChat.id === newMessageRecieved.chatId._id) {
         setChatMessages((prevState) => [...prevState, newMessageRecieved]);
       }
     });
     return () => {
-      socket.off("message recieved");
+      socket.off("message received");
     };
   }, [selectedChat]);
 
@@ -247,7 +247,7 @@ const Chats = () => {
   };
 
   return (
-    <div className="min-h-[90vh] bg-[#2d2d2d] font-['Montserrat'] text-white border-r border-[#3bb4a1]">
+    <div className="app-container min-h-[90vh] bg-[#2d2d2d] font-['Montserrat'] text-white border-r border-[#3bb4a1]">
       <div className="flex flex-col md:flex-row bg-gray-300">
         {/* Chat History */}
         <div className="flex-[3] bg-[#2d2d2d] min-h-[90vh]">

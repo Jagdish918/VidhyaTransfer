@@ -89,9 +89,9 @@ connectDB()
         const chat = newMessage.chatId;
         if (!chat.users) return console.log("Chat.users not defined");
         chat.users.forEach((user) => {
-          if (user._id === newMessage.sender._id) return;
-          io.to(user._id).emit("message recieved", newMessage);
-          console.log("Message sent to:", user._id);
+          if (user._id.toString() === newMessage.sender._id.toString()) return;
+          io.to(user._id.toString()).emit("message received", newMessage);
+          console.log("Message sent to:", user._id.toString());
         });
       });
 
