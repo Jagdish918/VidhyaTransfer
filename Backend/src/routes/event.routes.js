@@ -3,6 +3,8 @@ import { verifyJWT_username } from "../middlewares/verifyJWT.middleware.js";
 import { verifyAdmin } from "../middlewares/admin.middleware.js";
 import { emailLimiter } from "../middlewares/rateLimiter.middleware.js";
 import { createEvent, getEvents, deleteEvent, getAllEventsAdmin, getEventById, registerForEvent, updateEvent, scheduleMeeting, getMyEvents } from "../controllers/event/event.controllers.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import { eventSchema } from "../validators/extra.validators.js";
 
 const router = Router();
 
@@ -16,7 +18,7 @@ router.route("/schedule").post(emailLimiter, scheduleMeeting);
 // Creating events is restricted to admins
 router.route("/")
     .get(getEvents)
-    .post(verifyAdmin, createEvent);
+    .post(verifyAdmin, validate(eventSchema), createEvent);
 
 // Admin specific routes
 router.route("/all").get(verifyAdmin, getAllEventsAdmin);
@@ -28,7 +30,7 @@ router.route("/user/my-events").get(getMyEvents);
 router.route("/:id")
     .get(getEventById)
     .delete(verifyAdmin, deleteEvent)
-    .put(verifyAdmin, updateEvent);
+    .put(verifyAdmin, validate(eventSchema), updateEvent);
 
 router.route("/:id/register").post(registerForEvent);
 

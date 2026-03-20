@@ -102,7 +102,9 @@ const Settings = () => {
     <div className="min-h-screen bg-dark-bg py-4 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-500">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 text-center lg:text-left">
-          <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-br from-cyan-500 to-emerald-500 bg-clip-text text-transparent tracking-tight">Settings</h1>
+          <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-2 leading-tight tracking-tight">
+            Settings
+          </h1>
           <p className="mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Manage your account preferences and app behavior</p>
         </div>
 

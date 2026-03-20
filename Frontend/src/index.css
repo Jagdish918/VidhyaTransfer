@@ -25,6 +25,7 @@
     @apply h-full antialiased text-slate-900 selection:bg-indigo-500/20 selection:text-slate-900;
     background-color: #f8fafc; /* slate-50 */
     overflow-x: hidden;
+    scrollbar-gutter: stable;
   }
 
   #root {

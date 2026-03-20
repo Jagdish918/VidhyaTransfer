@@ -3,8 +3,13 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import passport from "passport";
 import { globalLimiter } from "./middlewares/rateLimiter.middleware.js";
+import helmet from "helmet";
+import { ApiError } from "./utils/ApiError.js";
 
 const app = express();
+
+// ─── SECURITY HEADERS (Helmet) ────────────────────────────────────────────────
+app.use(helmet());
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -28,8 +33,8 @@ app.use(
 app.use(globalLimiter);
 
 // ─── BODY PARSING ─────────────────────────────────────────────────────────────
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
@@ -52,6 +57,7 @@ import adminRouter from "./routes/admin.routes.js";
 import eventRouter from "./routes/event.routes.js";
 import resourceRouter from "./routes/resource.routes.js";
 import quizRouter from "./routes/quiz.routes.js";
+import sessionRouter from "./routes/session.routes.js";
 
 app.use("/user", userRouter);
 app.use("/auth", authRouter);
@@ -68,5 +74,26 @@ app.use("/admin", adminRouter);
 app.use("/events", eventRouter);
 app.use("/resources", resourceRouter);
 app.use("/quiz", quizRouter);
+app.use("/sessions", sessionRouter);
+
+// ─── GLOBAL ERROR HANDLER ─────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({
+      success: err.success,
+      message: err.message,
+      errors: err.errors,
+    });
+  }
+
+  // Handle unexpected errors (don't leak details in production)
+  const statusCode = err.statusCode || 500;
+  const message = process.env.NODE_ENV === "production" ? "Internal Server Error" : err.message;
+
+  return res.status(statusCode).json({
+    success: false,
+    message,
+  });
+});
 
 export { app };

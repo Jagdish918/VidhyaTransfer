@@ -135,6 +135,8 @@ export const toggleLike = asyncHandler(async (req, res) => {
       postId: post._id,
       likesCount: post.likes.length,
       commentsCount: post.comments.length,
+      userId: userId,
+      type: "like"
     });
   }
 
@@ -187,6 +189,8 @@ export const addComment = asyncHandler(async (req, res) => {
       postId: post._id,
       likesCount: post.likes.length,
       commentsCount: post.comments.length,
+      comment: newComment,
+      type: "comment"
     });
   }
 

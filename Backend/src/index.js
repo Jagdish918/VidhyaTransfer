@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
+dotenv.config();
+
 import connectDB from "./config/connectDB.js";
 import { app } from "./app.js";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
-
-dotenv.config();
+import { User } from "./models/user.model.js"; // Needed for socket auth check
 
 // ✅ Fix #10: Validate critical environment variables at startup
 // Fail fast with a clear message rather than crashing mid-request in production
@@ -44,7 +45,7 @@ connectDB()
     });
 
     // ─── SOCKET.IO AUTHENTICATION MIDDLEWARE ────────────────────────────────
-    io.use((socket, next) => {
+    io.use(async (socket, next) => {
       try {
         const rawCookie = socket.handshake.headers?.cookie || "";
         const cookies = cookie.parse(rawCookie);
@@ -55,6 +56,23 @@ connectDB()
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // ✅ CRITICAL FIX: Verify user status (ban check) and token version for sockets
+        const user = await User.findOne({ username: decoded.username }).select("status tokenVersion");
+        if (!user) {
+          return next(new Error("Authentication error: User not found"));
+        }
+
+        if (user.status === "banned") {
+          return next(new Error("Authentication error: Your account has been banned"));
+        }
+
+        const tokenVersion = decoded.tokenVersion ?? 0;
+        const dbVersion = user.tokenVersion ?? 0;
+        if (tokenVersion !== dbVersion) {
+          return next(new Error("Authentication error: Session expired"));
+        }
+
         socket.user = decoded; // Attach verified user info to socket
         next();
       } catch (error) {
@@ -86,10 +104,19 @@ connectDB()
       });
 
       socket.on("new message", (newMessage) => {
+        // ✅ CRITICAL FIX: Force message sender identity to prevent impersonation 
+        const senderId = socket.user?.id || socket.user?._id;
+        newMessage.sender = {
+          ...newMessage.sender,
+          _id: senderId,
+          username: socket.user?.username
+        };
+
         const chat = newMessage.chatId;
         if (!chat.users) return console.log("Chat.users not defined");
+
         chat.users.forEach((user) => {
-          if (user._id.toString() === newMessage.sender._id.toString()) return;
+          if (user._id.toString() === senderId.toString()) return;
           io.to(user._id.toString()).emit("message received", newMessage);
           console.log("Message sent to:", user._id.toString());
         });

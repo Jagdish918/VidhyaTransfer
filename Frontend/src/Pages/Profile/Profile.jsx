@@ -212,11 +212,11 @@ const Profile = () => {
       <div className="app-container">
 
         {/* Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[360px,1fr] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[360px,1fr] gap-6">
 
           {/* Left Column: Sidebar (Sticky) */}
           <div className="lg:col-span-1">
-            <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border p-3 lg:sticky lg:top-4 space-y-4">
+            <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border p-3 lg:sticky lg:top-20 space-y-4 max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
 
               {/* Profile Header */}
               <div className="flex flex-col items-center text-center">

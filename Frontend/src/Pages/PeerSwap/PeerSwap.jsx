@@ -157,7 +157,7 @@ const PeerSwap = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(idx * 0.03, 0.3) }}
         key={peer._id}
-        className="bg-dark-card rounded-xl p-4 shadow-card hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] transition-all duration-300 border border-dark-border flex flex-col justify-between group relative overflow-hidden h-full min-h-[280px] hover:-translate-y-0.5"
+        className="bg-dark-card rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-dark-border flex flex-col h-full group relative overflow-hidden hover:-translate-y-1"
       >
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-[3.5rem] -mr-5 -mt-5 transition-all duration-500 group-hover:bg-indigo-500/10 group-hover:scale-110" />
@@ -187,15 +187,6 @@ const PeerSwap = () => {
 
           <div className="space-y-3 w-full mb-5 relative">
             {/* Matching Highlight */}
-            {(peer.matchScore > 0 && user?.skillsToLearn) && (
-              <div className="flex flex-wrap justify-center gap-1 mb-2">
-                {peer.skillsProficientAt?.filter(s => user.skillsToLearn.some(ws => ws.name === s.name)).map((s, i) => (
-                  <span key={i} className="bg-amber-50 text-amber-800 text-[11px] font-medium px-2.5 py-1 rounded-lg ring-1 ring-inset ring-amber-100">
-                    Goal match: {s.name}
-                  </span>
-                ))}
-              </div>
-            )}
 
             <div className="bg-slate-50 rounded-lg p-2.5 border border-dark-border group-hover:bg-dark-hover transition-colors">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 mb-1">
@@ -285,7 +276,7 @@ const PeerSwap = () => {
         {/* Peers Grid */}
         <AnimatePresence mode="wait">
           {loading ? (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                 <div key={i} className="bg-dark-card rounded-2xl p-6 shadow-card animate-pulse h-72 border border-dark-border">
                   <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto mb-4 border border-dark-border" />
@@ -309,7 +300,7 @@ const PeerSwap = () => {
               <p className="text-slate-600 text-base max-w-sm">Try a broader search (name, skill, or domain) to see more matches.</p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {peers.map(renderPeerCard)}
             </div>
           )}

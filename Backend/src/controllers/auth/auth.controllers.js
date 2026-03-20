@@ -118,10 +118,6 @@ export const handleGoogleLoginCallback = asyncHandler(async (req, res) => {
 export const registerWithEmailPassword = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
-  if (!name || !email || !password) {
-    throw new ApiError(400, "Name, email, and password are required");
-  }
-
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw new ApiError(409, "User with this email already exists");
@@ -156,10 +152,6 @@ export const registerWithEmailPassword = asyncHandler(async (req, res) => {
 
 export const loginWithEmailPassword = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    throw new ApiError(400, "Email and password are required");
-  }
 
   const registeredUser = await User.findOne({ email });
   if (registeredUser && registeredUser.password) {
@@ -224,10 +216,6 @@ export const loginWithEmailPassword = asyncHandler(async (req, res) => {
 
 export const loginAdmin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    throw new ApiError(400, "Email and password are required");
-  }
 
   const user = await User.findOne({ email });
 
@@ -305,7 +293,6 @@ export const handleLogout = asyncHandler(async (req, res) => {
 
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
-  if (!email) throw new ApiError(400, "Email is required");
 
   // ✅ FIX: No longer throws 404 if user not found — prevents email enumeration
   const user = await User.findOne({ email });
@@ -343,10 +330,6 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 export const resetPassword = asyncHandler(async (req, res) => {
   const { resetToken, newPassword } = req.body;
 
-  if (!resetToken || !newPassword) {
-    throw new ApiError(400, "Reset token and new password are required");
-  }
-
   if (newPassword.length < 8) {
     throw new ApiError(400, "Password must be at least 8 characters long");
   }
@@ -375,10 +358,6 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
 export const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-
-  if (!currentPassword || !newPassword) {
-    throw new ApiError(400, "Current and new passwords are required");
-  }
 
   if (newPassword.length < 8) {
     throw new ApiError(400, "New password must be at least 8 characters long");
@@ -410,10 +389,6 @@ export const changePassword = asyncHandler(async (req, res) => {
 
 export const sendRegistrationOtp = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-
-  if (!name || !email || !password) {
-    throw new ApiError(400, "Name, email, and password are required");
-  }
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -458,10 +433,6 @@ export const sendRegistrationOtp = asyncHandler(async (req, res) => {
 
 export const verifyRegistrationOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    throw new ApiError(400, "Email and OTP are required");
-  }
 
   const unregisteredUser = await UnRegisteredUser.findOne({ email });
 

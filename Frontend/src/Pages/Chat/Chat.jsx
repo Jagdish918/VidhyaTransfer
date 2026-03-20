@@ -403,7 +403,7 @@ const Chat = () => {
                 </div>
             )}
 
-            <div className="flex-1 max-w-[1400px] w-full mx-auto flex h-full gap-6">
+            <div className={`flex-1 app-container w-full mx-auto flex h-full gap-6`}>
 
                 {/* Left Sidebar */}
                 <div className={`w-full md:w-80 bg-white shadow-sm border border-gray-200 rounded-2xl flex flex-col overflow-hidden ${selectedChatId ? 'hidden md:flex' : 'flex'}`}>

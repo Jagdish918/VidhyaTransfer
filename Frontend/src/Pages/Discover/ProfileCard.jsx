@@ -4,11 +4,11 @@ import { FaUser, FaStar, FaChevronRight } from "react-icons/fa";
 
 const ProfileCard = ({ profileImageUrl, bio, name, skills, rating, username }) => {
   return (
-    <div className="group bg-dark-card rounded-3xl shadow-card border border-dark-border overflow-hidden transition-all duration-300 hover:shadow-soft hover:-translate-y-1 flex flex-col h-full w-full max-w-[320px] mx-auto">
+    <div className="group bg-dark-card rounded-2xl shadow-sm border border-dark-border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full w-full">
       {/* Upper Section with Avatar and Header */}
-      <div className="p-6 pb-2 flex flex-col items-center text-center">
-        <div className="relative mb-4">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-dark-card ring-2 ring-dark-border shadow-sm group-hover:ring-cyan-500/30 transition-all duration-500">
+      <div className="p-4 pb-1 flex flex-col items-center text-center">
+        <div className="relative mb-3">
+          <div className="w-16 h-16 rounded-2xl overflow-hidden border-4 border-dark-card ring-2 ring-dark-border shadow-sm group-hover:ring-cyan-500/30 transition-all duration-500">
             <img
               className="w-full h-full object-cover"
               src={profileImageUrl || "https://ui-avatars.com/api/?name=" + (name || "User") + "&background=random&size=200"}
@@ -16,52 +16,47 @@ const ProfileCard = ({ profileImageUrl, bio, name, skills, rating, username }) =
               onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=" + (name || "User") + "&background=random&size=200" }}
             />
           </div>
-          <div className="absolute -bottom-2 -right-2 bg-amber-500 text-dark-bg text-[10px] font-black px-2 py-1 rounded-lg shadow-lg flex items-center gap-1">
-            <FaStar className="text-[8px]" /> {rating || "0.0"}
+          <div className="absolute -bottom-1 -right-1 bg-amber-500 text-dark-bg text-[9px] font-black px-1.5 py-0.5 rounded-lg shadow-lg flex items-center gap-1">
+            <FaStar className="text-[7px]" /> {rating || "4.5"}
           </div>
         </div>
 
-        <h3 className="text-lg font-bold text-slate-900 mb-1 leading-tight truncate w-full">{name}</h3>
-        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-4">@{username}</p>
-        
+        <h3 className="text-base font-bold text-slate-900 mb-0.5 leading-tight truncate w-full">{name}</h3>
+        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">@{username}</p>
+
         {bio && (
-          <p className="text-slate-700 text-xs leading-relaxed font-medium line-clamp-2 h-8 mb-4">
+          <p className="text-slate-600 text-[11px] leading-relaxed font-medium line-clamp-2 h-8 mb-3">
             {bio}
           </p>
         )}
       </div>
 
       {/* Skills Section */}
-      <div className="px-6 py-4 bg-dark-bg/50 border-t border-dark-border flex-grow">
-        <h4 className="text-[9px] font-black text-slate-600 uppercase tracking-[0.15em] mb-3">Top Skills</h4>
-        <div className="flex flex-wrap gap-1.5 min-h-[50px]">
+      <div className="px-5 py-3 bg-dark-bg/40 border-t border-dark-border flex-grow">
+        <h4 className="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em] mb-2.5">Key Skills</h4>
+        <div className="flex flex-wrap gap-1.5 min-h-[40px]">
           {skills && skills.length > 0 ? (
             skills.slice(0, 3).map((skill, index) => (
-              <span 
-                key={index} 
-                className="px-2.5 py-1 bg-cyan-500/10 text-cyan-600 border border-cyan-500/20 rounded-lg text-[9px] font-bold uppercase tracking-wider"
+              <span
+                key={index}
+                className="px-2 py-0.5 bg-white border border-dark-border text-slate-700 rounded-md text-[9px] font-bold uppercase tracking-tight"
               >
                 {typeof skill === 'string' ? skill : skill.name}
               </span>
             ))
           ) : (
-            <span className="text-slate-500 text-[9px] font-bold uppercase italic">No skills listed</span>
-          )}
-          {skills && skills.length > 3 && (
-            <span className="px-2 py-1 bg-dark-hover text-slate-600 border border-dark-border rounded-lg text-[9px] font-bold">
-              +{skills.length - 3} more
-            </span>
+            <span className="text-slate-400 text-[9px] font-bold uppercase italic">No skills listed</span>
           )}
         </div>
       </div>
 
       {/* Footer / CTA */}
-      <div className="p-4 bg-dark-card border-t border-dark-border mt-auto">
-        <Link 
-          to={`/profile/${username}`} 
-          className="flex items-center justify-center gap-2 w-full py-2.5 bg-dark-bg border border-dark-border rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 hover:text-cyan-600 hover:bg-cyan-500/5 hover:border-cyan-500/30 transition-all no-underline"
+      <div className="p-3 bg-dark-card border-t border-dark-border mt-auto">
+        <Link
+          to={`/profile/${username}`}
+          className="flex items-center justify-center gap-2 w-full py-2 bg-dark-bg border border-dark-border rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-cyan-600 hover:bg-cyan-500/5 hover:border-cyan-500/30 transition-all no-underline"
         >
-          View Full Profile <FaChevronRight className="text-[8px]" />
+          View Profile <FaChevronRight className="text-[7px]" />
         </Link>
       </div>
     </div>

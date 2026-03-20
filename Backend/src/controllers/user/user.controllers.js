@@ -856,12 +856,39 @@ export const getSkillGainExperts = asyncHandler(async (req, res) => {
         }
       }
     },
+    // Lookup connection requests involving the current user and each found mentor
+    {
+      $lookup: {
+        from: "requests",
+        let: { mentorId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  { $and: [{ $eq: ["$sender", currentUser._id] }, { $eq: ["$receiver", "$$mentorId"] }] },
+                  { $and: [{ $eq: ["$sender", "$$mentorId"] }, { $eq: ["$receiver", currentUser._id] }] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "connectionInfo"
+      }
+    },
+    {
+      $addFields: {
+        connectionStatus: {
+          $ifNull: [{ $arrayElemAt: ["$connectionInfo.status", 0] }, "Connect"]
+        }
+      }
+    },
     { $sort: { matchScore: -1, rating: -1, createdAt: -1 } },
     { $skip: skip },
     { $limit: limit },
     {
       $project: {
-        name: 1, username: 1, picture: 1, skillsProficientAt: 1, "preferences.rates.mentorship": 1, rating: 1, matchScore: 1
+        name: 1, username: 1, picture: 1, skillsProficientAt: 1, "preferences.rates.mentorship": 1, rating: 1, matchScore: 1, connectionStatus: 1
       }
     }
   ]);
@@ -914,4 +941,23 @@ export const getUtilizationProviders = asyncHandler(async (req, res) => {
   );
 });
 
+// ─── GET MY CONNECTIONS ───────────────────────────────────────────────────────
+export const getConnections = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
 
+  const connections = await Request.find({
+    $or: [{ sender: userId }, { receiver: userId }],
+    status: "Connected",
+  });
+
+  // Get the IDs of the other party in each connection
+  const connectedUserIds = connections.map((conn) =>
+    conn.sender.toString() === userId.toString() ? conn.receiver : conn.sender
+  );
+
+  const users = await User.find({ _id: { $in: connectedUserIds } }).select(
+    "name username picture"
+  );
+
+  res.status(200).json(new ApiResponse(200, users, "Connections fetched"));
+});

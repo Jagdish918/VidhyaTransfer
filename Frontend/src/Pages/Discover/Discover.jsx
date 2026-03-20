@@ -104,7 +104,7 @@ const Discover = () => {
                   <h2 id="for-you" className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <span className="p-2 bg-amber-500/10 rounded-lg text-amber-500">✨</span> For You
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {discoverUsers.length > 0 ? (
                       discoverUsers.map((u) => (
                         <ProfileCard
@@ -130,7 +130,7 @@ const Discover = () => {
                   <h2 id="web-development" className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <span className="p-2 bg-cyan-500/10 rounded-lg text-cyan-500">💻</span> Web Development
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {webDevUsers.length > 0 ? (
                       webDevUsers.map((u) => (
                         <ProfileCard
@@ -156,7 +156,7 @@ const Discover = () => {
                   <h2 id="machine-learning" className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <span className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">🤖</span> Machine Learning
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {mlUsers.length > 0 ? (
                       mlUsers.map((u) => (
                         <ProfileCard
@@ -182,7 +182,7 @@ const Discover = () => {
                   <h2 id="others" className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <span className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500">🌐</span> Others
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {otherUsers.length > 0 ? (
                       otherUsers.map((u) => (
                         <ProfileCard

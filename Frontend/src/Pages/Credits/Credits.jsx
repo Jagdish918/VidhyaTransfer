@@ -215,8 +215,8 @@ const Credits = () => {
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-slate-600">
                                                             {tx.orderId}
                                                         </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-emerald-700">
-                                                            +{tx.credits}
+                                                        <td className={`px-4 py-3 whitespace-nowrap text-sm font-semibold ${tx.credits > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                                                            {tx.credits > 0 ? `+${tx.credits}` : tx.credits}
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-slate-900">
                                                             ₹{tx.amount}

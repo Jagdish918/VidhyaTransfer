@@ -464,50 +464,43 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg py-4 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-[1280px] mx-auto">
-        <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between bg-white p-5 rounded-2xl shadow-card border border-dark-border gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 mb-0.5 tracking-tight">Edit Profile</h1>
-            <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">Update your information and showcase your skills</p>
-          </div>
-          <button
-            onClick={() => navigate("/profile")}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-[#fafafa] text-gray-600 hover:text-[#013e38] hover:bg-white border border-transparent hover:border-gray-100 rounded-[1.2rem] shadow-sm hover:shadow-md transition-all text-[10px] uppercase tracking-widest font-black"
-          >
-            <FaArrowLeft /> Back to Profile
-          </button>
+    <div className="min-h-screen bg-dark-bg py-12 px-4 font-sans flex flex-col items-center">
+      <div className="w-full max-w-[650px]">
+        {/* Compact Header */}
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-black text-slate-900 mb-1 tracking-tight">Profile Setup</h1>
+          <p className="text-[11px] uppercase font-black tracking-widest text-slate-400">Step {activeTab === 'basic' ? '1' : activeTab === 'education' ? '2' : '3'} of 3</p>
         </div>
 
-        <div className="flex gap-2 mb-4 bg-white rounded-2xl shadow-card border border-dark-border p-1.5 overflow-x-auto relative z-10 w-fit">
+        <div className="flex gap-2 mb-4 bg-dark-card rounded-2xl shadow-card border border-dark-border p-1.5 w-full">
           {[
-            { id: "basic", label: "Basic Info", icon: "👤" },
+            { id: "basic", label: "Basic", icon: "👤" },
             { id: "education", label: "Education", icon: "🎓" },
             { id: "portfolio", label: "Portfolio", icon: "💼" }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[120px] py-2.5 px-4 text-[10px] uppercase tracking-widest font-black transition-all flex items-center justify-center gap-2 rounded-xl ${activeTab === tab.id
-                ? "bg-dark-bg text-cyan-500 border border-dark-border shadow-sm"
-                : "text-slate-500 hover:text-slate-900 hover:bg-dark-hover"
+              className={`flex-1 py-2 px-4 text-[10px] uppercase tracking-widest font-black transition-all flex items-center justify-center gap-2 rounded-xl border ${activeTab === tab.id
+                ? "bg-dark-bg text-cyan-600 border-dark-border shadow-sm"
+                : "text-slate-400 border-transparent hover:text-slate-600"
                 }`}
             >
-              <span className="text-base">{tab.icon}</span>
-              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="text-lg">{tab.icon}</span>
+              <span className="hidden xs:inline">{tab.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-card border border-dark-border p-5 mb-4 relative z-10 animate-fade-in">
+        <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border p-6 mb-4 relative z-10 animate-fade-in">
 
           {/* BASIC INFO TAB */}
           {activeTab === "basic" && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Profile Photo */}
               <div className="flex flex-col items-center">
                 <div className="relative group">
-                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-100 shadow-lg">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-dark-border shadow-md">
                     <img
                       src={form.picture || "https://ui-avatars.com/api/?name=" + (form.name || "User") + "&background=random&size=200"}
                       alt="Profile"
@@ -517,71 +510,59 @@ const EditProfile = () => {
                   {/* Upload overlay */}
                   <label className="absolute inset-0 flex items-center justify-center bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
                     {uploadingPhoto ? (
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
                     ) : (
-                      <FaCamera size={24} />
+                      <FaCamera size={20} />
                     )}
                     <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploadingPhoto} />
                   </label>
-                  {/* Remove button - always visible */}
+                  {/* Remove button */}
                   {form.picture && (
                     <button
                       onClick={handleRemovePicture}
                       disabled={uploadingPhoto}
-                      className="absolute -bottom-2 -right-2 p-2.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed z-10"
-                      title="Remove profile picture"
+                      className="absolute -bottom-1 -right-1 p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-all z-10"
                     >
-                      <FaTrash size={16} />
+                      <FaTrash size={12} />
                     </button>
                   )}
                 </div>
                 <div className="mt-2 text-center">
-                  <p className="text-xs text-gray-500">Click photo to upload new (Max 5MB)</p>
-                  {form.picture && (
-                    <button
-                      onClick={handleRemovePicture}
-                      disabled={uploadingPhoto}
-                      className="mt-2 text-xs text-red-600 hover:text-red-700 underline disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Remove Photo
-                    </button>
-                  )}
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Max 5MB</p>
                 </div>
               </div>
 
-              <hr className="border-gray-200" />
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Full Name</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Full Name</label>
                   <input
                     type="text"
                     value={form.name}
                     disabled
-                    className="w-full px-5 py-2.5 bg-dark-bg border border-dark-border rounded-xl text-slate-400 font-bold cursor-not-allowed"
+                    className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-xl text-slate-400 font-bold cursor-not-allowed text-sm"
                   />
-                  <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mt-2">Name cannot be changed</p>
+                  <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mt-1.5">Name cannot be changed</p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Email</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Email</label>
                   <input
                     type="text"
                     value={form.email}
                     disabled
-                    className="w-full px-5 py-2.5 bg-dark-bg border border-dark-border rounded-xl text-slate-400 font-bold cursor-not-allowed"
+                    className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-xl text-slate-400 font-bold cursor-not-allowed text-sm"
                   />
-                  <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mt-2">Email cannot be changed</p>
+                  <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400 mt-1.5">Email cannot be changed</p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Username *</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Username *</label>
                 <input
                   type="text"
                   name="username"
                   value={form.username}
                   onChange={handleInputChange}
-                  className="w-full px-5 py-2.5 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all font-bold text-slate-900 shadow-sm"
+                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all font-bold text-slate-900 shadow-sm text-sm"
                   placeholder="your-username"
                 />
               </div>
@@ -594,7 +575,7 @@ const EditProfile = () => {
                 <p className="text-[10px] uppercase tracking-widest text-slate-500 mb-3">Add at least one social link</p>
                 <div className="space-y-3">
                   <div>
-                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
                       <FaLinkedin className="text-[#0077b5] text-sm" /> LinkedIn
                     </label>
                     <input
@@ -602,12 +583,12 @@ const EditProfile = () => {
                       name="linkedinLink"
                       value={form.linkedinLink}
                       onChange={handleInputChange}
-                      className="w-full px-5 py-2.5 bg-white border border-dark-border rounded-xl focus:ring-2 focus:ring-[#0077b5] focus:border-transparent outline-none transition-all shadow-sm font-medium text-slate-900"
+                      className="w-full px-4 py-2 bg-white border border-dark-border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all shadow-sm font-medium text-slate-900 text-sm"
                       placeholder="https://linkedin.com/in/your-profile"
                     />
                   </div>
                   <div>
-                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
                       <FaGithub className="text-slate-900 text-sm" /> GitHub
                     </label>
                     <input
@@ -615,12 +596,12 @@ const EditProfile = () => {
                       name="githubLink"
                       value={form.githubLink}
                       onChange={handleInputChange}
-                      className="w-full px-5 py-2.5 bg-white border border-dark-border rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all shadow-sm font-medium text-slate-900"
+                      className="w-full px-4 py-2 bg-white border border-dark-border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all shadow-sm font-medium text-slate-900 text-sm"
                       placeholder="https://github.com/your-username"
                     />
                   </div>
                   <div>
-                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
                       <FaLink className="text-cyan-500 text-sm" /> Portfolio
                     </label>
                     <input
@@ -628,17 +609,16 @@ const EditProfile = () => {
                       name="portfolioLink"
                       value={form.portfolioLink}
                       onChange={handleInputChange}
-                      className="w-full px-5 py-2.5 bg-white border border-dark-border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all shadow-sm font-medium text-slate-900"
+                      className="w-full px-4 py-2 bg-white border border-dark-border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition-all shadow-sm font-medium text-slate-900 text-sm"
                       placeholder="https://your-portfolio.com"
                     />
                   </div>
                 </div>
               </div>
 
-              <hr className="border-gray-100" />
 
               {/* Skills */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Proficient Skills */}
                 <div className="bg-white p-4 rounded-2xl border border-dark-border shadow-card">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Skills I Can Teach *</label>
@@ -673,11 +653,11 @@ const EditProfile = () => {
                 </div>
 
                 {/* Skills to Learn */}
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Skills I Want to Learn</label>
+                <div className="bg-dark-card p-6 rounded-2xl border border-dark-border shadow-card">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Skills I Want to Learn</label>
                   <div className="flex gap-3 mb-4">
                     <select
-                      className="flex-1 px-5 py-3 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none transition-all font-bold text-gray-900 shadow-sm"
+                      className="flex-1 px-5 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all font-bold text-slate-900 shadow-sm"
                       value={skillLearnInput}
                       onChange={(e) => setSkillLearnInput(e.target.value)}
                     >
@@ -686,17 +666,17 @@ const EditProfile = () => {
                     </select>
                     <button
                       onClick={() => addSkill('learn', skillLearnInput)}
-                      className="px-6 py-3 bg-purple-50 text-purple-700 rounded-[1.2rem] hover:bg-purple-100 transition-colors shadow-sm flex items-center justify-center font-black"
+                      className="px-6 py-3 bg-cyan-50 text-cyan-600 rounded-xl hover:bg-cyan-100 transition-colors shadow-sm flex items-center justify-center font-black"
                     >
                       <FaPlus />
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 border border-gray-100 rounded-[1.5rem] bg-[#fafafa]">
+                  <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 border border-dark-border rounded-xl bg-dark-bg">
                     {form.skillsToLearn.length === 0 ? (
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">No skills added yet</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">No skills added yet</p>
                     ) : (
                       form.skillsToLearn.map((skill, idx) => (
-                        <span key={idx} className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-800 rounded-[1rem] text-[10px] uppercase tracking-widest font-black shadow-sm transition-all hover:bg-purple-200 cursor-default">
+                        <span key={idx} className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-800 rounded-xl text-[10px] uppercase tracking-widest font-black shadow-sm transition-all hover:bg-purple-200 cursor-default">
                           {typeof skill === 'string' ? skill : skill.name}
                           <FaTrash className="ml-3 text-[10px] cursor-pointer text-purple-400 hover:text-red-500 transition-colors" onClick={() => removeSkill('learn', skill)} />
                         </span>
@@ -712,7 +692,7 @@ const EditProfile = () => {
                     const ok = await saveBasicInfo();
                     if (ok) setActiveTab('education');
                   }}
-                  className="px-8 py-4 bg-[#013e38] text-white font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
+                  className="px-8 py-3 bg-cyan-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
                 >
                   Next: Education <FaArrowRight className="text-sm" />
                 </button>
@@ -723,22 +703,22 @@ const EditProfile = () => {
           {/* EDUCATION TAB */}
           {activeTab === "education" && (
             <div className="space-y-4 animate-fade-in">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Education History</h3>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <h3 className="text-xl font-bold text-slate-900 tracking-tight">Education History</h3>
                 <button
                   onClick={addEducation}
-                  className="px-6 py-3 bg-[#013e38] text-white rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl text-[10px] uppercase tracking-widest font-black"
+                  className="px-6 py-3 bg-cyan-600 text-white rounded-xl hover:bg-cyan-500 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl text-[10px] uppercase tracking-widest font-black"
                 >
                   <FaPlus className="text-sm" /> Add Education
                 </button>
               </div>
 
               {form.education.length === 0 ? (
-                <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-[2.5rem] bg-[#fafafa]">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic mb-6">No education entries yet</p>
+                <div className="text-center py-16 border-2 border-dashed border-dark-border rounded-2xl bg-dark-bg">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic mb-6">No education entries yet</p>
                   <button
                     onClick={addEducation}
-                    className="px-8 py-4 bg-[#013e38] text-white text-[10px] uppercase tracking-widest font-black rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg mx-auto block"
+                    className="px-8 py-4 bg-cyan-600 text-white text-[10px] uppercase tracking-widest font-black rounded-xl hover:bg-cyan-500 transition-all shadow-lg mx-auto block"
                   >
                     Add Your First Education
                   </button>
@@ -761,7 +741,7 @@ const EditProfile = () => {
                           type="text"
                           value={edu.institution}
                           onChange={(e) => handleEducationChange(index, "institution", e.target.value)}
-                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
+                          className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm font-medium text-slate-900 text-sm"
                           placeholder="University/School Name"
                         />
                       </div>
@@ -771,7 +751,7 @@ const EditProfile = () => {
                           type="text"
                           value={edu.degree}
                           onChange={(e) => handleEducationChange(index, "degree", e.target.value)}
-                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
+                          className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm font-medium text-slate-900 text-sm"
                           placeholder="B.Tech, MBA, etc."
                         />
                       </div>
@@ -784,7 +764,7 @@ const EditProfile = () => {
                           type="date"
                           value={formatDate(edu.startDate)}
                           onChange={(e) => handleEducationChange(index, "startDate", e.target.value)}
-                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
+                          className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm font-medium text-slate-900 text-sm"
                         />
                       </div>
                       <div>
@@ -793,7 +773,7 @@ const EditProfile = () => {
                           type="date"
                           value={formatDate(edu.endDate)}
                           onChange={(e) => handleEducationChange(index, "endDate", e.target.value)}
-                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
+                          className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm font-medium text-slate-900 text-sm"
                         />
                       </div>
                       <div>
@@ -803,7 +783,7 @@ const EditProfile = () => {
                           step="0.01"
                           value={edu.score}
                           onChange={(e) => handleEducationChange(index, "score", e.target.value)}
-                          className="w-full px-5 py-4 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all shadow-sm font-medium text-gray-900"
+                          className="w-full px-5 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-sm font-medium text-slate-900"
                           placeholder="8.5"
                         />
                       </div>
@@ -823,10 +803,10 @@ const EditProfile = () => {
                 ))
               )}
 
-              <div className="flex justify-between items-center pt-8 mt-4 border-t border-gray-100 gap-4">
+              <div className="flex justify-between items-center pt-8 mt-4 border-t border-dark-border gap-4">
                 <button
                   onClick={() => setActiveTab('basic')}
-                  className="px-6 py-4 bg-[#fafafa] text-gray-600 hover:text-[#013e38] hover:bg-white border border-transparent hover:border-gray-100 rounded-[1.2rem] shadow-sm hover:shadow-md transition-all text-[10px] uppercase tracking-widest font-black flex items-center gap-2"
+                  className="px-6 py-4 bg-dark-bg text-slate-600 hover:text-cyan-600 hover:bg-dark-hover border border-dark-border rounded-xl shadow-sm transition-all text-[10px] uppercase tracking-widest font-black flex items-center gap-2"
                 >
                   <FaArrowLeft className="text-sm" /> Back
                 </button>
@@ -836,7 +816,7 @@ const EditProfile = () => {
                     const ok = await saveEducation();
                     if (ok) setActiveTab('portfolio');
                   }}
-                  className="px-8 py-4 bg-[#013e38] text-white font-black text-[10px] uppercase tracking-widest rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
+                  className="px-8 py-4 bg-cyan-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
                 >
                   Next: Portfolio <FaArrowRight className="text-sm" />
                 </button>
@@ -876,7 +856,7 @@ const EditProfile = () => {
                   <div className="flex-1 w-full">
                     <p className="text-sm font-medium text-slate-600 mb-4">Showcase your teaching style or introduce yourself with a short video.</p>
                     <div className="flex gap-4 items-center">
-                      <label className={`px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest cursor-pointer transition-all flex items-center gap-2 shadow-sm hover:shadow-md ${uploadingVideo ? 'bg-slate-100 text-slate-400' : 'bg-cyan-900 text-white hover:bg-cyan-500'}`}>
+                      <label className={`px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest cursor-pointer transition-all flex items-center gap-2 shadow-sm hover:shadow-md ${uploadingVideo ? 'bg-dark-hover text-slate-400' : 'bg-cyan-600 text-white hover:bg-cyan-500'}`}>
                         {uploadingVideo ? (
                           <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Uploading...</>
                         ) : (
@@ -912,18 +892,18 @@ const EditProfile = () => {
                   <h3 className="text-xl font-bold text-slate-900 tracking-tight">Projects</h3>
                   <button
                     onClick={addProject}
-                    className="px-5 py-2.5 bg-cyan-900 text-white rounded-xl hover:bg-cyan-500 transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md text-[10px] uppercase tracking-widest font-black"
+                    className="px-5 py-2.5 bg-cyan-600 text-white rounded-xl hover:bg-cyan-500 transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md text-[10px] uppercase tracking-widest font-black"
                   >
                     <FaPlus className="text-sm" /> Add Project
                   </button>
                 </div>
 
                 {form.projects.length === 0 ? (
-                  <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-[2.5rem] bg-[#fafafa]">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic mb-6">No projects yet</p>
+                  <div className="text-center py-16 border-2 border-dashed border-dark-border rounded-2xl bg-dark-bg">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic mb-6">No projects yet</p>
                     <button
                       onClick={addProject}
-                      className="px-8 py-4 bg-[#013e38] text-white text-[10px] uppercase tracking-widest font-black rounded-[1.2rem] hover:bg-[#3bb4a1] transition-all shadow-lg mx-auto block"
+                      className="px-8 py-4 bg-cyan-600 text-white text-[10px] uppercase tracking-widest font-black rounded-xl hover:bg-cyan-500 transition-all shadow-lg mx-auto block"
                     >
                       Add Your First Project
                     </button>
@@ -1000,7 +980,7 @@ const EditProfile = () => {
                           <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Tech Stack</label>
                           <div className="flex gap-3 mb-4">
                             <select
-                              className="flex-1 px-5 py-3 bg-[#fafafa] border border-gray-100 rounded-[1.2rem] focus:bg-white focus:ring-2 focus:ring-[#3bb4a1] outline-none transition-all font-bold text-gray-900 shadow-sm"
+                              className="flex-1 px-5 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all font-bold text-slate-900 shadow-sm"
                               onChange={(e) => {
                                 addTechStack(index, e.target.value);
                                 e.target.value = "";
@@ -1011,7 +991,7 @@ const EditProfile = () => {
                               {availableSkills.map((s, i) => <option key={i} value={s}>{s}</option>)}
                             </select>
                           </div>
-                          <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 border border-gray-100 rounded-[1.5rem] bg-[#fafafa]">
+                          <div className="flex flex-wrap gap-2.5 min-h-[60px] p-5 border border-dark-border rounded-xl bg-dark-bg">
                             {proj.techStack?.length === 0 || !proj.techStack ? (
                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">No technologies added</p>
                             ) : (
@@ -1040,7 +1020,7 @@ const EditProfile = () => {
                 </button>
                 <button
                   onClick={saveAllChanges}
-                  className="px-8 py-3 bg-cyan-900 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition-all shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50"
+                  className="px-8 py-3 bg-cyan-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition-all shadow-lg hover:shadow-xl flex items-center gap-3 disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? "Saving..." : <><FaSave className="text-base" /> Save All & Finish</>}

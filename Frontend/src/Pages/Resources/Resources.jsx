@@ -357,9 +357,10 @@ const Resources = () => {
     <div className="min-h-screen bg-dark-bg pt-2 pb-20 font-sans">
       <div className="max-w-[1280px] mx-auto px-5">
         <div className="text-center mb-6">
-          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-br from-cyan-500 to-emerald-500 bg-clip-text text-transparent tracking-tight mb-2 leading-tight">
-            Generate Your Roadmap
+          <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-2 leading-tight tracking-tight">
+            Generate Your <span className="text-cyan-700">Roadmap</span>
           </h1>
+          
           <p className="mt-2 text-slate-500 max-w-2xl mx-auto text-xs font-semibold leading-relaxed">
             Generate an interactive visual roadmap. Click any node to dive deep into detailed notes.
           </p>

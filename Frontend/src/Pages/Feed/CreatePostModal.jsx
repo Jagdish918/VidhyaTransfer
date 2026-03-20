@@ -118,7 +118,8 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 flex flex-col custom-scrollbar">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
           {/* Post Type Selector */}
           <div className="mb-6">
             <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">Category</label>
@@ -175,7 +176,9 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             )}
           </div>
 
-          <div className="flex items-center gap-4 py-4 border-t border-dark-border flex-shrink-0">
+          </div>
+
+          <div className="flex items-center gap-4 py-4 px-6 border-t border-dark-border flex-shrink-0 bg-slate-50/50">
             <button
               type="button"
               onClick={() => fileInputRef.current.click()}
@@ -186,7 +189,7 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             </button>
             <button
               type="button"
-              className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-all hidden"
+              className="items-center gap-2 px-4 py-2 text-slate-600 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-all hidden"
             >
               <FaPaperclip size={18} className="text-cyan-600" />
               <span className="text-sm font-semibold">File</span>
@@ -202,11 +205,12 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
             />
           </div>
 
-          <div className="flex justify-end gap-3 flex-shrink-0 pt-4 border-t border-dark-border mt-auto">
+          <div className="flex justify-end gap-3 flex-shrink-0 p-6 pt-2 border-t border-dark-border bg-white mt-auto">
             <button
               type="button"
               onClick={onClose}
               className="px-6 py-2.5 text-slate-600 font-semibold hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all text-sm"
+              disabled={loading}
             >
               Cancel
             </button>

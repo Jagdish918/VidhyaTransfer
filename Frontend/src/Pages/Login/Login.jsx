@@ -217,11 +217,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg font-sans p-5 flex items-center">
-      <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full px-5">
+    <div className="min-h-screen bg-dark-bg font-sans p-4 flex items-center justify-center">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center w-full px-4">
         {/* Left Section - Promotional Content */}
-        <div className="flex flex-col gap-6 py-10 lg:pl-10">
-          <h1 className="text-4xl md:text-5xl lg:text-5xl font-extrabold text-slate-900 m-0 leading-tight tracking-tight">Start Your Skill Journey</h1>
+        <div className="flex flex-col gap-4 py-4 lg:pl-10">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 m-0 leading-tight tracking-tight">Start Your Skill Journey</h1>
           <p className="text-lg text-slate-600 leading-relaxed m-0 max-w-[500px]">
             Join thousands of learners exchanging knowledge and building skills together.
           </p>
@@ -230,7 +230,7 @@ const Login = () => {
             <img
               src="https://media.licdn.com/dms/image/v2/D4D12AQF8Zym1URlUdw/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1675779883789?e=2147483647&v=beta&t=Sdl1tnLrAV89A5FJHCK95ruH4oA8kWjvL7YfPLRFDH4"
               alt="Skill Learning"
-              className="relative w-full max-w-[600px] h-auto rounded-2xl shadow-2xl border border-dark-border"
+              className="relative w-full max-w-[500px] h-auto rounded-2xl shadow-xl border border-dark-border"
             />
             <div className="absolute top-4 right-4 bg-cyan-500 text-dark-bg px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold shadow-lg shadow-cyan-500/30">
               <span className="text-base font-extrabold">✓</span>
@@ -241,13 +241,13 @@ const Login = () => {
 
         {/* Right Section - Login/Register Form */}
         <div className="flex justify-center items-center lg:pr-10">
-          <div className="bg-dark-card rounded-[2rem] p-8 md:p-10 w-full max-w-[480px] shadow-card border border-dark-border">
+          <div className="bg-white rounded-[2rem] p-6 w-full max-w-[440px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100">
             {/* Tabs */}
-            <div className="flex gap-2 mb-8 bg-dark-bg p-1.5 rounded-2xl border border-dark-border">
+            <div className="flex gap-2 mb-3 bg-slate-100 p-1 rounded-2xl">
               <button
                 className={`flex-1 py-3 px-6 border-0 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 ${activeTab === "login"
-                  ? "bg-dark-card text-slate-900 shadow-sm border border-dark-border"
-                  : "bg-transparent text-slate-600 hover:text-slate-700"
+                  ? "bg-white text-slate-700 shadow-sm"
+                  : "bg-transparent text-slate-500 hover:text-slate-700"
                   }`}
                 onClick={() => setActiveTab("login")}
                 disabled={loading}
@@ -256,8 +256,8 @@ const Login = () => {
               </button>
               <button
                 className={`flex-1 py-3 px-6 border-0 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 ${activeTab === "register"
-                  ? "bg-dark-card text-slate-900 shadow-sm border border-dark-border"
-                  : "bg-transparent text-slate-600 hover:text-slate-700"
+                  ? "bg-white text-slate-700 shadow-sm"
+                  : "bg-transparent text-slate-500 hover:text-slate-700"
                   }`}
                 onClick={() => setActiveTab("register")}
                 disabled={loading}
@@ -267,20 +267,20 @@ const Login = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {activeTab === "login" && (
-                <div className="flex gap-3 mb-2">
+                <div className="flex gap-2 mb-2">
                   <button
                     type="button"
                     onClick={() => setLoginMethod("password")}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border ${loginMethod === "password" ? "bg-cyan-500/10 text-cyan-600 border-cyan-500/30" : "bg-dark-bg text-slate-600 border-dark-border hover:bg-slate-200"}`}
+                    className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${loginMethod === "password" ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
                   >
                     Password
                   </button>
                   <button
                     type="button"
                     onClick={() => setLoginMethod("otp")}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border ${loginMethod === "otp" ? "bg-cyan-500/10 text-cyan-600 border-cyan-500/30" : "bg-dark-bg text-slate-600 border-dark-border hover:bg-slate-200"}`}
+                    className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${loginMethod === "otp" ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
                   >
                     OTP
                   </button>
@@ -289,42 +289,42 @@ const Login = () => {
 
               {activeTab === "register" && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Full Name</label>
+                  <label className="text-sm font-semibold text-slate-700">Full Name</label>
                   <input
                     type="text"
                     placeholder="Enter your full name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="p-3.5 px-4 bg-dark-bg border border-dark-border rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 placeholder:text-slate-600"
+                    className="p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium shadow-sm"
                     required
                     disabled={loading}
                   />
                 </div>
               )}
 
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Email Address</label>
+               <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-slate-700">Email Address</label>
                 <input
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="p-3.5 px-4 bg-dark-bg border border-dark-border rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 placeholder:text-slate-600"
+                  className="p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium shadow-sm"
                   required
                   disabled={loading || (loginMethod === "otp" && otpSent)}
                 />
               </div>
 
-              {(loginMethod === "password" || activeTab === "register") && (
+              {(activeTab === "register" || loginMethod === "password") && (
                 <div className="flex flex-col gap-2 relative">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Password</label>
+                  <label className="text-sm font-semibold text-slate-700">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full p-3.5 px-4 bg-dark-bg border border-dark-border rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 placeholder:text-slate-600"
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium shadow-sm"
                       required
                       disabled={loading}
                       minLength={6}
@@ -332,7 +332,7 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-600 hover:text-cyan-600 border-none bg-transparent cursor-pointer p-0 uppercase tracking-wider transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-0 transition-colors"
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
@@ -348,7 +348,7 @@ const Login = () => {
                     placeholder="000000"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="p-3.5 px-4 bg-dark-bg border border-dark-border rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 placeholder:text-slate-600 text-center tracking-[0.5em] font-mono text-lg"
+                    className="p-3.5 px-4 bg-dark-bg border border-dark-border rounded-xl text-slate-800 transition-all duration-200 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 placeholder:text-slate-600 text-center tracking-[0.5em] font-mono text-lg"
                     required
                     disabled={loading}
                     maxLength={6}
@@ -368,14 +368,14 @@ const Login = () => {
 
               {activeTab === "register" && (
                 <div className="flex flex-col gap-2 relative">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Confirm Password</label>
+                  <label className="text-sm font-semibold text-slate-700">Confirm Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Confirm your password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full p-3.5 px-4 bg-dark-bg border border-dark-border rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 placeholder:text-slate-600"
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium shadow-sm"
                       required
                       disabled={loading}
                       minLength={6}
@@ -409,7 +409,7 @@ const Login = () => {
                 <Button
                   type="button"
                   onClick={handleSendOtp}
-                  className="w-full p-4 mt-3 bg-cyan-500 text-dark-bg border-0 rounded-xl text-sm font-bold uppercase tracking-widest cursor-pointer transition-all duration-300 hover:bg-cyan-400 hover:-translate-y-0.5 shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-cyan-500/40"
+                  className="w-full p-3.5 mt-2 bg-blue-600 text-white border-0 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 hover:bg-blue-700 hover:-translate-y-0.5 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   {loading ? "Sending..." : "Send OTP"}
@@ -417,7 +417,7 @@ const Login = () => {
               ) : (
                 <Button
                   type="submit"
-                  className="w-full p-4 mt-3 bg-cyan-500 text-dark-bg border-0 rounded-xl text-sm font-bold uppercase tracking-widest cursor-pointer transition-all duration-300 hover:bg-cyan-400 hover:-translate-y-0.5 shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-cyan-500/40"
+                  className="w-full p-3.5 mt-2 bg-blue-600 text-white border-0 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 hover:bg-blue-700 hover:-translate-y-0.5 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   {loading ? "Processing..." : (activeTab === "register" ? "Continue" : (loginMethod === "otp" ? "Verify & Login" : "Login"))}
@@ -426,7 +426,7 @@ const Login = () => {
             </form>
 
             {/* Separator */}
-            <div className="flex items-center gap-4 my-7">
+            <div className="flex items-center gap-4 my-3">
               <div className="flex-1 h-px bg-dark-border"></div>
               <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">OR</span>
               <div className="flex-1 h-px bg-dark-border"></div>
@@ -436,10 +436,10 @@ const Login = () => {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full p-3.5 bg-dark-bg text-slate-700 border border-dark-border rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 flex items-center justify-center gap-3 hover:bg-slate-200 hover:border-slate-300 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full p-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               disabled={loading}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24">
+              <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />

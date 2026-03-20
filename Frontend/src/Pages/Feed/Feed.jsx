@@ -62,13 +62,41 @@ const Feed = () => {
         toast.info("📬 New post available!", { autoClose: 2000 });
       });
 
-      socketRef.current.on("post updated", ({ postId, likesCount, commentsCount }) => {
+      socketRef.current.on("post updated", ({ postId, likesCount, commentsCount, comment, userId, type }) => {
         setPosts((prev) =>
-          prev.map((post) =>
-            post._id === postId
-              ? { ...post, likes: post.likes.slice(0, likesCount), likesCount, commentsCount }
-              : post
-          )
+          prev.map((post) => {
+            if (post._id !== postId) return post;
+            
+            // Reconstruct basic counts
+            const updatedPost = { 
+              ...post, 
+              likesCount, 
+              commentsCount 
+            };
+
+            // Sync the 'likes' array so users see their heart stay red
+            if (type === "like" && userId) {
+              const currentLikes = post.likes || [];
+              const isAlreadyLiked = currentLikes.some(l => (l._id || l) === userId);
+              
+              if (isAlreadyLiked) {
+                updatedPost.likes = currentLikes.filter(l => (l._id || l) !== userId);
+              } else {
+                updatedPost.likes = [...currentLikes, userId];
+              }
+            }
+
+            // Sync comments array
+            if (type === "comment" && comment) {
+              const currentComments = post.comments || [];
+              const alreadyHas = currentComments.some(c => c._id === comment._id);
+              if (!alreadyHas) {
+                updatedPost.comments = [...currentComments, comment];
+              }
+            }
+            
+            return updatedPost;
+          })
         );
       });
 
@@ -212,26 +240,7 @@ const Feed = () => {
               </div>
 
               {/* Domains Navigation */}
-              <div className="w-full max-w-[260px] bg-dark-card rounded-2xl p-4 shadow-card border border-dark-border">
-                <h3 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-4 pl-4 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>
-                  Explore Domains
-                </h3>
-                <div className="space-y-1">
-                  {domains.map((domain) => (
-                    <button
-                      key={domain}
-                      onClick={() => setSelectedDomain(domain)}
-                      className={`w-full text-left px-5 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${selectedDomain === domain
-                        ? "bg-cyan-500/10 text-cyan-400"
-                        : "text-slate-600 hover:bg-dark-hover hover:text-slate-900"
-                        } `}
-                    >
-                      {domain}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              
             </div>
           </div>
 

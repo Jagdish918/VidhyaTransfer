@@ -23,11 +23,9 @@ const PostCard = ({ post }) => {
   const [showOptions, setShowOptions] = useState(false);
 
   useEffect(() => {
-    if (user && post.likes) {
-      setIsLiked(post.likes.some((like) => like._id === user._id || like === user._id));
-    }
-    setLikesCount(post.likes?.length || 0);
-    setCommentsCount(post.comments?.length || 0);
+    setIsLiked(post.likes?.some((like) => (like._id || like) === user?._id) || false);
+    setLikesCount(post.likesCount ?? (post.likes?.length || 0));
+    setCommentsCount(post.commentsCount ?? (post.comments?.length || 0));
     setComments(post.comments || []);
 
     const checkConnectionStatus = async () => {

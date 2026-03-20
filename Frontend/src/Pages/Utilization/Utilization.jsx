@@ -68,7 +68,7 @@ const Utilization = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 key={user._id}
-                className="bg-dark-card rounded-xl p-4 shadow-card hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] transition-all duration-300 border border-dark-border flex flex-col justify-between group relative overflow-hidden hover:-translate-y-0.5 min-h-[280px]"
+                className="bg-dark-card rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-dark-border flex flex-col h-full group relative overflow-hidden hover:-translate-y-1"
             >
                 {/* Background decoration */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-bl-[4rem] -mr-4 -mt-4 transition-all duration-500 group-hover:bg-cyan-500/10 group-hover:scale-110" />
@@ -182,8 +182,8 @@ const Utilization = () => {
                             exit={{ opacity: 0 }}
                         >
                             {loading ? (
-                                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
-                                    {[1, 2, 3].map(i => <div key={i} className="bg-dark-card h-96 rounded-[2.5rem] shadow-card animate-pulse border border-dark-border"></div>)}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {[1, 2, 3, 4].map(i => <div key={i} className="bg-dark-card h-96 rounded-2xl shadow-card animate-pulse border border-dark-border"></div>)}
                                 </div>
                             ) : events.length === 0 ? (
                                 <div className="bg-dark-card rounded-[3rem] p-20 text-center border-2 border-dashed border-dark-border max-w-2xl mx-auto flex flex-col items-center">
@@ -194,15 +194,15 @@ const Utilization = () => {
                                     <p className="text-slate-600 mb-0 leading-relaxed">We're currently curating new sessions. Check back shortly for fresh announcements.</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {events.map((event, idx) => (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: idx * 0.1 }}
-                                            key={event._id}
-                                            className="group bg-dark-card rounded-[2.5rem] shadow-card hover:shadow-[0_20px_50px_rgba(6,182,212,0.1)] transition-all duration-500 overflow-hidden border border-dark-border flex flex-col h-full relative"
-                                        >
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.1 }}
+                                                key={event._id}
+                                                className="group bg-dark-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden border border-dark-border flex flex-col h-full relative hover:-translate-y-1"
+                                            >
                                             <div className="h-48 relative overflow-hidden">
                                                 {event.image ? (
                                                     <img
@@ -266,9 +266,9 @@ const Utilization = () => {
                             exit={{ opacity: 0 }}
                         >
                             {loading ? (
-                                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="bg-dark-card rounded-[2rem] p-8 shadow-card animate-pulse h-96 border border-dark-border"></div>
+                                        <div key={i} className="bg-dark-card rounded-2xl p-8 shadow-card animate-pulse h-96 border border-dark-border"></div>
                                     ))}
                                 </div>
                             ) : providers.length === 0 ? (
@@ -280,7 +280,7 @@ const Utilization = () => {
                                     <p className="text-slate-600 text-base">Be the pioneer to offer {activeTab.toLowerCase()} in this category.</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {providers.map(renderCard)}
                                 </div>
                             )}

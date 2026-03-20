@@ -17,9 +17,12 @@ import {
   discoverUsers,
   sendScheduleMeet,
   getSkillGainExperts,
-  getUtilizationProviders
+  getUtilizationProviders,
+  getConnections
 } from "../controllers/user/user.controllers.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import { discoverUsersSchema } from "../validators/user.validators.js";
 import { emailLimiter } from "../middlewares/rateLimiter.middleware.js";
 
 const router = Router();
@@ -44,9 +47,10 @@ router.route("/removePicture").delete(verifyJWT_username, removePic);
 // get user details
 router.route("/registered/getDetails/:username").get(verifyJWT_username, UserDetails);
 router.route("/registered/getDetails").get(verifyJWT_username, userDetailsWithoutID);
+router.route("/registered/connections").get(verifyJWT_username, getConnections);
 
 // get profiles for discover page
-router.route("/discover").get(verifyJWT_username, discoverUsers);
+router.route("/discover").get(verifyJWT_username, validate(discoverUsersSchema), discoverUsers);
 
 // Skill Gain and Utilization
 router.route("/mentors").get(verifyJWT_username, getSkillGainExperts);

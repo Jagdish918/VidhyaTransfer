@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaChalkboardTeacher, FaStar, FaSearch, FaArrowRight, FaGraduationCap } from "react-icons/fa";
+import { FaChalkboardTeacher, FaStar, FaSearch, FaArrowRight, FaGraduationCap, FaCalendarAlt, FaUserPlus } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import BookSessionModal from "../Sessions/BookSessionModal";
+import { useUser } from "../../util/UserContext";
+import { toast } from "react-toastify";
 
 const SkillGain = () => {
+  const { user } = useUser();
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [bookingMentor, setBookingMentor] = useState(null);
+  const [connectedIds, setConnectedIds] = useState(new Set());
+  const [sendingRequest, setSendingRequest] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -33,9 +40,60 @@ const SkillGain = () => {
     }
   };
 
+  // Fetch connections to know which mentors we can book with
+  const fetchConnections = async () => {
+    try {
+      const { data } = await axios.get("/user/registered/connections");
+      if (data.success && data.data) {
+        const ids = new Set(
+          data.data.map((conn) => conn._id)
+        );
+        setConnectedIds(ids);
+      }
+    } catch (err) {
+      console.error("Error fetching connections", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchConnections();
+  }, []);
+
   useEffect(() => {
     fetchMentors();
   }, [debouncedSearch]);
+
+  const handleSendRequest = async (mentorId) => {
+    setSendingRequest(mentorId);
+    try {
+      const { data } = await axios.post("/request/create", { receiverID: mentorId });
+      if (data.success) {
+        toast.success("Connection request sent!");
+        // Update local state to reflect the change immediately
+        setMentors(prev => prev.map(m => m._id === mentorId ? { ...m, connectionStatus: "Pending" } : m));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send request");
+    } finally {
+      setSendingRequest(null);
+    }
+  };
+
+  const handleCancelRequest = async (mentorId) => {
+    setSendingRequest(mentorId);
+    try {
+      const { data } = await axios.post("/request/cancel", { receiverID: mentorId });
+      if (data.success) {
+        toast.info("Connection request cancelled");
+        // Update local state to reflect the change immediately
+        setMentors(prev => prev.map(m => m._id === mentorId ? { ...m, connectionStatus: "Connect" } : m));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to cancel request");
+    } finally {
+      setSendingRequest(null);
+    }
+  };
 
   const renderMentorCard = (mentor, idx) => (
     <motion.div
@@ -43,7 +101,7 @@ const SkillGain = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.05 }}
       key={mentor._id}
-      className="bg-dark-card rounded-2xl p-4 shadow-card hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] transition-all duration-300 border border-dark-border flex flex-col justify-between group relative overflow-hidden hover:-translate-y-0.5 min-h-[260px]"
+      className="bg-dark-card rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-dark-border flex flex-col h-full group relative overflow-hidden hover:-translate-y-1"
     >
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-bl-[6rem] -mr-6 -mt-6 transition-all duration-700 group-hover:bg-cyan-500/10 group-hover:scale-110" />
@@ -87,17 +145,43 @@ const SkillGain = () => {
         </div>
       </div>
 
-      <div className="mt-auto pt-4 border-t border-dark-border flex justify-between items-center relative z-10">
-        <div>
-          <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest leading-none mb-1.5">Mentorship</p>
-          <p className="text-cyan-400 font-black text-lg">{mentor.preferences?.rates?.mentorship || 0}<span className="text-[10px] ml-1 font-bold">Credits/h</span></p>
+      <div className="mt-auto pt-4 border-t border-dark-border relative z-10">
+        <div className="flex justify-between items-center mb-3">
+          <div>
+            <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest leading-none mb-1.5">Mentorship</p>
+            <p className="text-cyan-400 font-black text-lg">{mentor.preferences?.rates?.mentorship || 0}<span className="text-[10px] ml-1 font-bold">Credits/h</span></p>
+          </div>
+          <Link
+            to={`/profile/${mentor.username}`}
+            className="bg-white text-slate-700 text-[9px] uppercase font-bold tracking-[0.15em] px-4 py-2.5 rounded-xl hover:bg-slate-50 transition-all no-underline border border-dark-border"
+          >
+            Profile
+          </Link>
         </div>
-        <Link
-          to={`/profile/${mentor.username}`}
-          className="bg-cyan-500 text-dark-bg text-[9px] uppercase font-black tracking-[0.2em] px-6 py-3 rounded-xl hover:bg-cyan-400 hover:shadow-lg hover:shadow-cyan-500/20 transition-all no-underline flex items-center gap-2 group/btn hover:-translate-y-0.5"
-        >
-          Connect <FaArrowRight size={8} className="group-hover/btn:translate-x-1 transition-transform" />
-        </Link>
+        {mentor.connectionStatus === "Connected" || connectedIds.has(mentor._id) ? (
+          <button
+            onClick={() => setBookingMentor(mentor)}
+            className="w-full bg-indigo-600 text-white text-[10px] uppercase font-bold tracking-[0.15em] px-4 py-3 rounded-xl hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
+          >
+            <FaCalendarAlt size={10} /> Book Session
+          </button>
+        ) : mentor.connectionStatus === "Pending" ? (
+          <button
+            onClick={() => handleCancelRequest(mentor._id)}
+            disabled={sendingRequest === mentor._id}
+            className="w-full bg-slate-500 text-white text-[10px] uppercase font-bold tracking-[0.15em] px-4 py-3 rounded-xl hover:bg-slate-600 shadow-sm transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 disabled:opacity-50"
+          >
+            <FaUserPlus size={10} /> {sendingRequest === mentor._id ? "Cancelling..." : "Cancel Request"}
+          </button>
+        ) : (
+          <button
+            onClick={() => handleSendRequest(mentor._id)}
+            disabled={sendingRequest === mentor._id}
+            className="w-full bg-emerald-600 text-white text-[10px] uppercase font-bold tracking-[0.15em] px-4 py-3 rounded-xl hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 disabled:opacity-50"
+          >
+            <FaUserPlus size={10} /> {sendingRequest === mentor._id ? "Sending..." : "Connect First"}
+          </button>
+        )}
       </div>
     </motion.div>
   );
@@ -110,11 +194,17 @@ const SkillGain = () => {
         <div className="text-center mb-4 animate-fade-in">
 
           <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-2 leading-tight tracking-tight">
-            Find your <span className="text-cyan-700">master</span>
+            Find your <span className="text-cyan-700">Mentor</span>
           </h1>
           <p className="text-slate-600 max-w-2xl mx-auto text-base leading-relaxed">
             Connect with verified industry experts and accelerate your learning curve through personalized 1-on-1 mentorship.
           </p>
+          <Link
+            to="/sessions"
+            className="inline-flex items-center gap-2 mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-semibold no-underline transition-colors"
+          >
+            <FaCalendarAlt size={12} /> View My Sessions <FaArrowRight size={10} />
+          </Link>
         </div>
 
         {/* Search Bar */}
@@ -152,14 +242,24 @@ const SkillGain = () => {
               <p className="text-slate-600 text-base max-w-sm">Try adjusting your search filters to see more results.</p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[20px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {mentors.map(renderMentorCard)}
             </div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Booking Modal */}
+      {bookingMentor && (
+        <BookSessionModal
+          mentor={bookingMentor}
+          onClose={() => setBookingMentor(null)}
+          onBooked={() => setBookingMentor(null)}
+        />
+      )}
     </div>
   );
 };
 
 export default SkillGain;
+

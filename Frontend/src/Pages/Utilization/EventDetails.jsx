@@ -329,20 +329,27 @@ const EventDetails = () => {
                                 </div>
 
                                 <motion.button
-                                    whileHover={!isRegistered && !isFull && !registering ? { scale: 1.02, y: -2 } : {}}
-                                    whileTap={!isRegistered && !isFull && !registering ? { scale: 0.98 } : {}}
-                                    onClick={handleRegister}
-                                    disabled={isRegistered || isFull || registering}
-                                    className={`w-full py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all mb-8 relative overflow-hidden group/btn ${isRegistered
-                                        ? "bg-dark-bg text-cyan-400 border border-cyan-500/30 cursor-default shadow-sm"
+                                    whileHover={(!isFull && !registering) ? { scale: 1.02, y: -2 } : {}}
+                                    whileTap={(!isFull && !registering) ? { scale: 0.98 } : {}}
+                                    onClick={() => {
+                                        if (isRegistered) {
+                                            if (event.link) window.open(event.link, "_blank");
+                                            else toast.info("Meeting link will be active shortly.");
+                                        } else {
+                                            handleRegister();
+                                        }
+                                    }}
+                                    disabled={(!isRegistered && isFull) || registering}
+                                    className={`w-full py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all mb-8 relative overflow-hidden group/btn shadow-card ${isRegistered
+                                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white cursor-pointer hover:shadow-cyan-500/40"
                                         : isFull
                                             ? "bg-dark-bg text-slate-600 cursor-not-allowed border border-dark-border shadow-sm"
                                             : "bg-cyan-500 text-dark-bg shadow-xl shadow-cyan-500/20 hover:bg-cyan-400 hover:shadow-cyan-500/40"
                                         }`}
                                 >
                                     <span className="relative z-10 flex items-center justify-center gap-3">
-                                        {registering ? "Updating Registry..." : isRegistered ? "In Your Schedule" : isFull ? "Capacity Reached" : "Join the session"}
-                                        {!isRegistered && !isFull && !registering && <FaArrowRight />}
+                                        {registering ? "Updating Registry..." : isRegistered ? (event.link ? "Join Session" : "In Your Schedule") : isFull ? "Capacity Reached" : "Join the session"}
+                                        {(!isFull && !registering) && <FaBolt className={isRegistered ? "text-white" : "text-dark-bg"} />}
                                     </span>
                                 </motion.button>
 
@@ -409,23 +416,30 @@ const EventDetails = () => {
 
             {/* Sticky Mobile Bar */}
             <AnimatePresence>
-                {!isRegistered && !isFull && (
+                {!isFull && (
                     <motion.div
                         initial={{ y: 100 }}
                         animate={{ y: 0 }}
                         exit={{ y: 100 }}
-                        className="lg:hidden fixed bottom-0 inset-x-0 p-6 bg-dark-card/90 backdrop-blur-2xl border-t border-dark-border z-[100] flex items-center justify-between shadow-card"
+                        className="lg:hidden fixed bottom-12 left-6 right-6 p-5 bg-dark-card/90 backdrop-blur-2xl border border-dark-border z-[100] flex items-center justify-between shadow-card rounded-3xl"
                     >
                         <div>
-                            <p className="text-[10px] uppercase font-black text-slate-600 tracking-[0.2em] mb-1">Standard Entry</p>
-                            <p className="text-2xl font-black text-slate-900">{event.credits > 0 ? `${event.credits} Cr` : "Free Access"}</p>
+                            <p className="text-[10px] uppercase font-black text-slate-600 tracking-[0.2em] mb-1">Entry Status</p>
+                            <p className="text-xl font-black text-slate-900">{isRegistered ? "Verified" : (event.credits > 0 ? `${event.credits} Cr` : "Free Access")}</p>
                         </div>
                         <button
-                            onClick={handleRegister}
+                            onClick={() => {
+                                if (isRegistered) {
+                                    if (event.link) window.open(event.link, "_blank");
+                                    else toast.info("Link active soon.");
+                                } else {
+                                    handleRegister();
+                                }
+                            }}
                             disabled={registering}
-                            className="bg-cyan-500 text-dark-bg px-8 py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-cyan-500/20 active:scale-95 transition-all"
+                            className={`px-8 py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95 ${isRegistered ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white" : "bg-cyan-500 text-dark-bg"}`}
                         >
-                            {registering ? "..." : "Secure Seat"}
+                            {registering ? "..." : isRegistered ? (event.link ? "Join" : "Ready") : "Join"}
                         </button>
                     </motion.div>
                 )}

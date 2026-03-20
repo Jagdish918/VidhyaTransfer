@@ -146,7 +146,9 @@ const Notifications = () => {
                 <div className="flex-1">
                     <div className="flex items-center justify-between mb-4">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-extrabold bg-gradient-to-br from-cyan-500 to-emerald-500 bg-clip-text text-transparent tracking-tight">Notifications</h1>
+                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 mb-3 leading-tight tracking-tight">
+                                Notifications
+                            </h1>
                             <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mt-0.5">Stay updated with your activities</p>
                         </div>
                         <button className="text-[9px] uppercase tracking-widest text-cyan-500 font-black hover:text-cyan-700 transition-colors">Mark all as read</button>
