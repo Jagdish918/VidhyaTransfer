@@ -5,30 +5,16 @@ import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { storeSanitizedUserData } from "../../util/sanitizeUserData";
-import { NavLink } from "react-router-dom";
-import Navbar from "react-bootstrap/Navbar";
-import Nav from "react-bootstrap/Nav";
-import Form from "react-bootstrap/Form";
-import FormControl from "react-bootstrap/FormControl";
-import Button from "react-bootstrap/Button";
-import Card from "react-bootstrap/Card";
 import ProfileCard from "./ProfileCard";
-import Search from "./Search";
 import Spinner from "react-bootstrap/Spinner";
 
 const Discover = () => {
   const navigate = useNavigate();
-
   const { user, setUser } = useUser();
-
   const [loading, setLoading] = useState(false);
-
   const [discoverUsers, setDiscoverUsers] = useState([]);
-
   const [webDevUsers, setWebDevUsers] = useState([]);
-
   const [mlUsers, setMlUsers] = useState([]);
-
   const [otherUsers, setOtherUsers] = useState([]);
 
   useEffect(() => {
@@ -45,26 +31,19 @@ const Discover = () => {
         }
         localStorage.removeItem("userInfo");
         setUser(null);
-        await axios.get("/auth/logout");
+        await axios.post("/auth/logout");
         navigate("/login");
       }
     };
     const getDiscoverUsers = async () => {
       try {
         const { data } = await axios.get("/user/discover");
-        setDiscoverUsers(data.data.forYou);
-        setWebDevUsers(data.data.webDev);
-        setMlUsers(data.data.ml);
-        setOtherUsers(data.data.others);
+        setDiscoverUsers(data.data.forYou || []);
+        setWebDevUsers(data.data.webDev || []);
+        setMlUsers(data.data.ml || []);
+        setOtherUsers(data.data.others || []);
       } catch (error) {
         console.log(error);
-        if (error?.response?.data?.message) {
-          toast.error(error.response.data.message);
-        }
-        localStorage.removeItem("userInfo");
-        setUser(null);
-        await axios.get("/auth/logout");
-        navigate("/login");
       } finally {
         setLoading(false);
       }
@@ -74,204 +53,161 @@ const Discover = () => {
   }, []);
 
   return (
-    <>
-      <div className="min-h-screen bg-[#2d2d2d] text-white">
-        <div className="md:ml-[30vw] flex flex-col md:flex-row md:items-start items-center text-center md:text-left">
-          <div className="bg-[#013e38] h-screen w-[20vw] p-[20px] fixed left-0 hidden md:flex flex-col justify-center items-center top-0">
-            <Nav defaultActiveKey="/home" className="flex-column">
-              <Nav.Link href="#for-you" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f] !text-[#f56664] !text-[20px] !-ml-[1rem]" id="foryou">
-                For You
-              </Nav.Link>
-              <Nav.Link href="#popular" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f] !text-[#3bb4a1] !text-[20px] !-ml-[1rem]" id="popular1">
-                Popular
-              </Nav.Link>
-              <Nav.Link href="#web-development" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f]">
-                Web Development
-              </Nav.Link>
-              <Nav.Link href="#machine-learning" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f]">
-                Machine Learning
-              </Nav.Link>
-              <Nav.Link href="#others" className="text-white font-['Montserrat'] no-underline p-[10px] m-[5px] hover:text-[#6d706f]">
-                Others
-              </Nav.Link>
-            </Nav>
+    <div className="min-h-screen bg-dark-bg text-slate-900 pt-16">
+      <div className="flex flex-col md:flex-row items-start">
+        {/* Modern Sidebar */}
+        <aside className="w-full md:w-[260px] md:h-[calc(100vh-64px)] p-6 md:sticky md:top-16 bg-dark-card border-r border-dark-border z-10">
+          <div className="mb-8">
+            <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6">Discover Feed</h2>
+            <nav className="flex flex-col gap-1">
+              {[
+                { id: 'for-you', label: 'For You', icon: '✨', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                { id: 'web-development', label: 'Web Dev', icon: '💻', color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+                { id: 'machine-learning', label: 'AI & ML', icon: '🤖', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                { id: 'others', label: 'Others', icon: '🌐', color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+              ].map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all no-underline text-slate-600 hover:text-cyan-600 hover:bg-dark-hover"
+                >
+                  <span className="text-base">{item.icon}</span>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
           </div>
-          <div className="flex-[80%] max-w-[100vw] flex flex-col items-center md:items-start md:block">
+
+          <div className="mt-12 p-5 bg-cyan-500/10 rounded-2xl border border-cyan-500/20">
+            <h4 className="text-[10px] font-black text-cyan-700 uppercase tracking-widest mb-2">Pro Tip</h4>
+            <p className="text-[11px] text-cyan-600 font-medium leading-relaxed">
+              Connect with users who have "Skills Proficient At" that match your "Skills To Learn"!
+            </p>
+          </div>
+        </aside>
+
+        <main className="flex-1 p-6 md:p-8">
+          <div className="app-container">
+            <header className="mb-10 text-center md:text-left">
+              <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-br from-cyan-500 to-emerald-500 bg-clip-text text-transparent tracking-tight mb-2">Discover New People</h1>
+              <p className="text-sm font-medium text-slate-600">Find and connect with mentors or peers based on their unique skillsets.</p>
+            </header>
+
             {loading ? (
-              <div className="container d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
+              <div className="flex justify-center py-20">
                 <Spinner animation="border" variant="primary" />
               </div>
             ) : (
-              <>
-                {/* <div>
-                  <Search />
-                </div> */}
-                <h1
-                  id="for-you"
-                  className="font-['Josefin_Sans'] text-[#fbf1a4] mt-[2rem] mb-[1rem]"
-                >
-                  For You
-                </h1>
-                <div className="flex flex-wrap md:p-[20px] p-0 justify-center md:justify-start items-center">
-                  {discoverUsers && discoverUsers.length > 0 ? (
-                    discoverUsers.map((user) => (
-                      <ProfileCard
-                        profileImageUrl={user?.picture}
-                        name={user?.name}
-                        rating={user?.rating ? user?.rating : 5}
-                        bio={user?.bio}
-                        skills={user?.skillsProficientAt}
-                        username={user?.username}
-                      />
-                    ))
-                  ) : (
-                    <h1 style={{ color: "#fbf1a4" }}>No users to show</h1>
-                  )}
-                  {/* <ProfileCard
-                    profileImageUrl="/assets/images/sample_profile.jpg"
-                    name="Paakhi Maheshwari"
-                    rating="⭐⭐⭐⭐⭐"
-                    bio="Computer Science student specialising in data science and machine learning"
-                    skills={["Machine Learning", "Python", "Data Science", "English", "Communication"]}
-                  />
-                  <ProfileCard
-                    profileImageUrl="/assets/images/sample_profile2.jpeg"
-                    name="Harsh Sharma"
-                    rating="⭐⭐⭐⭐⭐"
-                    bio="Web Developer and Competitive programmer, specialising in MERN stack."
-                    skills={["React.JS", "MongoDB", "DSA", "Node.JS"]}
-                  /> */}
-                </div>
-                <h1
-                  id="popular"
-                  className="font-['Josefin_Sans'] text-[#fbf1a4] mt-[1rem] mb-[3rem]"
-                >
-                  Popular
-                </h1>
-                <h2 id="web-development" className="font-['Montserrat'] mt-[5rem]">Web Development</h2>
-                <div className="flex flex-wrap md:p-[20px] p-0 justify-center md:justify-start items-center">
-                  {/* Profile cards go here */}
-                  {webDevUsers && webDevUsers.length > 0 ? (
-                    webDevUsers.map((user) => (
-                      <ProfileCard
-                        profileImageUrl={user?.picture}
-                        name={user?.name}
-                        rating={4}
-                        bio={user?.bio}
-                        skills={user?.skillsProficientAt}
-                        username={user?.username}
-                      />
-                    ))
-                  ) : (
-                    <h1 style={{ color: "#fbf1a4" }}>No users to show</h1>
-                  )}
-                  {/* Add more ProfileCard components as needed */}
-                </div>
-                <h2 id="machine-learning" className="font-['Montserrat'] mt-[5rem]">Machine Learning</h2>
-                <div className="flex flex-wrap md:p-[20px] p-0 justify-center md:justify-start items-center">
-                  {mlUsers && mlUsers.length > 0 ? (
-                    mlUsers.map((user) => (
-                      <ProfileCard
-                        profileImageUrl={user?.picture}
-                        name={user?.name}
-                        rating={4}
-                        bio={user?.bio}
-                        skills={user?.skillsProficientAt}
-                        username={user?.username}
-                      />
-                    ))
-                  ) : (
-                    <h1 style={{ color: "#fbf1a4" }}>No users to show</h1>
-                  )}
-                  {/* <ProfileCard
-                    profileImageUrl="/assets/images/profile2.png"
-                    name="Madan Gupta"
-                    rating="⭐⭐⭐⭐⭐"
-                    bio="Experienced professor specialising in data science and machine learning"
-                    skills={["Machine Learning", "Python", "Data Science", "English", "Communication"]}
-                  />
-                  <ProfileCard
-                    profileImageUrl="/assets/images/profile4.jpg"
-                    name="Karuna Yadav"
-                    rating="⭐⭐⭐⭐"
-                    bio="Working professional specialising in Artificial Intelligence and Machine Learning Research."
-                    skills={["Machine Learning", "Python", "Data Science", "Artificial Intelligence"]}
-                  /> */}
-                </div>
-                {/* <h2 id="graphic-design">Graphic Design</h2>
-                <div className="profile-cards">
-                  <ProfileCard
-                    profileImageUrl="profile-image-url"
-                    name="Name"
-                    rating="⭐⭐⭐⭐⭐"
-                    bio="yahan apan bio rakhre"
-                    skills={["HTML", "CSS", "JS"]}
-                  />
-                  <ProfileCard
-                    profileImageUrl="profile-image-url"
-                    name="Name"
-                    rating="⭐⭐⭐⭐⭐"
-                    bio="yahan apan bio rakhre"
-                    skills={["HTML", "CSS", "JS"]}
-                  />
-                </div>
-                <h2 id="soft-skills">Soft Skills</h2>
-                <div className="profile-cards">
-                  <ProfileCard
-                    profileImageUrl="profile-image-url"
-                    name="Name"
-                    rating="⭐⭐⭐⭐⭐"
-                    bio="yahan apan bio rakhre"
-                    skills={["HTML", "CSS", "JS"]}
-                  />
-                  <ProfileCard
-                    profileImageUrl="profile-image-url"
-                    name="Name"
-                    rating="⭐⭐⭐⭐⭐"
-                    bio="yahan apan bio rakhre"
-                    skills={["HTML", "CSS", "JS"]}
-                  />
-                </div> */}
-                <h2 id="others" className="font-['Montserrat'] mt-[5rem]">Others</h2>
-                <div className="flex flex-wrap md:p-[20px] p-0 justify-center md:justify-start items-center">
-                  {/* Profile cards go here */}
-                  {otherUsers && otherUsers.length > 0 ? (
-                    otherUsers.map((user) => (
-                      <ProfileCard
-                        profileImageUrl={user?.picture}
-                        name={user?.name}
-                        rating={4}
-                        bio={user?.bio}
-                        skills={user?.skillsProficientAt}
-                        username={user?.username}
-                      />
-                    ))
-                  ) : (
-                    <h1 style={{ color: "#fbf1a4" }}>No users to show</h1>
-                  )}
-                  {/* <ProfileCard
-                    profileImageUrl="/assets/images/profile.jpg"
-                    name="Anil Khosla"
-                    rating="⭐⭐⭐⭐"
-                    bio="Professor - Maths 2 @ IIIT Raipur. Specialising in Algebra"
-                    skills={["Mathematics", "Algebra", "Arithmetic"]}
-                  />
-                  <ProfileCard
-                    profileImageUrl="/assets/images/profile3.jpg"
-                    name="Rahul Goel"
-                    rating="⭐⭐⭐⭐"
-                    bio="Photography and art enthusiast. National Wildlife Photography Awardee."
-                    skills={["Art", "Photography"]}
-                  /> */}
-                  {/* Add more ProfileCard components as needed */}
-                </div>
-                {/* Add more ProfileCard components as needed */}
-              </>
+              <div className="space-y-16">
+                {/* For You Section */}
+                <section>
+                  <h2 id="for-you" className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <span className="p-2 bg-amber-500/10 rounded-lg text-amber-500">✨</span> For You
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {discoverUsers.length > 0 ? (
+                      discoverUsers.map((u) => (
+                        <ProfileCard
+                          key={u._id}
+                          profileImageUrl={u.picture}
+                          name={u.name}
+                          rating={u.rating || 4.5}
+                          bio={u.bio}
+                          skills={u.skillsProficientAt}
+                          username={u.username}
+                        />
+                      ))
+                    ) : (
+                      <div className="col-span-full py-12 text-center bg-white border border-dashed border-dark-border rounded-3xl w-full">
+                        <p className="text-slate-500 font-bold italic uppercase tracking-widest text-[9px]">No direct matches for you yet</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* Web Dev Section */}
+                <section>
+                  <h2 id="web-development" className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <span className="p-2 bg-cyan-500/10 rounded-lg text-cyan-500">💻</span> Web Development
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {webDevUsers.length > 0 ? (
+                      webDevUsers.map((u) => (
+                        <ProfileCard
+                          key={u._id}
+                          profileImageUrl={u.picture}
+                          name={u.name}
+                          rating={u.rating || 4.0}
+                          bio={u.bio}
+                          skills={u.skillsProficientAt}
+                          username={u.username}
+                        />
+                      ))
+                    ) : (
+                      <div className="col-span-full py-12 text-center bg-white border border-dashed border-dark-border rounded-3xl w-full">
+                        <p className="text-slate-500 font-bold italic uppercase tracking-widest text-[9px]">No web developers found</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* AI / ML Section */}
+                <section>
+                  <h2 id="machine-learning" className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <span className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">🤖</span> Machine Learning
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {mlUsers.length > 0 ? (
+                      mlUsers.map((u) => (
+                        <ProfileCard
+                          key={u._id}
+                          profileImageUrl={u.picture}
+                          name={u.name}
+                          rating={u.rating || 4.2}
+                          bio={u.bio}
+                          skills={u.skillsProficientAt}
+                          username={u.username}
+                        />
+                      ))
+                    ) : (
+                      <div className="col-span-full py-12 text-center bg-white border border-dashed border-dark-border rounded-3xl w-full">
+                        <p className="text-slate-500 font-bold italic uppercase tracking-widest text-[9px]">No ML specialists found</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* Others Section */}
+                <section>
+                  <h2 id="others" className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <span className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500">🌐</span> Others
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {otherUsers.length > 0 ? (
+                      otherUsers.map((u) => (
+                        <ProfileCard
+                          key={u._id}
+                          profileImageUrl={u.picture}
+                          name={u.name}
+                          rating={u.rating || 3.8}
+                          bio={u.bio}
+                          skills={u.skillsProficientAt}
+                          username={u.username}
+                        />
+                      ))
+                    ) : (
+                      <div className="col-span-full py-12 text-center bg-white border border-dashed border-dark-border rounded-3xl w-full">
+                        <p className="text-slate-500 font-bold italic uppercase tracking-widest text-[9px]">No other users found</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
-    </>
+    </div>
   );
 };
 

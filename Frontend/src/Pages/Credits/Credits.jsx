@@ -108,118 +108,139 @@ const Credits = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#fafafa] pt-12 pb-16 font-['Montserrat']">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-
-                {/* Header Section */}
-                <div className="text-center mb-16">
-                    <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight">My Credits</h1>
-                    <p className="mt-3 max-w-2xl mx-auto text-[11px] font-bold text-gray-500 uppercase tracking-widest">
-                        Manage and purchase credits to learn new skills
-                    </p>
+        <div className="min-h-[calc(100vh-64px)] bg-dark-bg pt-6 pb-10 font-sans">
+            <div className="app-container">
+                <div className="flex items-end justify-between gap-6 mb-4">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">Credits</h1>
+                        <p className="mt-1 text-sm text-slate-600">Buy credits and track your transactions.</p>
+                    </div>
                 </div>
 
-                {/* Current Balance Card */}
-                <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 p-10 mb-16 max-w-md mx-auto text-center transform transition-all hover:scale-[1.02] duration-300">
-                    <div className="flex justify-center mb-6">
-                        <div className="w-20 h-20 bg-[#fafafa] rounded-full flex items-center justify-center shadow-inner">
-                            <span className="text-4xl">💎</span>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                    {/* Row 1: Balance */}
+                    <div className="lg:col-span-4">
+                        <div className="bg-dark-card border border-dark-border rounded-xl p-4 shadow-card">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-dark-border flex items-center justify-center">
+                                        <span className="text-lg">💎</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-600">Current balance</p>
+                                        <p className="text-2xl font-bold text-slate-900 leading-tight">{user?.credits || 0}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-slate-600">Credits</p>
+                                    <p className="text-xs text-slate-600">Available</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">You have</p>
-                    <h2 className="text-6xl font-black text-[#013e38] mb-2">{user?.credits || 0}</h2>
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">credits</p>
-                </div>
 
-                {/* Credit Packs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-                    {creditPacks.map((pack, index) => (
-                        <div
-                            key={index}
-                            className={`relative bg-white rounded-[2rem] p-8 shadow-sm border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${pack.recommended ? 'border-[#3bb4a1] ring-2 ring-[#3bb4a1] ring-opacity-20 transform scale-105 z-10' : 'border-gray-50'}`}
-                        >
-                            {pack.recommended && (
-                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#3bb4a1] text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-md">
-                                    Most Popular
-                                </div>
-                            )}
-                            <div className="text-center">
-                                <h3 className="text-lg font-black text-gray-900 mb-2">{pack.credits} Credits</h3>
-                                <div className="flex justify-center items-baseline mb-6">
-                                    <span className="text-4xl font-black text-[#013e38]">₹{pack.price}</span>
-                                </div>
-                                <button
-                                    onClick={() => handlePayment(pack.price, pack.credits)}
-                                    disabled={loading}
-                                    className={`w-full py-4 px-4 rounded-[1.2rem] text-[10px] uppercase font-black tracking-widest transition-all duration-200 ${pack.recommended
-                                        ? 'bg-[#013e38] text-white hover:bg-[#3bb4a1] shadow-lg'
-                                        : 'bg-[#fafafa] border border-gray-200 text-[#013e38] hover:bg-white shadow-sm hover:shadow-md'
-                                        }`}
+                    {/* Row 2: Packs */}
+                    <div className="lg:col-span-8">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {creditPacks.map((pack, index) => (
+                                <div
+                                    key={index}
+                                    className={`relative bg-dark-card rounded-xl p-4 border shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft min-h-[170px] ${pack.recommended ? 'border-indigo-200 ring-1 ring-inset ring-indigo-100' : 'border-dark-border'}`}
                                 >
-                                    {loading ? 'Processing...' : 'Buy Now'}
-                                </button>
+                                    {pack.recommended && (
+                                        <div className="absolute top-3 right-3 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+                                            Popular
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col h-full">
+                                        <div className="mb-3">
+                                            <h3 className="text-sm font-semibold text-slate-900">{pack.credits} credits</h3>
+                                            <p className="text-xs text-slate-600">{pack.label}</p>
+                                        </div>
+                                        <div className="mt-auto">
+                                            <div className="flex items-baseline gap-1 mb-3">
+                                                <span className="text-lg font-bold text-slate-900">₹{pack.price}</span>
+                                                <span className="text-xs text-slate-600">INR</span>
+                                            </div>
+                                            <button
+                                                onClick={() => handlePayment(pack.price, pack.credits)}
+                                                disabled={loading}
+                                                className={`w-full h-10 rounded-lg text-sm font-semibold transition-colors ${pack.recommended
+                                                    ? 'bg-indigo-600 text-white hover:bg-indigo-500'
+                                                    : 'bg-white border border-dark-border text-slate-700 hover:bg-slate-50'
+                                                    }`}
+                                            >
+                                                {loading ? 'Processing…' : 'Buy'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Row 3: History */}
+                    <div className="lg:col-span-12">
+                        <div className="bg-dark-card border border-dark-border rounded-xl shadow-card overflow-hidden">
+                            <div className="px-4 py-3 border-b border-dark-border bg-slate-50 flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-slate-700">
+                                    <FaHistory className="text-slate-600" />
+                                    <h3 className="text-sm font-semibold">Transaction history</h3>
+                                </div>
+                            </div>
+                            <div className="max-h-[360px] overflow-auto custom-scrollbar">
+                                {transactions.length === 0 ? (
+                                    <div className="text-center text-slate-600 py-10">
+                                        <p className="font-semibold text-sm">No transactions yet.</p>
+                                        <p className="text-sm mt-1">Your purchases will show up here.</p>
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full divide-y divide-slate-200">
+                                            <thead className="bg-slate-50 sticky top-0 z-10">
+                                                <tr>
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Date</th>
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Order</th>
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Credits</th>
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Amount</th>
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-slate-100">
+                                                {transactions.map((tx) => (
+                                                    <tr key={tx._id} className="hover:bg-slate-50 transition-colors">
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-700">
+                                                            {new Date(tx.createdAt).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-slate-600">
+                                                            {tx.orderId}
+                                                        </td>
+                                                        <td className={`px-4 py-3 whitespace-nowrap text-sm font-semibold ${tx.credits > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                                                            {tx.credits > 0 ? `+${tx.credits}` : tx.credits}
+                                                        </td>
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-slate-900">
+                                                            ₹{tx.amount}
+                                                        </td>
+                                                        <td className="px-4 py-3 whitespace-nowrap">
+                                                            <span className={`px-2.5 py-1 inline-flex text-xs font-semibold rounded-full ${tx.status === 'paid'
+                                                                ? 'bg-emerald-50 text-emerald-700'
+                                                                : tx.status === 'failed'
+                                                                    ? 'bg-red-50 text-red-700'
+                                                                    : 'bg-amber-50 text-amber-700'
+                                                                }`}>
+                                                                {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    ))}
-                </div>
-
-                {/* Transaction History */}
-                <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 overflow-hidden">
-                    <div className="px-8 py-6 border-b border-gray-50 bg-[#fafafa] flex items-center gap-3">
-                        <FaHistory className="text-gray-400" />
-                        <h3 className="text-[11px] font-black uppercase tracking-widest text-[#013e38]">Recent Transactions</h3>
-                    </div>
-                    <div className="p-0">
-                        {transactions.length === 0 ? (
-                            <div className="text-center text-gray-400 py-12">
-                                <p className="font-bold text-sm">No recent transactions to show.</p>
-                                <p className="text-[10px] mt-3 uppercase tracking-widest font-black opacity-60">(Transaction history will appear here once you make a purchase)</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto p-4">
-                                <table className="min-w-full divide-y divide-gray-100">
-                                    <thead className="bg-[#fafafa] rounded-[1rem] overflow-hidden">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest rounded-tl-[1rem] rounded-bl-[1rem]">Date</th>
-                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Order ID</th>
-                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Credits</th>
-                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</th>
-                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest rounded-tr-[1rem] rounded-br-[1rem]">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-50">
-                                        {transactions.map((tx) => (
-                                            <tr key={tx._id} className="hover:bg-[#fafafa] transition-colors">
-                                                <td className="px-6 py-5 whitespace-nowrap text-[11px] font-bold text-gray-500">
-                                                    {new Date(tx.createdAt).toLocaleDateString()}{" "}
-                                                    <span className="text-[10px] text-gray-400 ml-1">{new Date(tx.createdAt).toLocaleTimeString()}</span>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-[11px] font-mono font-bold text-gray-400">
-                                                    {tx.orderId}
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-[11px] font-black text-[#3bb4a1]">
-                                                    +{tx.credits}
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-[11px] font-black text-[#013e38]">
-                                                    ₹{tx.amount}
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <span className={`px-3 py-1 inline-flex text-[9px] uppercase tracking-widest font-black rounded-[0.8rem] ${tx.status === 'paid' ? 'bg-green-50 text-green-600' :
-                                                        tx.status === 'failed' ? 'bg-red-50 text-red-600' :
-                                                            'bg-yellow-50 text-yellow-600'
-                                                        }`}>
-                                                        {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
                     </div>
                 </div>
-
             </div>
         </div>
     );

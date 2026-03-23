@@ -2,55 +2,46 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import passport from "passport";
+import { globalLimiter } from "./middlewares/rateLimiter.middleware.js";
+import helmet from "helmet";
+import { ApiError } from "./utils/ApiError.js";
 
 const app = express();
 
-// ✅ Allowed origins
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "https://vidhyatransfer-frontend.vercel.app",
-  "https://vidhyatransfer-admin.vercel.app",
-  "https://vidhya-transfer.vercel.app"
-];
+// ─── SECURITY HEADERS (Helmet) ────────────────────────────────────────────────
+app.use(helmet());
 
-// ✅ CORS config (IMPORTANT)
-const corsOptions = {
-  origin: function (origin, callback) {
-    // allow requests with no origin (like Postman)
-    if (!origin) return callback(null, true);
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"];
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS: " + origin));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-};
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
-// ✅ Apply CORS middleware
-app.use(cors(corsOptions));
+// ─── GLOBAL RATE LIMITER (200 req / 15 min per IP) ───────────────────────────
+app.use(globalLimiter);
 
-// ✅ Handle preflight requests PROPERLY
-app.options("*", cors(corsOptions));
-
-
-// ------------------ BODY + MIDDLEWARE ------------------
-
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// ─── BODY PARSING ─────────────────────────────────────────────────────────────
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-// Passport middleware
+// ─── PASSPORT ─────────────────────────────────────────────────────────────────
 app.use(passport.initialize());
 
-
-// ------------------ ROUTES ------------------
-
+// ─── ROUTES ───────────────────────────────────────────────────────────────────
 import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import chatRouter from "./routes/chat.routes.js";
@@ -66,6 +57,7 @@ import adminRouter from "./routes/admin.routes.js";
 import eventRouter from "./routes/event.routes.js";
 import resourceRouter from "./routes/resource.routes.js";
 import quizRouter from "./routes/quiz.routes.js";
+import sessionRouter from "./routes/session.routes.js";
 
 app.use("/user", userRouter);
 app.use("/auth", authRouter);
@@ -82,5 +74,26 @@ app.use("/admin", adminRouter);
 app.use("/events", eventRouter);
 app.use("/resources", resourceRouter);
 app.use("/quiz", quizRouter);
+app.use("/sessions", sessionRouter);
+
+// ─── GLOBAL ERROR HANDLER ─────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({
+      success: err.success,
+      message: err.message,
+      errors: err.errors,
+    });
+  }
+
+  // Handle unexpected errors (don't leak details in production)
+  const statusCode = err.statusCode || 500;
+  const message = process.env.NODE_ENV === "production" ? "Internal Server Error" : err.message;
+
+  return res.status(statusCode).json({
+    success: false,
+    message,
+  });
+});
 
 export { app };

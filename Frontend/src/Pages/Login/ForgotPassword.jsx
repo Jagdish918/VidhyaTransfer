@@ -26,31 +26,31 @@ const ForgotPassword = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <div className="min-h-[90vh] bg-dark-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+            <div className="sm:mx-auto sm:w-full sm:max-w-md animate-fade-in">
+                <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900 tracking-tight">
                     Reset your password
                 </h2>
-                <p className="mt-2 text-center text-sm text-gray-600">
-                    Enter your email address and we'll send you a link to reset your password.
+                <p className="mt-2 text-center text-xs font-bold uppercase tracking-widest text-slate-600">
+                    Enter your email address to receive a reset link.
                 </p>
             </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-fade-in">
+                <div className="bg-dark-card py-10 px-6 shadow-card sm:rounded-3xl sm:px-10 border border-dark-border">
                     {sent ? (
                         <div className="text-center">
-                            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-6 shadow-sm">
+                                <svg className="h-8 w-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h3 className="text-lg leading-6 font-medium text-gray-900">Check your email</h3>
-                            <p className="mt-2 text-sm text-gray-500">
-                                We sent a password reset link to <strong>{email}</strong>
+                            <h3 className="text-xl leading-8 font-bold text-slate-900 tracking-tight">Check your email</h3>
+                            <p className="mt-3 text-sm text-slate-600 font-medium">
+                                We sent a password reset link to <strong className="text-slate-800">{email}</strong>
                             </p>
-                            <div className="mt-6">
-                                <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">
+                            <div className="mt-8">
+                                <Link to="/login" className="text-xs font-bold uppercase tracking-widest text-cyan-400 hover:text-cyan-300 transition-colors">
                                     Back to Login
                                 </Link>
                             </div>
@@ -58,7 +58,7 @@ const ForgotPassword = () => {
                     ) : (
                         <form className="space-y-6" onSubmit={handleSubmit}>
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="email" className="block text-xs font-bold uppercase tracking-widest text-slate-600 mb-2">
                                     Email address
                                 </label>
                                 <div className="mt-1">
@@ -70,23 +70,24 @@ const ForgotPassword = () => {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        className="appearance-none block w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-xl shadow-sm text-slate-800 placeholder-slate-600 focus:outline-none focus:ring-4 focus:ring-cyan-500/10 focus:border-cyan-500 sm:text-sm transition-all"
+                                        placeholder="your@email.com"
                                     />
                                 </div>
                             </div>
 
-                            <div>
+                            <div className="pt-2">
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    className={`w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold uppercase tracking-widest text-dark-bg bg-cyan-500 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-dark-bg transition-all hover:-translate-y-0.5 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 >
                                     {loading ? "Sending..." : "Send Reset Link"}
                                 </button>
                             </div>
 
-                            <div className="text-sm text-center">
-                                <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                            <div className="text-center pt-2">
+                                <Link to="/login" className="text-xs font-bold uppercase tracking-widest text-slate-600 hover:text-cyan-400 transition-colors">
                                     Back to Login
                                 </Link>
                             </div>

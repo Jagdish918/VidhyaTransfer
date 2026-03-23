@@ -126,51 +126,25 @@ const Login = () => {
           storeSanitizedUserData(userInfo);
           setUser(userInfo);
 
-          // Check onboarding status and redirect accordingly
+          // Check onboarding status
           try {
-            let onboardingStatus;
-            try {
-              // move the api logic to api folder
-              const onboardingRes = await axios.get("/onboarding/registered/status");
-              onboardingStatus = onboardingRes.data;
-            } catch (err) {
-              // Try unregistered endpoint
-              try {
-                const onboardingRes = await axios.get("/onboarding/status");
-                onboardingStatus = onboardingRes.data;
-              } catch (unregErr) {
-                console.error("Error checking onboarding:", unregErr);
-                // Default to landing page if can't check
-                navigate("/");
-                return;
-              }
-            }
-
-            if (onboardingStatus?.success) {
-              const { completed, step } = onboardingStatus.data;
+            const { data: statusRes } = await axios.get("/onboarding/status");
+            if (statusRes?.success) {
+              const { completed, step } = statusRes.data;
               if (!completed) {
-                // Redirect to appropriate onboarding step
-                if (step === 0) {
-                  navigate("/onboarding/personal-info");
-                } else if (step === 1) {
-                  navigate("/onboarding/skills");
-                } else if (step === 2) {
-                  navigate("/onboarding/preferences");
-                } else {
-                  navigate("/onboarding/personal-info");
-                }
+                if (step === 0) navigate("/onboarding/personal-info");
+                else if (step === 1) navigate("/onboarding/skills");
+                else if (step === 2) navigate("/onboarding/preferences");
+                else navigate("/onboarding/personal-info");
               } else {
-                // Onboarding completed, go to landing page
                 navigate("/feed");
               }
             } else {
-              // If can't check status, default to landing page
               navigate("/feed");
             }
           } catch (error) {
             console.error("Error checking onboarding:", error);
-            // On error, default to landing page
-            navigate("/");
+            navigate("/feed");
           }
         }
       } else {
@@ -243,36 +217,37 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans p-5">
-      <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center min-h-[calc(100vh-40px)]">
+    <div className="min-h-screen bg-dark-bg font-sans p-4 flex items-center justify-center">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center w-full px-4">
         {/* Left Section - Promotional Content */}
-        <div className="flex flex-col gap-6 py-10">
-          <h1 className="text-4xl md:text-5xl lg:text-5xl font-extrabold text-gray-800 m-0 leading-tight tracking-tight">Start Your Skill Journey</h1>
-          <p className="text-lg text-gray-500 leading-relaxed m-0 max-w-[500px]">
+        <div className="flex flex-col gap-4 py-4 lg:pl-10">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 m-0 leading-tight tracking-tight">Start Your Skill Journey</h1>
+          <p className="text-lg text-slate-600 leading-relaxed m-0 max-w-[500px]">
             Join thousands of learners exchanging knowledge and building skills together.
           </p>
-          <div className="relative mt-5">
+          <div className="relative mt-5 group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
             <img
               src="https://media.licdn.com/dms/image/v2/D4D12AQF8Zym1URlUdw/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1675779883789?e=2147483647&v=beta&t=Sdl1tnLrAV89A5FJHCK95ruH4oA8kWjvL7YfPLRFDH4"
               alt="Skill Learning"
-              className="w-full max-w-[600px] h-auto rounded-2xl shadow-xl"
+              className="relative w-full max-w-[500px] h-auto rounded-2xl shadow-xl border border-dark-border"
             />
-            <div className="absolute top-4 right-4 bg-emerald-500 text-white px-4 py-2 rounded-3xl flex items-center gap-2 text-sm font-semibold shadow-lg shadow-emerald-500/30">
-              <span className="text-base font-bold">✓</span>
-              <span className="text-sm">500+ Skills</span>
+            <div className="absolute top-4 right-4 bg-cyan-500 text-dark-bg px-4 py-2 rounded-full flex items-center gap-2 text-sm font-bold shadow-lg shadow-cyan-500/30">
+              <span className="text-base font-extrabold">✓</span>
+              <span>500+ Skills</span>
             </div>
           </div>
         </div>
 
         {/* Right Section - Login/Register Form */}
-        <div className="flex justify-center items-center">
-          <div className="bg-white rounded-3xl p-10 w-full max-w-[480px] shadow-lg border border-gray-200">
+        <div className="flex justify-center items-center lg:pr-10">
+          <div className="bg-white rounded-[2rem] p-6 w-full max-w-[440px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100">
             {/* Tabs */}
-            <div className="flex gap-2 mb-8 bg-gray-100 p-1 rounded-xl">
+            <div className="flex gap-2 mb-3 bg-slate-100 p-1 rounded-2xl">
               <button
-                className={`flex-1 py-3 px-6 border-0 rounded-lg text-base font-semibold cursor-pointer transition-all duration-200 ${activeTab === "login"
-                  ? "bg-white text-gray-800 shadow-sm"
-                  : "bg-transparent text-gray-500 hover:text-gray-800"
+                className={`flex-1 py-3 px-6 border-0 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 ${activeTab === "login"
+                  ? "bg-white text-slate-700 shadow-sm"
+                  : "bg-transparent text-slate-500 hover:text-slate-700"
                   }`}
                 onClick={() => setActiveTab("login")}
                 disabled={loading}
@@ -280,9 +255,9 @@ const Login = () => {
                 Login
               </button>
               <button
-                className={`flex-1 py-3 px-6 border-0 rounded-lg text-base font-semibold cursor-pointer transition-all duration-200 ${activeTab === "register"
-                  ? "bg-white text-gray-800 shadow-sm"
-                  : "bg-transparent text-gray-500 hover:text-gray-800"
+                className={`flex-1 py-3 px-6 border-0 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 ${activeTab === "register"
+                  ? "bg-white text-slate-700 shadow-sm"
+                  : "bg-transparent text-slate-500 hover:text-slate-700"
                   }`}
                 onClick={() => setActiveTab("register")}
                 disabled={loading}
@@ -292,20 +267,20 @@ const Login = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {activeTab === "login" && (
-                <div className="flex gap-2 mb-4">
+                <div className="flex gap-2 mb-2">
                   <button
                     type="button"
                     onClick={() => setLoginMethod("password")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${loginMethod === "password" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                    className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${loginMethod === "password" ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
                   >
                     Password
                   </button>
                   <button
                     type="button"
                     onClick={() => setLoginMethod("otp")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${loginMethod === "otp" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                    className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${loginMethod === "otp" ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
                   >
                     OTP
                   </button>
@@ -314,42 +289,42 @@ const Login = () => {
 
               {activeTab === "register" && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-gray-700">Full Name</label>
+                  <label className="text-sm font-semibold text-slate-700">Full Name</label>
                   <input
                     type="text"
                     placeholder="Enter your full name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className="p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium shadow-sm"
                     required
                     disabled={loading}
                   />
                 </div>
               )}
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-gray-700">Email Address</label>
+               <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-slate-700">Email Address</label>
                 <input
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  className="p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium shadow-sm"
                   required
                   disabled={loading || (loginMethod === "otp" && otpSent)}
                 />
               </div>
 
-              {(loginMethod === "password" || activeTab === "register") && (
+              {(activeTab === "register" || loginMethod === "password") && (
                 <div className="flex flex-col gap-2 relative">
-                  <label className="text-sm font-semibold text-gray-700">Password</label>
+                  <label className="text-sm font-semibold text-slate-700">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium shadow-sm"
                       required
                       disabled={loading}
                       minLength={6}
@@ -357,7 +332,7 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 border-none bg-transparent cursor-pointer p-0"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-0 transition-colors"
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
@@ -367,22 +342,23 @@ const Login = () => {
 
               {loginMethod === "otp" && otpSent && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-gray-700">Enter OTP</label>
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Enter OTP</label>
                   <input
                     type="text"
-                    placeholder="Enter 6-digit OTP"
+                    placeholder="000000"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className="p-3.5 px-4 bg-dark-bg border border-dark-border rounded-xl text-slate-800 transition-all duration-200 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 placeholder:text-slate-600 text-center tracking-[0.5em] font-mono text-lg"
                     required
                     disabled={loading}
+                    maxLength={6}
                   />
-                  <div className="text-right">
+                  <div className="text-right mt-1">
                     <button
                       type="button"
                       onClick={handleResendOtp}
                       disabled={otpTimer > 0}
-                      className={`text-xs bg-transparent border-0 cursor-pointer hover:underline ${otpTimer > 0 ? "text-gray-400" : "text-blue-600"}`}
+                      className={`text-[11px] font-bold uppercase tracking-widest bg-transparent border-0 cursor-pointer transition-colors ${otpTimer > 0 ? "text-slate-600" : "text-cyan-600 hover:text-cyan-500"}`}
                     >
                       {otpTimer > 0 ? `Resend in ${otpTimer}s` : "Resend OTP"}
                     </button>
@@ -392,14 +368,14 @@ const Login = () => {
 
               {activeTab === "register" && (
                 <div className="flex flex-col gap-2 relative">
-                  <label className="text-sm font-semibold text-gray-700">Confirm Password</label>
+                  <label className="text-sm font-semibold text-slate-700">Confirm Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Confirm your password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full p-3 px-4 border border-gray-300 rounded-lg text-base text-gray-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 transition-all duration-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 placeholder:text-slate-400 font-medium shadow-sm"
                       required
                       disabled={loading}
                       minLength={6}
@@ -409,18 +385,23 @@ const Login = () => {
               )}
 
               {activeTab === "login" && loginMethod === "password" && (
-                <div className="flex justify-between items-center">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 cursor-pointer"
-                      disabled={loading}
-                    />
-                    <span className="text-sm text-gray-700">Remember me</span>
+                <div className="flex justify-between items-center mt-1">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="peer w-4 h-4 cursor-pointer opacity-0 absolute"
+                        disabled={loading}
+                      />
+                      <div className="w-4 h-4 rounded border border-dark-border bg-dark-bg peer-checked:bg-cyan-500 peer-checked:border-cyan-500 transition-all flex items-center justify-center">
+                         {rememberMe && <span className="text-dark-bg text-[10px] font-black">✓</span>}
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-slate-600">Remember me</span>
                   </label>
-                  <Link to="/forgot-password" className="text-sm text-blue-500 no-underline font-medium hover:text-blue-600">Forgot password?</Link>
+                  <Link to="/forgot-password" className="text-xs text-cyan-600 no-underline font-bold hover:text-cyan-500 transition-colors">Forgot password?</Link>
                 </div>
               )}
 
@@ -428,7 +409,7 @@ const Login = () => {
                 <Button
                   type="button"
                   onClick={handleSendOtp}
-                  className="w-full p-3.5 bg-blue-500 text-white border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 mt-2 hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-lg shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full p-3.5 mt-2 bg-blue-600 text-white border-0 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 hover:bg-blue-700 hover:-translate-y-0.5 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   {loading ? "Sending..." : "Send OTP"}
@@ -436,7 +417,7 @@ const Login = () => {
               ) : (
                 <Button
                   type="submit"
-                  className="w-full p-3.5 bg-blue-500 text-white border-0 rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 mt-2 hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-lg shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full p-3.5 mt-2 bg-blue-600 text-white border-0 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 hover:bg-blue-700 hover:-translate-y-0.5 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   {loading ? "Processing..." : (activeTab === "register" ? "Continue" : (loginMethod === "otp" ? "Verify & Login" : "Login"))}
@@ -445,17 +426,17 @@ const Login = () => {
             </form>
 
             {/* Separator */}
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-gray-200"></div>
-              <span className="text-sm text-gray-500 font-medium">OR</span>
-              <div className="flex-1 h-px bg-gray-200"></div>
+            <div className="flex items-center gap-4 my-3">
+              <div className="flex-1 h-px bg-dark-border"></div>
+              <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">OR</span>
+              <div className="flex-1 h-px bg-dark-border"></div>
             </div>
 
             {/* Google Login */}
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full p-3.5 bg-white text-gray-800 border border-gray-300 rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 flex items-center justify-center gap-2 hover:bg-gray-50 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full p-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl text-sm font-bold cursor-pointer transition-all duration-300 flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               disabled={loading}
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -469,46 +450,47 @@ const Login = () => {
           </div>
         </div>
       </div>
+      
       {/* OTP Modal */}
       {showRegOtpModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md m-4 shadow-2xl animate-fade-in relative">
+        <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-card border border-dark-border rounded-[2rem] p-8 md:p-10 w-full max-w-md shadow-2xl animate-fade-in relative">
             <button
               onClick={() => { setShowRegOtpModal(false); setLoading(false); }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 border-none bg-transparent cursor-pointer text-xl"
+              className="absolute top-6 right-6 text-slate-600 hover:text-cyan-600 border-none bg-transparent cursor-pointer text-xl transition-colors"
             >
               ×
             </button>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">Verify Email</h2>
-            <p className="text-gray-500 text-center mb-6">Enter the 6-digit code sent to {email}</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center tracking-tight">Verify Email</h2>
+            <p className="text-slate-600 text-sm text-center mb-8 font-medium">Enter the 6-digit code sent to <span className="text-slate-700">{email}</span></p>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
               <input
                 type="text"
                 placeholder="000000"
                 value={regOtp}
                 onChange={(e) => setRegOtp(e.target.value)}
-                className="text-center text-3xl tracking-widest p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none font-mono"
+                className="text-center text-3xl tracking-[0.5em] p-4 bg-dark-bg border border-dark-border rounded-xl focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 outline-none font-mono text-cyan-600 transition-all font-bold"
                 maxLength={6}
               />
 
               <Button
                 onClick={handleVerifyRegistrationOtp}
                 disabled={loading}
-                className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-70"
+                className="w-full py-4 bg-cyan-500 text-dark-bg rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-cyan-400 transition-all disabled:opacity-50 shadow-lg shadow-cyan-500/20"
               >
-                {loading ? "Verifying..." : "Verify & Complete Registration"}
+                {loading ? "Verifying..." : "Verify & Complete"}
               </Button>
             </div>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="mt-8 text-center text-xs font-bold text-slate-600 uppercase tracking-widest">
+              <p>
                 Didn't receive code? {" "}
                 <button
                   onClick={handleResendOtp}
                   disabled={otpTimer > 0}
-                  className={`font-semibold bg-transparent border-none cursor-pointer hover:underline ${otpTimer > 0 ? "text-gray-400" : "text-blue-600"}`}
+                  className={`font-bold bg-transparent border-none cursor-pointer transition-colors uppercase tracking-widest ml-1 ${otpTimer > 0 ? "text-slate-700" : "text-cyan-600 hover:text-cyan-500"}`}
                 >
                   {otpTimer > 0 ? `Resend in ${otpTimer}s` : "Resend"}
                 </button>

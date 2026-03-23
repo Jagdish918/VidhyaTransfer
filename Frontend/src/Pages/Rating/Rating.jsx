@@ -41,7 +41,7 @@ const Rating = () => {
         if (error.response.data.message === "Please Login") {
           localStorage.removeItem("userInfo");
           setUser(null);
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           navigate("/login");
         }
       }

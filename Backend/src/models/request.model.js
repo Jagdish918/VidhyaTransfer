@@ -22,3 +22,7 @@ const requestSchema = new Schema(
 );
 
 export const Request = mongoose.model("Request", requestSchema);
+
+// ✅ Fix #7: Compound index — queried on every notifications load, accept, reject, and duplicate check
+requestSchema.index({ sender: 1, receiver: 1, status: 1 });
+requestSchema.index({ receiver: 1, status: 1 }); // for getRequests (pending requests for a user)

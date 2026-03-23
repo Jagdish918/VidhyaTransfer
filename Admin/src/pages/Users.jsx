@@ -15,7 +15,7 @@ const Users = () => {
             try {
                 const { data } = await axios.get('/admin/users');
                 if (data.success) {
-                    setUsers(data.data);
+                    setUsers(data.data.users || data.data); // support both formats
                 }
             } catch (error) {
                 toast.error("Failed to fetch users");

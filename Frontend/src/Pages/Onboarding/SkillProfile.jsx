@@ -13,22 +13,16 @@ const SkillProfile = () => {
 
   // Local state for UI interaction
   const [currentSkills, setCurrentSkills] = useState(onboardingData.skills.learning || []);
-  const [desiredSkills, setDesiredSkills] = useState(onboardingData.skills.teaching || []); // Note: store structure might be confusing, let's map correctly. 
-  // Store has "learning" and "teaching". Usually "current skills" = what I can teach, "desired skills" = what I want to learn.
-  // Checking existing code: 
-  // currentSkills -> skillsProficientAt (Teaching)
-  // desiredSkills -> skillsToLearn (Learning)
+  const [desiredSkills, setDesiredSkills] = useState(onboardingData.skills.teaching || []); 
 
   const [selectedSkill, setSelectedSkill] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Programming");
   const [autoMatch, setAutoMatch] = useState(false);
 
   const categories = ["Programming", "Design", "Business", "Marketing", "Writing"];
-
   const proficiencyLevels = ["Beginner", "Intermediate", "Advanced", "Expert"];
 
   useEffect(() => {
-    // If store is empty, try to populate from passed data or backend (simulated by just using store default)
     if (onboardingData.skills.teaching && onboardingData.skills.teaching.length > 0) {
       setCurrentSkills(onboardingData.skills.teaching);
     }
@@ -113,7 +107,6 @@ const SkillProfile = () => {
 
     setLoading(true);
     try {
-      // Update store
       updateSkills({
         teaching: currentSkills,
         learning: desiredSkills
@@ -125,15 +118,7 @@ const SkillProfile = () => {
       };
 
       // Backend sync
-      try {
-        await axios.post("/onboarding/registered/skill-profile", payload);
-      } catch (err) {
-        try {
-          await axios.post("/onboarding/skill-profile", payload);
-        } catch (inner) {
-          console.warn("Backend sync failed", inner);
-        }
-      }
+      await axios.post("/onboarding/skill-profile", payload);
 
       toast.success("Skills saved!");
       navigate("/onboarding/preferences");
@@ -145,51 +130,51 @@ const SkillProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-3xl mx-auto space-y-8">
+    <div className="min-h-screen bg-dark-bg py-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
         <div className="text-center">
           {/* Logo Header */}
           <div className="flex justify-center mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-[10px] bg-blue-50 flex items-center justify-center">
-                <FaGraduationCap className="text-[28px] text-blue-500" />
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shadow-sm">
+                <FaGraduationCap className="text-3xl text-cyan-400" />
               </div>
-              <span className="text-2xl font-bold text-gray-800 font-sans">VidhyaTransfer</span>
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">VidhyaTransfer</span>
             </div>
           </div>
 
-          <h2 className="text-3xl font-extrabold text-gray-900">Your Skills</h2>
-          <p className="mt-2 text-sm text-gray-600">Manage what you know and what you want to learn</p>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Your Skills</h2>
+          <p className="mt-2 text-xs font-medium text-slate-600">Manage what you know and what you want to learn</p>
         </div>
 
         {/* Current Skills Section */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Current Skills (I can teach)</h3>
+        <div className="bg-dark-card p-6 md:p-8 rounded-3xl shadow-card border border-dark-border">
+          <h3 className="text-lg font-bold text-slate-900 mb-6 tracking-tight">Current Skills (I can teach)</h3>
 
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <select
               value={selectedSkill}
               onChange={(e) => setSelectedSkill(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+              className="block w-full rounded-xl bg-dark-bg border border-dark-border text-slate-800 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 sm:text-sm p-3.5 outline-none transition-all"
             >
-              <option value="">Select a skill...</option>
+              <option value="" className="bg-dark-bg text-slate-600">Select a skill...</option>
               {skills.map((skill) => (
-                <option key={skill} value={skill}>{skill}</option>
+                <option key={skill} value={skill} className="bg-dark-card">{skill}</option>
               ))}
             </select>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="block w-full sm:w-1/3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+              className="block w-full sm:w-1/3 rounded-xl bg-dark-bg border border-dark-border text-slate-800 shadow-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 sm:text-sm p-3.5 outline-none transition-all"
             >
               {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat} className="bg-dark-card">{cat}</option>
               ))}
             </select>
             <button
               onClick={handleAddCurrentSkill}
               type="button"
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex justify-center items-center py-3.5 px-6 border border-cyan-500/20 shadow-sm text-xs font-bold uppercase tracking-widest rounded-xl text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-dark-bg transition-all"
             >
               Add
             </button>
@@ -197,19 +182,19 @@ const SkillProfile = () => {
 
           <div className="space-y-4">
             {currentSkills.map((skill, index) => (
-              <div key={index} className="bg-gray-50 p-4 rounded-md border border-gray-200 relative group">
-                <div className="flex justify-between items-start mb-2">
+              <div key={index} className="bg-dark-bg p-5 rounded-2xl border border-dark-border relative group hover:border-cyan-500/30 transition-all">
+                <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h4 className="text-md font-bold text-gray-800">{skill.name}</h4>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-800">{skill.category}</span>
+                    <h4 className="text-base font-bold text-slate-800">{skill.name}</h4>
+                    <span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">{skill.category}</span>
                   </div>
-                  <button onClick={() => handleRemoveCurrentSkill(index)} className="text-gray-400 hover:text-red-500 transition-colors">
-                    <span className="text-xl">×</span>
+                  <button onClick={() => handleRemoveCurrentSkill(index)} className="text-slate-600 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-red-500/10">
+                    <span className="text-xl leading-none">×</span>
                   </button>
                 </div>
 
-                <div className="mt-3">
-                  <label className="text-xs text-gray-500 block mb-1">Proficiency: {skill.proficiency}</label>
+                <div className="mt-4 pt-4 border-t border-dark-border">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-600 block mb-3">Proficiency: <span className="text-cyan-400 ml-1">{skill.proficiency}</span></label>
                   <input
                     type="range"
                     min="0"
@@ -217,9 +202,9 @@ const SkillProfile = () => {
                     step="1"
                     value={proficiencyLevels.indexOf(skill.proficiency)}
                     onChange={(e) => handleUpdateProficiency(index, proficiencyLevels[parseInt(e.target.value)], true)}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    className="w-full h-2 bg-dark-card rounded-lg appearance-none cursor-pointer accent-cyan-500 border border-dark-border"
                   />
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-600 mt-2">
                     <span>Beginner</span>
                     <span>Expert</span>
                   </div>
@@ -227,30 +212,30 @@ const SkillProfile = () => {
               </div>
             ))}
             {currentSkills.length === 0 && (
-              <p className="text-center text-gray-400 italic py-4">No skills added yet.</p>
+              <p className="text-center text-[10px] uppercase font-bold tracking-widest text-slate-600 italic py-6">No skills added yet.</p>
             )}
           </div>
         </div>
 
         {/* Desired Skills Section */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Desired Skills (I want to learn)</h3>
+        <div className="bg-dark-card p-6 md:p-8 rounded-3xl shadow-card border border-dark-border">
+          <h3 className="text-lg font-bold text-slate-900 mb-6 tracking-tight">Desired Skills (I want to learn)</h3>
 
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <select
               value={selectedSkill}
               onChange={(e) => setSelectedSkill(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+              className="block w-full rounded-xl bg-dark-bg border border-dark-border text-slate-800 shadow-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 sm:text-sm p-3.5 outline-none transition-all"
             >
-              <option value="">Select a skill...</option>
+              <option value="" className="bg-dark-bg text-slate-600">Select a skill...</option>
               {skills.map((skill) => (
-                <option key={skill} value={skill}>{skill}</option>
+                <option key={skill} value={skill} className="bg-dark-card">{skill}</option>
               ))}
             </select>
             <button
               onClick={handleAddDesiredSkill}
               type="button"
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              className="inline-flex justify-center items-center py-3.5 px-6 border border-purple-500/20 shadow-sm text-xs font-bold uppercase tracking-widest rounded-xl text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-dark-bg transition-all"
             >
               Add
             </button>
@@ -258,16 +243,16 @@ const SkillProfile = () => {
 
           <div className="space-y-4">
             {desiredSkills.map((skill, index) => (
-              <div key={index} className="bg-gray-50 p-4 rounded-md border border-gray-200 relative group">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-md font-bold text-gray-800">#{skill.name}</h4>
-                  <button onClick={() => handleRemoveDesiredSkill(index)} className="text-gray-400 hover:text-red-500 transition-colors">
-                    <span className="text-xl">×</span>
+              <div key={index} className="bg-dark-bg p-5 rounded-2xl border border-dark-border relative group hover:border-purple-500/30 transition-all">
+                <div className="flex justify-between items-start mb-3">
+                  <h4 className="text-base font-bold text-slate-800">#{skill.name}</h4>
+                  <button onClick={() => handleRemoveDesiredSkill(index)} className="text-slate-600 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-red-500/10">
+                    <span className="text-xl leading-none">×</span>
                   </button>
                 </div>
 
-                <div className="mt-3">
-                  <label className="text-xs text-gray-500 block mb-1">Target Proficiency: {skill.proficiency}</label>
+                <div className="mt-4 pt-4 border-t border-dark-border">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-600 block mb-3">Target Proficiency: <span className="text-purple-400 ml-1">{skill.proficiency}</span></label>
                   <input
                     type="range"
                     min="0"
@@ -275,61 +260,68 @@ const SkillProfile = () => {
                     step="1"
                     value={proficiencyLevels.indexOf(skill.proficiency)}
                     onChange={(e) => handleUpdateProficiency(index, proficiencyLevels[parseInt(e.target.value)], false)}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                    className="w-full h-2 bg-dark-card rounded-lg appearance-none cursor-pointer accent-purple-500 border border-dark-border"
                   />
+                  <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-600 mt-2">
+                    <span>Beginner</span>
+                    <span>Expert</span>
+                  </div>
                 </div>
               </div>
             ))}
             {desiredSkills.length === 0 && (
-              <p className="text-center text-gray-400 italic py-4">No desired skills added yet.</p>
+              <p className="text-center text-[10px] uppercase font-bold tracking-widest text-slate-600 italic py-6">No desired skills added yet.</p>
             )}
           </div>
 
-          <div className="mt-4 flex items-center">
-            <input
-              id="auto-match"
-              type="checkbox"
-              checked={autoMatch}
-              onChange={(e) => setAutoMatch(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="auto-match" className="ml-2 block text-sm text-gray-900">
+          <div className="mt-6 flex items-center p-4 bg-dark-bg rounded-xl border border-dark-border cursor-pointer" onClick={() => setAutoMatch(!autoMatch)}>
+            <div className={`relative w-4 h-4 rounded border flex items-center justify-center transition-colors ${autoMatch ? 'bg-purple-500 border-purple-500' : 'bg-dark-card border-dark-border'}`}>
+              <input
+                id="auto-match"
+                type="checkbox"
+                checked={autoMatch}
+                onChange={(e) => setAutoMatch(e.target.checked)}
+                className="opacity-0 absolute inset-0 cursor-pointer"
+              />
+              {autoMatch && <span className="text-dark-bg text-[10px] font-black">✓</span>}
+            </div>
+            <label htmlFor="auto-match" className="ml-3 block text-sm font-bold text-slate-700 cursor-pointer">
               Auto-match tutors for these skills
             </label>
           </div>
         </div>
 
-        <div className="flex justify-center">
-          <div className="flex gap-4 w-full sm:w-auto">
+        <div className="flex justify-center pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
             <button
               onClick={() => navigate("/onboarding/personal-info")}
-              className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-8 shadow-sm transition-transform"
+              className="w-full sm:w-1/3 px-6 py-4 border border-dark-border text-xs font-bold uppercase tracking-widest rounded-xl text-slate-600 bg-dark-card hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-slate-800 shadow-sm transition-all"
             >
               Back
             </button>
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full sm:w-auto px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 shadow-lg transition-transform hover:-translate-y-0.5"
+              className="w-full sm:w-2/3 px-8 py-4 border border-transparent text-xs font-bold uppercase tracking-widest rounded-xl text-dark-bg bg-cyan-500 hover:bg-cyan-400 shadow-lg shadow-cyan-500/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Saving..." : "Save & Continue"}
             </button>
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-8">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-dark-border" />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Step 2 of 3</span>
+            <div className="relative flex justify-center text-xs font-bold uppercase tracking-widest">
+              <span className="px-4 bg-dark-bg text-slate-600 border border-dark-border rounded-full py-1">Step 2 of 3</span>
             </div>
           </div>
-          <div className="mt-4 flex gap-1 justify-center">
-            <div className="h-1.5 w-16 bg-blue-600 rounded-full"></div>
-            <div className="h-1.5 w-16 bg-blue-600 rounded-full"></div>
-            <div className="h-1.5 w-16 bg-gray-200 rounded-full"></div>
+          <div className="mt-6 flex gap-2 justify-center">
+            <div className="h-1.5 w-16 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.5)]"></div>
+            <div className="h-1.5 w-16 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.5)]"></div>
+            <div className="h-1.5 w-16 bg-dark-border rounded-full"></div>
           </div>
         </div>
       </div>

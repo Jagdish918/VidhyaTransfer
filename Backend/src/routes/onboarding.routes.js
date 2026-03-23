@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyJWT_email, verifyJWT_username } from "../middlewares/verifyJWT.middleware.js";
+import { verifyJWT_any } from "../middlewares/verifyJWT.middleware.js";
 import {
   updatePersonalInfo,
   updateSkillProfile,
@@ -9,17 +9,11 @@ import {
 
 const router = Router();
 
-// Unregistered users
-router.route("/personal-info").post(verifyJWT_email, updatePersonalInfo);
-router.route("/skill-profile").post(verifyJWT_email, updateSkillProfile);
-router.route("/preferences").post(verifyJWT_email, updatePreferences);
-router.route("/status").get(verifyJWT_email, getOnboardingStatus);
-
-// Registered users
-router.route("/registered/personal-info").post(verifyJWT_username, updatePersonalInfo);
-router.route("/registered/skill-profile").post(verifyJWT_username, updateSkillProfile);
-router.route("/registered/preferences").post(verifyJWT_username, updatePreferences);
-router.route("/registered/status").get(verifyJWT_username, getOnboardingStatus);
+// Unified onboarding routes for both registered and unregistered users
+router.route("/personal-info").post(verifyJWT_any, updatePersonalInfo);
+router.route("/skill-profile").post(verifyJWT_any, updateSkillProfile);
+router.route("/preferences").post(verifyJWT_any, updatePreferences);
+router.route("/status").get(verifyJWT_any, getOnboardingStatus);
 
 export default router;
 

@@ -17,10 +17,25 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
-    // Basic pagination could be added later
-    const users = await User.find().select("-password").sort({ createdAt: -1 }).limit(50);
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200); // max 200
+    const skip = (page - 1) * limit;
+    const search = req.query.search || "";
+
+    const query = {};
+    if (search) {
+        const safeSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").slice(0, 100);
+        const regex = new RegExp(safeSearch, "i");
+        query.$or = [{ name: regex }, { email: regex }, { username: regex }];
+    }
+
+    const [users, total] = await Promise.all([
+        User.find(query).select("-password").sort({ createdAt: -1 }).skip(skip).limit(limit),
+        User.countDocuments(query),
+    ]);
+
     return res.status(200).json(
-        new ApiResponse(200, users, "Users fetched successfully")
+        new ApiResponse(200, { users, pagination: { current: page, pages: Math.ceil(total / limit), total } }, "Users fetched successfully")
     );
 });
 
@@ -41,7 +56,8 @@ const banUser = asyncHandler(async (req, res) => {
         id,
         {
             status: "banned",
-            refreshToken: null // Force logout
+            refreshToken: null,      // Force logout on refresh
+            $inc: { tokenVersion: 1 } // ✅ JWT REVOCATION: instantly invalidates all active tokens
         },
         { new: true }
     );
@@ -49,7 +65,7 @@ const banUser = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
     return res.status(200).json(
-        new ApiResponse(200, user, "User banned successfully")
+        new ApiResponse(200, user, "User banned successfully. Their active sessions have been terminated.")
     );
 });
 
@@ -69,12 +85,21 @@ const unbanUser = asyncHandler(async (req, res) => {
 });
 
 const getAllPosts = asyncHandler(async (req, res) => {
-    const posts = await Post.find({ isDeleted: false })
-        .populate("author", "name email picture")
-        .sort({ createdAt: -1 })
-        .limit(50);
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const skip = (page - 1) * limit;
+
+    const [posts, total] = await Promise.all([
+        Post.find({ isDeleted: false })
+            .populate("author", "name email picture")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+        Post.countDocuments({ isDeleted: false }),
+    ]);
+
     return res.status(200).json(
-        new ApiResponse(200, posts, "Posts fetched successfully")
+        new ApiResponse(200, { posts, pagination: { current: page, pages: Math.ceil(total / limit), total } }, "Posts fetched successfully")
     );
 });
 

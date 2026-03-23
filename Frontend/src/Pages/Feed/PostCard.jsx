@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { FaHeart, FaComment, FaTrash, FaShare, FaBookmark, FaUserPlus, FaReply } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaComment, FaShare, FaBookmark, FaRegBookmark, FaEllipsisH, FaTrash } from "react-icons/fa";
 import { useUser } from "../../util/UserContext";
 
 const PostCard = ({ post }) => {
@@ -19,13 +19,13 @@ const PostCard = ({ post }) => {
 
   // Per-comment reply state: { [commentId]: { show: bool, input: string, loading: bool } }
   const [replyState, setReplyState] = useState({});
+  const [showFullContent, setShowFullContent] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
 
   useEffect(() => {
-    if (user && post.likes) {
-      setIsLiked(post.likes.some((like) => like._id === user._id || like === user._id));
-    }
-    setLikesCount(post.likes?.length || 0);
-    setCommentsCount(post.comments?.length || 0);
+    setIsLiked(post.likes?.some((like) => (like._id || like) === user?._id) || false);
+    setLikesCount(post.likesCount ?? (post.likes?.length || 0));
+    setCommentsCount(post.commentsCount ?? (post.comments?.length || 0));
     setComments(post.comments || []);
 
     const checkConnectionStatus = async () => {
@@ -216,196 +216,269 @@ const PostCard = ({ post }) => {
   };
 
   const isAuthor = user && (post.author?._id === user._id || post.author === user._id);
+  const contentExcerpt = post.content?.length > 150 ? post.content.substring(0, 150) + "..." : post.content;
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-gray-50 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(59,180,161,0.12)] group">
-      <div className="flex gap-5">
-        {/* Avatar */}
-        <Link to={`/profile/${post.author?._id || post.author?.username}`} className="flex-shrink-0">
-          <img
-            src={post.author?.picture || "/default-avatar.png"}
-            alt={post.author?.name || "User"}
-            className="w-14 h-14 rounded-[1.2rem] object-cover ring-4 ring-gray-50 group-hover:ring-[#3bb4a1]/10 transition-all shadow-sm"
-          />
-        </Link>
-
-        {/* Content Area */}
-        <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-start mb-2">
-            <Link to={`/profile/${post.author?._id || post.author?.username}`} className="text-lg font-black text-gray-900 hover:text-[#3bb4a1] transition-colors truncate no-underline tracking-tight">
-              {post.author?.name || "Unknown User"}
-            </Link>
-            <span className="text-[10px] font-black uppercase text-gray-400 whitespace-nowrap ml-2 tracking-widest">{formatTime(post.createdAt)}</span>
+    <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border mb-6 overflow-hidden max-w-[580px] mx-auto transition-all hover:border-cyan-500/20 group/post">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-3">
+          <Link to={`/profile/${post.author?.username || post.author?._id}`}>
+            <img
+              src={post.author?.picture || "/default-avatar.png"}
+              alt={post.author?.name}
+              className="w-10 h-10 rounded-full object-cover border border-dark-border"
+            />
+          </Link>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <Link to={`/profile/${post.author?.username || post.author?._id}`} className="text-sm font-bold text-slate-900 no-underline hover:text-cyan-700 transition-colors leading-tight">
+                {post.author?.name || "Anonymous"}
+              </Link>
+              {!isAuthor && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-600 block w-1 h-1 rounded-full bg-slate-600"></span>
+                  <button
+                    onClick={
+                      connectStatus === "Connect" ? handleConnect
+                        : connectStatus === "Pending" ? handleCancelRequest
+                          : undefined
+                    }
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all ${connectStatus === "Connect" ? "text-cyan-700 bg-cyan-500/10 hover:bg-cyan-500 hover:text-dark-bg" :
+                        connectStatus === "Pending" ? "text-amber-700 bg-amber-500/10 hover:bg-red-500/10 hover:text-red-700" : "text-slate-600 bg-white border border-dark-border"
+                      }`}
+                  >
+                    {connectStatus === "Connect" ? "Connect" : connectStatus === "Pending" ? "Sent" : "Connected"}
+                  </button>
+                </div>
+              )}
+            </div>
+            <span className="text-xs text-slate-600 font-medium mt-0.5">{formatTime(post.createdAt)}</span>
           </div>
-
-          <p className="text-sm text-gray-600 leading-relaxed mb-4">{post.content}</p>
-
-          {/* Media */}
-          {post.attachments && post.attachments.length > 0 && (
-            <div className="mb-6 rounded-[1.5rem] overflow-hidden border border-gray-50 bg-[#fafafa]">
-              {post.attachments.map((att, idx) => {
-                const isImage = att.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(att) || att.includes('/image/upload/');
-                const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(att) || att.includes('/video/upload/');
-                if (isImage) return <img key={idx} src={att} alt="Post" className="w-full h-auto max-h-[500px] object-cover" />;
-                if (isVideo) return <video key={idx} src={att} controls className="w-full max-h-[500px]" />;
-                return null;
-              })}
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setShowOptions(!showOptions)}
+            className="p-2 text-slate-600 hover:bg-dark-hover hover:text-slate-900 rounded-full transition-colors"
+          >
+            <FaEllipsisH />
+          </button>
+          {showOptions && (
+            <div className="absolute right-0 mt-2 w-40 bg-dark-card border border-dark-border rounded-xl shadow-card z-20 overflow-hidden py-1">
+              {isAuthor && (
+                <button
+                  onClick={() => { handleDelete(); setShowOptions(false); }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                >
+                  <FaTrash size={12} /> Delete Post
+                </button>
+              )}
+              <button
+                onClick={() => setShowOptions(false)}
+                className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-dark-hover hover:text-slate-900 transition-colors"
+              >
+                Hide Post
+              </button>
             </div>
           )}
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {post.skills && post.skills.map((skill, index) => (
-              <span key={index} className="px-4 py-1.5 rounded-[1rem] text-[9px] font-black uppercase tracking-[0.1em] bg-[#3bb4a1]/10 text-[#013e38]">{skill.name}</span>
-            ))}
-            {post.domain && post.domain !== "All" && (
-              <span className="px-4 py-1.5 rounded-[1rem] text-[9px] font-black uppercase tracking-[0.1em] bg-amber-50 text-amber-700">{post.domain}</span>
-            )}
-          </div>
-
-          {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-5">
-            <button onClick={handleLike} className={`flex items-center gap-1.5 text-xs font-black transition-colors ${isLiked ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}>
-              <FaHeart className={isLiked ? "fill-current scale-110 transition-transform" : ""} size={14} />
-              <span>{likesCount}</span>
-            </button>
-            <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-1.5 text-xs font-black text-gray-400 hover:text-[#3bb4a1] transition-colors">
-              <FaComment size={14} />
-              <span>{commentsCount}</span>
-            </button>
-            {!isAuthor && (
-              <button
-                onClick={
-                  connectStatus === "Connect" ? handleConnect
-                    : connectStatus === "Pending" ? handleCancelRequest
-                      : undefined
-                }
-                disabled={connectStatus === "Connected"}
-                className={`px-5 py-2.5 rounded-[1rem] text-[9px] uppercase font-black tracking-widest transition-all ${connectStatus === "Connect"
-                    ? "bg-[#013e38] text-white hover:bg-[#3bb4a1] shadow-lg shadow-[#013e38]/20"
-                    : connectStatus === "Pending"
-                      ? "bg-yellow-50 text-yellow-700 hover:bg-red-50 hover:text-red-600"
-                      : "bg-[#fafafa] text-gray-400 cursor-not-allowed"
-                  }`}
-                title={connectStatus === "Pending" ? "Click to cancel request" : ""}
-              >
-                {connectStatus === "Connect" && "Connect"}
-                {connectStatus === "Pending" && "Pending · Cancel?"}
-                {connectStatus === "Connected" && "Connected ✓"}
-              </button>
-            )}
-            {isAuthor && (
-              <button onClick={handleDelete} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
-                <FaTrash size={12} />
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
+      {/* Content */}
+      <div className="px-5 pb-4">
+        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-normal">
+          {showFullContent ? post.content : contentExcerpt}
+          {post.content?.length > 150 && !showFullContent && (
+            <button
+              onClick={() => setShowFullContent(true)}
+              className="ml-1 text-cyan-700 font-bold uppercase text-[10px] tracking-widest hover:text-cyan-600 transition-colors outline-none"
+            >
+              See more
+            </button>
+          )}
+        </p>
+      </div>
+
+      {/* Media */}
+      {post.attachments && post.attachments.length > 0 && (
+        <div className="w-full bg-dark-bg overflow-hidden border-y border-dark-border">
+          {post.attachments.map((att, idx) => {
+            const isImage = att.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(att) || att.includes('/image/upload/');
+            const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(att) || att.includes('/video/upload/');
+            if (isImage) return <img key={idx} src={att} alt="Post media" className="w-full h-auto object-cover max-h-[500px] select-none" />;
+            if (isVideo) return <video key={idx} src={att} controls className="w-full h-auto max-h-[500px]" />;
+            return null;
+          })}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="p-1 px-3 flex items-center justify-between border-t border-dark-border bg-dark-card">
+        <button
+          onClick={handleLike}
+          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:bg-dark-hover group/btn ${isLiked ? "text-red-600" : "text-slate-600 hover:text-slate-900"}`}
+        >
+          <div className="flex items-center gap-2">
+            {isLiked ? <FaHeart size={16} /> : <FaRegHeart size={16} className="group-hover/btn:scale-110 transition-transform" />}
+            <span className="text-xs font-semibold">Like</span>
+            {likesCount > 0 && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isLiked ? 'bg-red-50' : 'bg-white border border-dark-border'}`}>{likesCount.toLocaleString()}</span>}
+          </div>
+        </button>
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition-all hover:bg-dark-hover group/btn"
+        >
+          <div className="flex items-center gap-2">
+            <FaComment size={16} className="group-hover/btn:scale-110 transition-transform" />
+            <span className="text-xs font-semibold">Comment</span>
+            {commentsCount > 0 && <span className="text-[10px] font-bold bg-white border border-dark-border px-2 py-0.5 rounded-full">{commentsCount.toLocaleString()}</span>}
+          </div>
+        </button>
+        <button
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({ title: 'VidhyaTransfer Post', text: post.content, url: window.location.href });
+            } else {
+              toast.info("Sharing not supported on this browser");
+            }
+          }}
+          className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition-all hover:bg-dark-hover group/btn"
+        >
+          <div className="flex items-center gap-2">
+            <FaShare size={16} className="group-hover/btn:scale-110 transition-transform" />
+            <span className="text-xs font-semibold">Share</span>
+          </div>
+        </button>
+        <button className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition-all hover:bg-dark-hover group/btn">
+          <div className="flex items-center gap-2">
+            <FaRegBookmark size={16} className="group-hover/btn:scale-110 transition-transform" />
+            <span className="text-xs font-semibold">Save</span>
+          </div>
+        </button>
+      </div>
+
+
       {/* ── Comments Section ── */}
       {showComments && (
-        <div className="mt-5 pt-5 border-t border-gray-100">
-          <div className="space-y-4 mb-4">
+        <div className="bg-dark-bg/40 border-t border-dark-border animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="px-5 py-4 space-y-3">
             {comments.map((comment) => {
               const commentLiked = isCommentLiked(comment);
               const commentLikesCount = comment._likesCount ?? (comment.likes?.length || 0);
               const rs = replyState[comment._id] || {};
 
               return (
-                <div key={comment._id} className="flex gap-4">
-                  <img
-                    src={comment.user?.picture || "/default-avatar.png"}
-                    alt={comment.user?.name}
-                    className="w-10 h-10 rounded-xl object-cover flex-shrink-0 mt-2 border border-gray-50"
-                  />
-                  <div className="flex-1">
-                    {/* Comment bubble */}
-                    <div className="bg-[#fafafa] rounded-[1.5rem] px-5 py-4 border border-gray-50">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-black text-gray-900 tracking-tight">{comment.user?.name}</span>
-                        <span className="text-[9px] uppercase font-black tracking-widest text-gray-400">{formatTime(comment.createdAt)}</span>
+                <div key={comment._id} className="group/comment">
+                  <div className="flex gap-3">
+                    <img
+                      src={comment.user?.picture || "/default-avatar.png"}
+                      alt={comment.user?.name}
+                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5 border border-dark-border"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="bg-dark-bg border border-dark-border rounded-xl px-3 py-2 shadow-sm inline-block">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-bold text-slate-900">{comment.user?.name}</span>
+                          <span className="text-xs text-slate-600 font-medium">{formatTime(comment.createdAt)}</span>
+                        </div>
+                        <p className="text-sm text-slate-700 leading-relaxed break-words">
+                          {comment.content}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-600 leading-relaxed">{comment.content}</p>
-                    </div>
 
-                    {/* Comment actions */}
-                    <div className="flex items-center gap-3 mt-1 pl-2">
-                      <button
-                        onClick={() => handleCommentLike(comment._id)}
-                        className={`flex items-center gap-1 text-[10px] font-semibold transition-colors ${commentLiked ? "text-red-500" : "text-gray-400 hover:text-red-400"}`}
-                      >
-                        <FaHeart size={9} /> {commentLikesCount > 0 && commentLikesCount}
-                      </button>
-                      <button
-                        onClick={() => toggleReplyInput(comment._id)}
-                        className="flex items-center gap-1 text-[10px] font-semibold text-gray-400 hover:text-[#3f51b5] transition-colors"
-                      >
-                        <FaReply size={9} /> Reply
-                      </button>
-                      {comment.replies?.length > 0 && (
+                      {/* Interaction Options */}
+                      <div className="flex items-center gap-4 mt-2 ml-2">
                         <button
-                          onClick={() => setReplyState(prev => ({ ...prev, [comment._id]: { ...prev[comment._id], showReplies: !(prev[comment._id]?.showReplies ?? true) } }))}
-                          className="text-[10px] font-black text-[#3bb4a1] hover:underline uppercase tracking-wider"
+                          onClick={() => handleCommentLike(comment._id)}
+                          className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${commentLiked ? "text-red-600" : "text-slate-600 hover:text-slate-800"}`}
                         >
-                          {(rs.showReplies ?? true) ? `▲ Hide` : `▼ ${comment.replies.length} repl${comment.replies.length === 1 ? 'y' : 'ies'}`}
+                          <FaHeart size={11} className={commentLiked ? "fill-current" : ""} />
+                          {commentLikesCount > 0 && <span>{commentLikesCount}</span>}
+                          <span>Like</span>
                         </button>
+                        <button
+                          onClick={() => toggleReplyInput(comment._id)}
+                          className="text-xs font-bold text-slate-600 hover:text-slate-800 transition-colors"
+                        >
+                          Reply
+                        </button>
+                        {comment.replies?.length > 0 && (
+                          <button
+                            onClick={() => setReplyState(prev => ({ ...prev, [comment._id]: { ...prev[comment._id], showReplies: !(prev[comment._id]?.showReplies ?? true) } }))}
+                            className="text-xs font-bold text-cyan-500 hover:text-cyan-400 transition-colors"
+                          >
+                            {(rs.showReplies ?? true) ? "Hide replies" : `Show ${comment.replies.length} ${comment.replies.length === 1 ? "reply" : "replies"}`}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Reply input */}
+                      {rs.show && (
+                        <form onSubmit={(e) => handleReply(e, comment._id)} className="flex gap-3 mt-4 ml-2">
+                          <img
+                            src={user?.picture || "/default-avatar.png"}
+                            alt="Your avatar"
+                            className="w-7 h-7 rounded-full object-cover border border-dark-border"
+                          />
+                          <div className="flex-1 relative">
+                            <input
+                              type="text"
+                              placeholder={`Reply to ${comment.user?.name}...`}
+                              value={rs.input || ""}
+                              onChange={(e) => setReplyState(prev => ({ ...prev, [comment._id]: { ...prev[comment._id], input: e.target.value } }))}
+                              className="w-full bg-white border border-dark-border rounded-lg pl-3 pr-10 py-1.5 text-sm text-slate-900 placeholder:text-slate-600 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all"
+                            />
+                            <button
+                              type="submit"
+                              disabled={rs.loading || !rs.input?.trim()}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-500 hover:text-cyan-400 disabled:opacity-30 p-1"
+                            >
+                              <FaShare size={14} />
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
+                      {/* Threaded Replies */}
+                      {(rs.showReplies ?? true) && comment.replies?.length > 0 && (
+                        <div className="mt-3 space-y-3 border-l-2 border-dark-border ml-3 pl-4">
+                          {comment.replies.map((reply) => {
+                            const replyLiked = isReplyLiked(reply);
+                            const replyLikesCount = reply._likesCount ?? (reply.likes?.length || 0);
+                            return (
+                              <div key={reply._id} className="flex gap-3">
+                                <img
+                                  src={reply.user?.picture || "/default-avatar.png"}
+                                  alt={reply.user?.name}
+                                  className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5 border border-dark-border"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="bg-dark-bg border border-dark-border rounded-xl px-3 py-2 shadow-sm inline-block">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-sm font-bold text-slate-900">{reply.user?.name}</span>
+                                      <span className="text-xs text-slate-600 font-medium">{formatTime(reply.createdAt)}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-700 leading-relaxed break-words">
+                                      {reply.content}
+                                    </p>
+                                  </div>
+                                  <div className="mt-1.5 ml-2">
+                                    <button
+                                      onClick={() => handleReplyLike(comment._id, reply._id)}
+                                      className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors ${replyLiked ? "text-red-600" : "text-slate-600 hover:text-slate-800"}`}
+                                    >
+                                      <FaHeart size={10} className={replyLiked ? "fill-current" : ""} />
+                                      {replyLikesCount > 0 && <span>{replyLikesCount}</span>}
+                                      <span>Like</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
-
-                    {/* Reply input */}
-                    {rs.show && (
-                      <form onSubmit={(e) => handleReply(e, comment._id)} className="flex gap-3 mt-4 pl-3">
-                        <input
-                          type="text"
-                          placeholder={`Reply to ${comment.user?.name}...`}
-                          value={rs.input || ""}
-                          onChange={(e) => setReplyState(prev => ({ ...prev, [comment._id]: { ...prev[comment._id], input: e.target.value } }))}
-                          className="flex-1 bg-white border-2 border-transparent hover:border-gray-50 rounded-[1rem] px-4 py-2 text-[11px] font-semibold focus:ring-4 focus:ring-[#3bb4a1]/10 outline-none transition-all shadow-sm"
-                        />
-                        <button
-                          type="submit"
-                          disabled={rs.loading || !rs.input?.trim()}
-                          className="bg-[#013e38] text-white px-5 py-2 rounded-[1rem] text-[9px] uppercase tracking-widest font-black disabled:opacity-50 hover:bg-[#3bb4a1] hover:shadow-lg transition-all"
-                        >
-                          {rs.loading ? "..." : "Reply"}
-                        </button>
-                      </form>
-                    )}
-
-                    {/* Replies ladder */}
-                    {(rs.showReplies ?? true) && comment.replies?.length > 0 && (
-                      <div className="mt-2 pl-3 border-l-2 border-gray-100 space-y-2">
-                        {comment.replies.map((reply) => {
-                          const replyLiked = isReplyLiked(reply);
-                          const replyLikesCount = reply._likesCount ?? (reply.likes?.length || 0);
-                          return (
-                            <div key={reply._id} className="flex gap-2">
-                              <img
-                                src={reply.user?.picture || "/default-avatar.png"}
-                                alt={reply.user?.name}
-                                className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-0.5"
-                              />
-                              <div className="flex-1">
-                                <div className="bg-gray-50 rounded-xl px-3 py-2">
-                                  <div className="flex justify-between items-center mb-0.5">
-                                    <span className="text-[11px] font-bold text-gray-900">{reply.user?.name}</span>
-                                    <span className="text-[9px] text-gray-400">{formatTime(reply.createdAt)}</span>
-                                  </div>
-                                  <p className="text-[11px] text-gray-600">{reply.content}</p>
-                                </div>
-                                <button
-                                  onClick={() => handleReplyLike(comment._id, reply._id)}
-                                  className={`flex items-center gap-1 text-[10px] font-semibold mt-0.5 pl-2 transition-colors ${replyLiked ? "text-red-500" : "text-gray-400 hover:text-red-400"}`}
-                                >
-                                  <FaHeart size={8} /> {replyLikesCount > 0 && replyLikesCount}
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 </div>
               );
@@ -413,22 +486,31 @@ const PostCard = ({ post }) => {
           </div>
 
           {/* New Comment Input */}
-          <form onSubmit={handleComment} className="flex gap-3 mt-6">
-            <input
-              type="text"
-              placeholder="Add a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="flex-1 bg-white border-2 border-transparent hover:border-gray-50 rounded-[1.2rem] px-5 py-3 text-sm font-medium focus:ring-4 focus:ring-[#3bb4a1]/10 outline-none transition-all shadow-[0_4px_15px_rgba(0,0,0,0.02)]"
-            />
-            <button
-              type="submit"
-              disabled={loading || !newComment.trim()}
-              className="bg-[#013e38] text-white px-6 py-3 rounded-[1.2rem] text-[10px] uppercase tracking-widest font-black disabled:opacity-50 hover:bg-[#3bb4a1] hover:shadow-lg transition-all"
-            >
-              Post
-            </button>
-          </form>
+          <div className="p-4 border-t border-dark-border bg-dark-card">
+            <form onSubmit={handleComment} className="flex items-center gap-3">
+              <img
+                src={user?.picture || "/default-avatar.png"}
+                alt="My avatar"
+                className="w-8 h-8 rounded-full object-cover border border-dark-border"
+              />
+              <div className="flex-1 relative flex items-center">
+                <input
+                  type="text"
+                  placeholder="Write a comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="w-full bg-white border border-dark-border rounded-full px-5 py-2.5 text-sm text-slate-900 font-medium placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || !newComment.trim()}
+                  className="absolute right-4 text-cyan-500 hover:text-cyan-400 disabled:opacity-30 transition-colors p-1"
+                >
+                  <FaShare size={18} />
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
@@ -436,4 +518,3 @@ const PostCard = ({ post }) => {
 };
 
 export default PostCard;
-

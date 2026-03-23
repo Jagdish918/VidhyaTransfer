@@ -8,6 +8,14 @@ import { generateJWTToken_username } from "../../utils/generateJWTToken.js";
 import { uploadOnCloudinary } from "../../config/connectCloudinary.js";
 import { sendMail } from "../../utils/SendMail.js";
 
+// ✅ FIX: Escape regex special characters to prevent ReDoS attacks
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// ✅ FIX: In-memory cooldown map for sendScheduleMeet (prevents email spam)
+// Format: "senderUsername->receiverUsername" => timestamp of last send
+const scheduleMeetCooldown = new Map();
+const SCHEDULE_MEET_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+
 export const userDetailsWithoutID = asyncHandler(async (req, res) => {
   console.log("\n******** Inside userDetailsWithoutID Controller function ********");
 
@@ -186,11 +194,7 @@ export const saveAddUnRegisteredUser = asyncHandler(async (req, res) => {
 
 export const registerUser = async (req, res) => {
   console.log("\n******** Inside registerUser function ********");
-  // First check if the user is already registered
-  // if the user is already registerd than send a message that the user is already registered
-  // redirect him to the discover page
-  // if the user is not registered than create a new user and redirect him to the discover page after generating the token and setting the cookie and also delete the user detail from unregistered user from the database
-  console.log("User:", req.user);
+  // Sensitive user data removed from log to prevent PII exposure in production
 
   const {
     name,
@@ -293,9 +297,16 @@ export const registerUser = async (req, res) => {
 
   await UnRegisteredUser.findOneAndDelete({ email: email });
 
+  const IS_PROD = process.env.NODE_ENV === "production";
   const jwtToken = generateJWTToken_username(newUser);
   const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
-  res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
+  res.cookie("accessToken", jwtToken, {
+    httpOnly: true,
+    expires: expiryDate,
+    secure: IS_PROD,                            // ✅ FIX: HTTPS-only in production
+    sameSite: IS_PROD ? "Strict" : "Lax",      // ✅ FIX: CSRF protection in production
+    path: "/",
+  });
   res.clearCookie("accessTokenRegistration");
   return res.status(200).json(new ApiResponse(200, newUser, "NewUser registered successfully"));
 };
@@ -305,8 +316,6 @@ export const saveRegRegisteredUser = asyncHandler(async (req, res) => {
 
   const { name, username, linkedinLink, githubLink, portfolioLink, skillsProficientAt, skillsToLearn, picture } =
     req.body;
-
-  console.log("Body: ", req.body);
 
   if (!name || !username || !skillsProficientAt || skillsProficientAt.length === 0) {
     throw new ApiError(400, "Please provide name, username, and at least one proficient skill");
@@ -357,13 +366,16 @@ export const saveRegRegisteredUser = asyncHandler(async (req, res) => {
 
   // If username changed, we MUST issue a new token because the old one encoded the old username
   if (isUsernameChanged) {
+    const IS_PROD = process.env.NODE_ENV === "production";
     const jwtToken = generateJWTToken_username(user);
     const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     res.cookie("accessToken", jwtToken, {
       httpOnly: true,
       expires: expiryDate,
-      secure: false // Set to true in production if using HTTPS
+      secure: IS_PROD,                          // ✅ FIX: HTTPS-only in production
+      sameSite: IS_PROD ? "Strict" : "Lax",    // ✅ FIX: CSRF protection in production
+      path: "/",
     });
   }
 
@@ -690,58 +702,87 @@ export const discoverUsers = asyncHandler(async (req, res) => {
   console.log("******** Inside discoverUsers Function *******");
 
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
-  const query = {
-    username: { $ne: req.user.username },
+  const currentUser = req.user;
+  if (!currentUser) throw new ApiError(401, "Unauthorized access");
+
+  const myTeachableSkills = (currentUser.skillsProficientAt || []).map(s => s.name);
+  const myWantedSkills = (currentUser.skillsToLearn || []).map(s => s.name);
+
+  // Base match query
+  const matchQuery = {
+    username: { $ne: currentUser.username },
     role: { $ne: "admin" },
-    status: { $nin: ["banned", "deleted"] }, // Allow active or missing
-    isDeleted: { $ne: true } // Allow false or missing
+    status: { $nin: ["banned", "deleted"] },
+    isDeleted: { $ne: true }
   };
 
   if (search) {
-    const searchRegex = new RegExp(search, "i");
-    query.$or = [
+    const safeSearch = escapeRegex(search.slice(0, 100));
+    const searchRegex = new RegExp(safeSearch, "i");
+    matchQuery.$or = [
       { name: searchRegex },
       { username: searchRegex },
       { "skillsProficientAt.name": searchRegex }
     ];
   }
 
-  // Fetch users excluding current user
-  const users = await User.find(query)
-    .select("-password -phone -personalInfo -resetPasswordToken -resetPasswordExpires -__v")
-    .skip(skip)
-    .limit(limit);
-
-  const total = await User.countDocuments(query);
-
-  if (!users) {
-    throw new ApiError(500, "Error in fetching users");
-  }
-
-  // Optional: Simple randomization or relevance sorting could be added here, 
-  // but standard pagination conflicts with random shuffling unless seeded.
-  // For now, we return valid paginated data.
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          users,
-          pagination: {
-            current: page,
-            pages: Math.ceil(total / limit),
-            total
-          }
+  // Aggregation for scoring and sorting
+  const users = await User.aggregate([
+    { $match: matchQuery },
+    {
+      $addFields: {
+        // How many skills they offer that I want
+        wantMatchCount: {
+          $size: { $setIntersection: ["$skillsProficientAt.name", myWantedSkills] }
         },
-        "Users fetched successfully"
-      )
-    );
+        // How many skills I offer that they want
+        teachMatchCount: {
+          $size: { $setIntersection: ["$skillsToLearn.name", myTeachableSkills] }
+        }
+      }
+    },
+    {
+      $addFields: {
+        // High score for mutual match, medium for "they have what I want"
+        matchScore: {
+          $add: [
+            { $cond: [{ $and: [{ $gt: ["$wantMatchCount", 0] }, { $gt: ["$teachMatchCount", 0] }] }, 10, 0] },
+            { $multiply: ["$wantMatchCount", 5] },
+            { $multiply: ["$teachMatchCount", 2] }
+          ]
+        }
+      }
+    },
+    { $sort: { matchScore: -1, rating: -1, createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $project: {
+        password: 0, phone: 0, personalInfo: 0, resetPasswordToken: 0, resetPasswordExpires: 0, __v: 0, email: 0
+      }
+    }
+  ]);
+
+  const total = await User.countDocuments(matchQuery);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        users,
+        pagination: {
+          current: page,
+          pages: Math.ceil(total / limit),
+          total
+        }
+      },
+      "Peers discovered successfully"
+    )
+  );
 });
 
 export const sendScheduleMeet = asyncHandler(async (req, res) => {
@@ -752,6 +793,19 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Please provide all the details");
   }
 
+  // ✅ FIX: Prevent self-meet spam
+  if (username === req.user.username) {
+    throw new ApiError(400, "You cannot schedule a meet with yourself");
+  }
+
+  // ✅ FIX: Cooldown check — prevent spamming the same person
+  const cooldownKey = `${req.user.username}->${username}`;
+  const lastSent = scheduleMeetCooldown.get(cooldownKey);
+  if (lastSent && Date.now() - lastSent < SCHEDULE_MEET_COOLDOWN_MS) {
+    const waitMinutes = Math.ceil((SCHEDULE_MEET_COOLDOWN_MS - (Date.now() - lastSent)) / 60000);
+    throw new ApiError(429, `Please wait ${waitMinutes} more minute(s) before sending another meeting request to this user.`);
+  }
+
   const user = await User.findOne({ username: username });
 
   if (!user) {
@@ -760,9 +814,14 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
 
   const to = user.email;
   const subject = "Request for Scheduling a meeting";
-  const message = `${req.user.name} has requested for a meet at ${time} time on ${date} date. Please respond to the request.`;
+  const message = `${req.user.name} has requested for a meet at ${time} on ${date}. Please respond to the request.`;
 
   await sendMail(to, subject, message);
+
+  // Record cooldown timestamp
+  scheduleMeetCooldown.set(cooldownKey, Date.now());
+  // Auto-clean the map entry after cooldown expires
+  setTimeout(() => scheduleMeetCooldown.delete(cooldownKey), SCHEDULE_MEET_COOLDOWN_MS);
 
   return res.status(200).json(new ApiResponse(200, null, "Email sent successfully"));
 });
@@ -770,28 +829,71 @@ export const sendScheduleMeet = asyncHandler(async (req, res) => {
 // Skill Gain: Find mentors/teachers
 export const getSkillGainExperts = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
-  const query = {
-    username: { $ne: req.user.username },
+  const currentUser = req.user;
+  const myWantedSkills = (currentUser.skillsToLearn || []).map(s => s.name);
+
+  const matchQuery = {
+    username: { $ne: currentUser.username },
     status: { $nin: ["banned", "deleted"] },
     isDeleted: { $ne: true },
-    // Logic: User wants to TEACH (mentorship rate > 0)
     "preferences.rates.mentorship": { $gt: 0 }
   };
 
   if (search) {
-    query["skillsProficientAt.name"] = { $regex: search, $options: "i" };
+    matchQuery["skillsProficientAt.name"] = { $regex: escapeRegex(search.slice(0, 100)), $options: "i" };
   }
 
-  const users = await User.find(query)
-    .select("name username picture skillsProficientAt preferences.rates.mentorship rating")
-    .skip(skip)
-    .limit(limit);
+  const users = await User.aggregate([
+    { $match: matchQuery },
+    {
+      $addFields: {
+        matchScore: {
+          $size: { $setIntersection: ["$skillsProficientAt.name", myWantedSkills] }
+        }
+      }
+    },
+    // Lookup connection requests involving the current user and each found mentor
+    {
+      $lookup: {
+        from: "requests",
+        let: { mentorId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  { $and: [{ $eq: ["$sender", currentUser._id] }, { $eq: ["$receiver", "$$mentorId"] }] },
+                  { $and: [{ $eq: ["$sender", "$$mentorId"] }, { $eq: ["$receiver", currentUser._id] }] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "connectionInfo"
+      }
+    },
+    {
+      $addFields: {
+        connectionStatus: {
+          $ifNull: [{ $arrayElemAt: ["$connectionInfo.status", 0] }, "Connect"]
+        }
+      }
+    },
+    { $sort: { matchScore: -1, rating: -1, createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $project: {
+        name: 1, username: 1, picture: 1, skillsProficientAt: 1, "preferences.rates.mentorship": 1, rating: 1, matchScore: 1, connectionStatus: 1
+      }
+    }
+  ]);
 
-  const total = await User.countDocuments(query);
+  const total = await User.countDocuments(matchQuery);
 
   return res.status(200).json(
     new ApiResponse(200, { users, pagination: { current: page, pages: Math.ceil(total / limit), total } }, "Mentors fetched successfully")
@@ -802,7 +904,7 @@ export const getSkillGainExperts = asyncHandler(async (req, res) => {
 export const getUtilizationProviders = asyncHandler(async (req, res) => {
   const { type } = req.query; // 'Instant Help' or 'Hire Expert'
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100); // ✅ FIX: cap at 100
   const search = req.query.search || "";
   const skip = (page - 1) * limit;
 
@@ -818,8 +920,9 @@ export const getUtilizationProviders = asyncHandler(async (req, res) => {
   };
 
   if (search) {
-    // Search by skill or name
-    const searchRegex = new RegExp(search, "i");
+    // ✅ FIX: Escape regex special chars + cap length — prevents ReDoS attack (same as discoverUsers)
+    const safeSearch = escapeRegex(search.slice(0, 100));
+    const searchRegex = new RegExp(safeSearch, "i");
     query.$or = [
       { name: searchRegex },
       { "skillsProficientAt.name": searchRegex }
@@ -838,4 +941,23 @@ export const getUtilizationProviders = asyncHandler(async (req, res) => {
   );
 });
 
+// ─── GET MY CONNECTIONS ───────────────────────────────────────────────────────
+export const getConnections = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
 
+  const connections = await Request.find({
+    $or: [{ sender: userId }, { receiver: userId }],
+    status: "Connected",
+  });
+
+  // Get the IDs of the other party in each connection
+  const connectedUserIds = connections.map((conn) =>
+    conn.sender.toString() === userId.toString() ? conn.receiver : conn.sender
+  );
+
+  const users = await User.find({ _id: { $in: connectedUserIds } }).select(
+    "name username picture"
+  );
+
+  res.status(200).json(new ApiResponse(200, users, "Connections fetched"));
+});

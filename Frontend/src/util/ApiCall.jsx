@@ -10,19 +10,18 @@ const ApiCall = async (url, method, navigate, setUser, data) => {
       return response.data;
     } catch (error) {
       console.error("Error in API call:", error);
-      setUser(null);
-      if (error.response.status === 401) {
+      
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        setUser(null); // Clear context only for auth-level errors
         toast.error("You are not authorized to access this page. Please login first.");
         navigate("/login");
-      } else if (error.response.status === 404) {
+      } else if (status === 404) {
         toast.error("The requested resource was not found.");
-        navigate("/");
-      } else if (error.response.status === 500) {
+      } else if (status === 500) {
         toast.error("Server Error. Please try again later.");
-        navigate("/");
       } else {
         toast.error("An error occurred. Please try again later.");
-        navigate("/");
       }
     }
   } else if (method === "POST") {
@@ -31,19 +30,18 @@ const ApiCall = async (url, method, navigate, setUser, data) => {
       return response.data;
     } catch (error) {
       console.error("Error in API call:", error);
-      setUser(null);
-      if (error.response.status === 401) {
+      
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        setUser(null); // Clear context only for auth-level errors
         toast.error("You are not authorized to access this page. Please login first.");
         navigate("/login");
-      } else if (error.response.status === 404) {
+      } else if (status === 404) {
         toast.error("The requested resource was not found.");
-        navigate("/");
-      } else if (error.response.status === 500) {
+      } else if (status === 500) {
         toast.error("Server Error. Please try again later.");
-        navigate("/");
       } else {
         toast.error("An error occurred. Please try again later.");
-        navigate("/");
       }
     }
   }

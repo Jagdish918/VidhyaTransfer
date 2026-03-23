@@ -25,7 +25,7 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 font-sans">
       {/* Hero Section */}
-      <div className="pt-20 px-6 pb-16 max-w-[1400px] mx-auto">
+      <div className="pt-20 px-5 pb-16 max-w-[1280px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col gap-6">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold bg-gradient-to-br from-blue-500 to-green-500 bg-clip-text text-transparent leading-[1.2] m-0 tracking-tight">
@@ -98,7 +98,7 @@ const LandingPage = () => {
       </div>
 
       {/* Features Section */}
-      <div id="features" className="py-20 px-6 bg-white max-w-[1400px] mx-auto">
+      <div id="features" className="py-20 px-5 bg-white max-w-[1280px] mx-auto">
         <h2 className="text-3xl md:text-5xl font-extrabold text-gray-800 text-center mb-4">Features</h2>
         <p className="text-lg text-gray-500 text-center max-w-[700px] mx-auto mb-16 leading-relaxed">
           Discover what makes VidhyaTransfer the perfect platform for skill exchange and learning.
@@ -135,7 +135,7 @@ const LandingPage = () => {
       </div>
 
       {/* How SkillSwap Works Section */}
-      <div id="how-it-works" className="py-20 px-6 bg-white max-w-[1400px] mx-auto">
+      <div id="how-it-works" className="py-20 px-5 bg-white max-w-[1280px] mx-auto">
         <h2 className="text-3xl md:text-5xl font-extrabold text-gray-800 text-center mb-4">How VidhyaTransfer Works</h2>
         <p className="text-lg text-gray-500 text-center max-w-[700px] mx-auto mb-16 leading-relaxed">
           A simple, credit-based system that makes learning and teaching accessible to everyone.

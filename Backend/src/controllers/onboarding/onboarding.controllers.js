@@ -218,18 +218,14 @@ export const updatePreferences = asyncHandler(async (req, res) => {
       password: user.password,
       picture: user.picture,
       username: username,
-      // Map other fields
-      personalInfo: user.personalInfo,
-      skillsProficientAt: user.skillsProficientAt,
-      skillsToLearn: user.skillsToLearn,
+      tokenVersion: 0, // Initial version
       personalInfo: user.personalInfo,
       skillsProficientAt: user.skillsProficientAt,
       skillsToLearn: user.skillsToLearn,
       preferences: user.preferences,
-      primaryGoal: user.primaryGoal, // Copy primaryGoal
+      primaryGoal: user.primaryGoal,
       onboardingCompleted: true,
       onboardingStep: 3,
-      // Copy timestamps if needed, or let them be new
     });
 
     // Delete unregistered user
@@ -238,13 +234,29 @@ export const updatePreferences = asyncHandler(async (req, res) => {
   }
 
   // Generate proper access token for User (username-based)
+  const IS_PROD = process.env.NODE_ENV === "production";
   const jwtToken = generateJWTToken_username(finalUser);
   const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-  // Set both cookies to be safe, or just accessToken
-  res.cookie("accessToken", jwtToken, { httpOnly: true, expires: expiryDate, secure: false });
-  // Clear registration token
-  res.clearCookie("accessTokenRegistration");
+  // Set the main login cookie
+  res.cookie("accessToken", jwtToken, {
+    httpOnly: true,
+    expires: expiryDate,
+    secure: IS_PROD,
+    sameSite: IS_PROD ? "Strict" : "Lax",
+    path: "/",
+  });
+
+  // Set a non-HTTP-only hint cookie for Frontend/Persistence
+  res.cookie("hasSession", "true", {
+    expires: expiryDate,
+    secure: IS_PROD,
+    sameSite: IS_PROD ? "Strict" : "Lax",
+    path: "/",
+  });
+
+  // Clear registration token with correct options
+  res.clearCookie("accessTokenRegistration", { path: "/" });
 
   // Remove ALL sensitive fields before sending
   const userData = { ...finalUser.toObject() };

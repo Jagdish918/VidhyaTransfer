@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "html2pdf.js": "^0.14.0",
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.8.0",
+    "remark-gfm": "^4.0.1"
+  }
+}

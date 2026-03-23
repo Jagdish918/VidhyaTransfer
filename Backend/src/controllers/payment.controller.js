@@ -2,6 +2,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { User } from "../models/user.model.js";
 import { Transaction } from "../models/transaction.model.js";
+import { ApiError } from "../utils/ApiError.js";
 
 // Initialize Razorpay
 let razorpay;
@@ -19,33 +20,49 @@ try {
     console.error("Razorpay Initialization Error:", error);
 }
 
+// Key = number of credits, Value = price in INR (₹)
+const CREDIT_PACKAGES = {
+    100: 99,
+    250: 199,
+    500: 349,
+    1000: 699,
+};
+
 export const createOrder = async (req, res) => {
     try {
         if (!razorpay) {
             return res.status(500).json({ message: "Payment gateway not initialized" });
         }
 
-        const { amount, credits } = req.body; // Expect credits to be sent from frontend to know which pack was chosen
+        const { credits } = req.body;
 
-        if (!amount || !credits) {
-            return res.status(400).json({ message: "Amount and credits are required" });
+        if (!credits) {
+            return res.status(400).json({ message: "Credits package selection is required" });
+        }
+
+        // ✅ SECURITY FIX: Look up the price server-side — ignore any amount from the client
+        const serverAmount = CREDIT_PACKAGES[Number(credits)];
+        if (!serverAmount) {
+            return res.status(400).json({
+                message: `Invalid credit package. Available options: ${Object.keys(CREDIT_PACKAGES).join(", ")} credits`,
+            });
         }
 
         const options = {
-            amount: amount * 100, // amount in smallest currency unit (paise)
+            amount: serverAmount * 100, // Convert to paise (smallest INR unit)
             currency: "INR",
             receipt: `receipt_${Date.now()}`,
         };
 
         const order = await razorpay.orders.create(options);
 
-        // Save transaction to DB
+        // Save transaction to DB with server-verified amount and credits
         await Transaction.create({
             userId: req.user._id,
             orderId: order.id,
-            amount: amount,
-            credits: credits,
-            status: "created"
+            amount: serverAmount,   // Server-determined amount
+            credits: Number(credits),
+            status: "created",
         });
 
         res.status(200).json(order);
@@ -60,6 +77,10 @@ export const verifyPayment = async (req, res) => {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
         const userId = req.user._id;
 
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({ message: "Missing payment verification parameters" });
+        }
+
         const body = razorpay_order_id + "|" + razorpay_payment_id;
 
         const expectedSignature = crypto
@@ -67,46 +88,52 @@ export const verifyPayment = async (req, res) => {
             .update(body.toString())
             .digest("hex");
 
-        const isAuthentic = expectedSignature === razorpay_signature;
+        // ✅ Use timingSafeEqual to prevent timing attacks on HMAC comparison
+        const sigBuffer = Buffer.from(razorpay_signature, "hex");
+        const expectedBuffer = Buffer.from(expectedSignature, "hex");
+        const isAuthentic =
+            sigBuffer.length === expectedBuffer.length &&
+            crypto.timingSafeEqual(sigBuffer, expectedBuffer);
 
         if (isAuthentic) {
-            // Find the transaction
             const transaction = await Transaction.findOne({ orderId: razorpay_order_id });
 
             if (!transaction) {
                 return res.status(404).json({ message: "Transaction not found" });
             }
 
+            // ✅ Ensure transaction belongs to the requesting user (ownership check)
+            if (transaction.userId.toString() !== userId.toString()) {
+                return res.status(403).json({ message: "Not authorized to verify this transaction" });
+            }
+
             if (transaction.status === "paid") {
                 return res.status(400).json({ message: "Transaction already processed" });
             }
 
-            // Update user credits
             const user = await User.findById(userId);
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            // Trust the database record for credits, NOT the frontend
+            // Credits are sourced from DB transaction record — not the frontend
             user.credits += Number(transaction.credits);
             await user.save();
 
-            // Update transaction status
             transaction.status = "paid";
             transaction.paymentId = razorpay_payment_id;
             await transaction.save();
 
             res.status(200).json({
                 message: "Payment successful and credits added",
-                credits: user.credits
+                credits: user.credits,
             });
         } else {
-            // Mark transaction as failed if signature is invalid (optional, but good practice)
             await Transaction.findOneAndUpdate(
                 { orderId: razorpay_order_id },
                 { status: "failed", paymentId: razorpay_payment_id }
             );
-            res.status(400).json({ message: "Invalid signature" });
+            res.status(400).json({ message: "Invalid payment signature" });
         }
     } catch (error) {
         console.error("Verify Payment Error:", error);
@@ -134,5 +161,82 @@ export const getTransactions = async (req, res) => {
     } catch (error) {
         console.error("Get Transactions Error:", error);
         res.status(500).json({ message: "Error fetching transactions" });
+    }
+};
+
+export const transferCredits = async (req, res) => {
+    console.log("\n******** Inside transferCredits Controller function ********");
+    try {
+        const { receiverId, amount } = req.body;
+        const senderId = req.user._id;
+
+        console.log(`Transfer Attempt: Sender ${senderId} -> Receiver ${receiverId}, Amount: ${amount}`);
+
+        if (!receiverId || !amount || amount <= 0) {
+            console.log("Transfer Failed: Missing receiverId or invalid amount");
+            return res.status(400).json({ message: "Receiver ID and valid amount are required" });
+        }
+
+        if (senderId.toString() === receiverId.toString()) {
+            console.log("Transfer Failed: Self-transfer attempted");
+            return res.status(400).json({ message: "You cannot transfer credits to yourself" });
+        }
+
+        const sender = await User.findById(senderId);
+        const receiver = await User.findById(receiverId);
+
+        if (!sender) {
+            console.log("Transfer Failed: Sender not found");
+            return res.status(404).json({ message: "Sender not found" });
+        }
+        if (!receiver) {
+            console.log("Transfer Failed: Receiver not found");
+            return res.status(404).json({ message: "Receiver not found" });
+        }
+
+        if (sender.credits < amount) {
+            console.log(`Transfer Failed: Insufficient credits (Sender has ${sender.credits}, needs ${amount})`);
+            return res.status(400).json({ message: "Insufficient credits" });
+        }
+
+        // Perform transfer atomically
+        sender.credits -= Number(amount);
+        receiver.credits += Number(amount);
+
+        await sender.save();
+        await receiver.save();
+
+        console.log("Transfer Success: Credits updated in User model");
+
+        // Log transaction for sender
+        const senderTrans = await Transaction.create({
+            userId: senderId,
+            amount: 0,
+            credits: -Number(amount),
+            status: "transfer_sent",
+            description: `Sent to ${receiver.name}`,
+            paymentId: `P2P_S_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+        });
+
+        // Log transaction for receiver
+        const receiverTrans = await Transaction.create({
+            userId: receiverId,
+            amount: 0,
+            credits: Number(amount),
+            status: "transfer_received",
+            description: `Received from ${sender.name}`,
+            paymentId: `P2P_R_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+        });
+
+        console.log("Transfer Success: Transaction logs created");
+
+        res.status(200).json({
+            success: true,
+            message: "Credits transferred successfully",
+            senderCredits: sender.credits
+        });
+    } catch (error) {
+        console.error("Transfer Credits Error:", error);
+        res.status(500).json({ message: error.message || "Error transferring credits" });
     }
 };

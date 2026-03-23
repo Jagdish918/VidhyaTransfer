@@ -139,28 +139,30 @@ const Notifications = () => {
             : allNotifications.filter(n => n.tag === activeTab);
 
     return (
-        <div className="min-h-screen bg-[#fafafa] py-10 px-4 sm:px-6 lg:px-8 font-['Montserrat']">
-            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-10">
+        <div className="min-h-screen bg-dark-bg py-4 px-4 sm:px-6 lg:px-8 font-sans">
+            <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
 
                 {/* Main Content - Notification List */}
                 <div className="flex-1">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-4">
                         <div>
-                            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Notifications</h1>
-                            <p className="text-gray-400 font-medium text-sm mt-2">Stay updated with your learning activities</p>
+                            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 mb-3 leading-tight tracking-tight">
+                                Notifications
+                            </h1>
+                            <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mt-0.5">Stay updated with your activities</p>
                         </div>
-                        <button className="text-[10px] uppercase tracking-widest text-[#3bb4a1] font-black hover:text-[#013e38] transition-colors">Mark all as read</button>
+                        <button className="text-[9px] uppercase tracking-widest text-cyan-500 font-black hover:text-cyan-700 transition-colors">Mark all as read</button>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex gap-2.5 overflow-x-auto pb-6 mb-4 scrollbar-hide">
+                    <div className="flex gap-2 overflow-x-auto pb-4 mb-3 scrollbar-hide">
                         {["All", "Unread", "Peer Swap", "Learning", "System"].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-6 py-2.5 rounded-[1.2rem] text-[10px] uppercase tracking-widest font-black whitespace-nowrap transition-all duration-300 ${activeTab === tab
-                                    ? "bg-[#013e38] text-white shadow-xl shadow-[#013e38]/20"
-                                    : "bg-white text-gray-400 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent hover:border-gray-100"
+                                className={`px-5 py-2 rounded-xl text-[10px] uppercase tracking-widest font-black whitespace-nowrap transition-all duration-300 ${activeTab === tab
+                                    ? "bg-cyan-500 text-dark-bg shadow-lg shadow-cyan-500/20"
+                                    : "bg-dark-card text-slate-400 hover:text-slate-900 hover:bg-slate-50 border border-dark-border"
                                     }`}
                             >
                                 {tab}
@@ -172,24 +174,24 @@ const Notifications = () => {
                         {loading ? (
                             <div className="space-y-5">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 animate-pulse h-32"></div>
+                                    <div key={i} className="bg-dark-card p-8 rounded-[2rem] shadow-card border border-dark-border animate-pulse h-32"></div>
                                 ))}
                             </div>
                         ) : filteredNotifications.length === 0 ? (
-                            <div className="bg-white p-16 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-dashed border-gray-100 text-center">
-                                <div className="w-20 h-20 bg-[#fafafa] rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <FaBell className="text-gray-300 text-3xl" />
+                            <div className="bg-dark-card p-10 rounded-2xl shadow-card border border-dashed border-dark-border text-center">
+                                <div className="w-20 h-20 bg-dark-bg rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <FaBell className="text-slate-300 text-3xl" />
                                 </div>
-                                <h3 className="text-xl font-black text-gray-900 tracking-tight">No notifications found</h3>
-                                <p className="text-gray-400 font-medium text-sm mt-3">You're all caught up!</p>
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight">No notifications found</h3>
+                                <p className="text-slate-500 font-medium text-sm mt-3">You're all caught up!</p>
                             </div>
                         ) : (
                             filteredNotifications.map(notification => (
-                                <div key={notification.id} className={`bg-white p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(59,180,161,0.08)] ${!notification.read ? 'bg-teal-50/30 border-teal-100/50' : ''}`}>
+                                <div key={notification.id} className={`bg-dark-card p-4 rounded-xl shadow-card border border-dark-border transition-all duration-300 hover:shadow-[0_20px_50px_rgba(6,182,212,0.06)] ${!notification.read ? 'bg-cyan-50/30' : ''}`}>
                                     <div className="flex items-start gap-5">
-                                        <div className={`w-14 h-14 rounded-[1.2rem] flex items-center justify-center flex-shrink-0 shadow-inner ${notification.color}`}>
+                                        <div className={`w-12 h-12 rounded-[1rem] flex items-center justify-center flex-shrink-0 shadow-inner ${notification.color}`}>
                                             {notification.type === 'peer_request' && notification.data?.picture ? (
-                                                <img src={notification.data.picture} alt="" className="w-full h-full rounded-[1.2rem] object-cover" />
+                                                <img src={notification.data.picture} alt="" className="w-full h-full rounded-[1rem] object-cover" />
                                             ) : (
                                                 <notification.icon size={22} />
                                             )}
@@ -197,16 +199,16 @@ const Notifications = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="font-black text-gray-900 text-lg tracking-tight">{notification.title}</h3>
-                                                    <p className="text-gray-500 font-medium text-sm mt-1.5 leading-relaxed">{notification.description}</p>
+                                                    <h3 className="font-black text-slate-900 text-base tracking-tight">{notification.title}</h3>
+                                                    <p className="text-slate-600 font-medium text-xs mt-1 leading-relaxed">{notification.description}</p>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-3 ml-4">
-                                                    <span className="text-[9px] uppercase font-black tracking-widest text-gray-400 whitespace-nowrap">{notification.time}</span>
-                                                    {!notification.read && <div className="w-3 h-3 bg-[#3bb4a1] rounded-full shadow-sm shadow-[#3bb4a1]/50 animate-pulse"></div>}
+                                                    <span className="text-[9px] uppercase font-black tracking-widest text-slate-400 whitespace-nowrap">{notification.time}</span>
+                                                    {!notification.read && <div className="w-3 h-3 bg-cyan-500 rounded-full shadow-sm shadow-cyan-500/50 animate-pulse"></div>}
                                                 </div>
                                             </div>
 
-                                            <div className="mt-5 flex items-center justify-between">
+                                            <div className="mt-4 flex items-center justify-between">
                                                 <span className={`inline-flex items-center px-4 py-1.5 rounded-[1rem] text-[9px] uppercase tracking-widest font-black ${notification.tag === 'Learning' ? 'bg-blue-50 text-blue-700' :
                                                     notification.tag === 'Peer Swap' ? 'bg-purple-50 text-purple-700' :
                                                         notification.tag === 'Resources' ? 'bg-yellow-50 text-yellow-700' :
@@ -219,13 +221,13 @@ const Notifications = () => {
                                                     <div className="flex gap-3 mt-3 sm:mt-0">
                                                         <button
                                                             onClick={() => handleAccept(notification.data._id)}
-                                                            className="px-6 py-2 bg-[#013e38] text-white text-[9px] uppercase tracking-widest font-black rounded-[1rem] hover:bg-[#3bb4a1] hover:shadow-lg transition-all"
+                                                            className="px-6 py-2 bg-cyan-900 text-white text-[9px] uppercase tracking-widest font-black rounded-[1rem] hover:bg-cyan-950 hover:shadow-lg transition-all"
                                                         >
                                                             Accept
                                                         </button>
                                                         <button
                                                             onClick={() => handleReject(notification.data._id)}
-                                                            className="px-6 py-2 bg-[#fafafa] border-2 border-transparent text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 text-[9px] uppercase tracking-widest font-black rounded-[1rem] transition-all"
+                                                            className="px-6 py-2 bg-slate-50 border border-dark-border text-slate-500 hover:text-red-500 hover:border-red-100 hover:bg-red-50 text-[9px] uppercase tracking-widest font-black rounded-[1rem] transition-all"
                                                         >
                                                             Decline
                                                         </button>
@@ -243,20 +245,20 @@ const Notifications = () => {
                 {/* Right Sidebar - Stats & Settings */}
                 <div className="w-full lg:w-96 space-y-8">
                     {/* Quick Stats */}
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
-                        <h3 className="font-black text-lg text-gray-900 mb-6 tracking-tight">Quick Stats</h3>
-                        <div className="space-y-6">
+                    <div className="bg-dark-card p-4 rounded-2xl shadow-card border border-dark-border">
+                        <h3 className="font-black text-lg text-slate-900 mb-4 tracking-tight">Quick Stats</h3>
+                        <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-[1rem] bg-teal-50 text-[#3bb4a1] flex items-center justify-center">
+                                    <div className="w-10 h-10 rounded-[1rem] bg-cyan-50 text-cyan-500 flex items-center justify-center">
                                         <FaBell size={16} />
                                     </div>
                                     <div className="text-sm">
-                                        <p className="font-black text-gray-900 tracking-tight">Unread</p>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Notifications</p>
+                                        <p className="font-black text-slate-900 tracking-tight">Unread</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Notifications</p>
                                     </div>
                                 </div>
-                                <span className="text-xl font-black text-[#3bb4a1]">12</span>
+                                <span className="text-xl font-black text-cyan-500">12</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -286,9 +288,9 @@ const Notifications = () => {
                     </div>
 
                     {/* Notification Settings */}
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
-                        <h3 className="font-black text-lg text-gray-900 mb-6 tracking-tight">Notification Settings</h3>
-                        <div className="space-y-5">
+                    <div className="bg-dark-card p-4 rounded-2xl shadow-card border border-dark-border">
+                        <h3 className="font-black text-lg text-slate-900 mb-4 tracking-tight">Notification Settings</h3>
+                        <div className="space-y-3">
                             {[
                                 { label: "Email Notifications", active: true },
                                 { label: "Push Notifications", active: true },
@@ -296,8 +298,8 @@ const Notifications = () => {
                                 { label: "Learning Updates", active: true },
                             ].map((setting, idx) => (
                                 <div key={idx} className="flex items-center justify-between">
-                                    <span className="text-[11px] uppercase tracking-widest font-bold text-gray-500">{setting.label}</span>
-                                    <div className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${setting.active ? 'bg-[#3bb4a1]' : 'bg-gray-200'}`}>
+                                    <span className="text-[11px] uppercase tracking-widest font-bold text-slate-500">{setting.label}</span>
+                                    <div className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${setting.active ? 'bg-cyan-500' : 'bg-slate-200'}`}>
                                         <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${setting.active ? 'translate-x-6' : ''}`}></div>
                                     </div>
                                 </div>
@@ -306,21 +308,21 @@ const Notifications = () => {
                     </div>
 
                     {/* Upcoming */}
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
-                        <h3 className="font-black text-lg text-gray-900 mb-6 tracking-tight">Upcoming Sessions</h3>
+                    <div className="bg-dark-card p-5 rounded-[2rem] shadow-card border border-dark-border">
+                        <h3 className="font-black text-lg text-slate-900 mb-6 tracking-tight">Upcoming Sessions</h3>
                         <div className="space-y-4">
-                            <div className="flex items-center gap-4 bg-[#fafafa] p-4 rounded-[1.5rem] border border-gray-100 hover:border-[#3bb4a1]/30 transition-colors">
+                            <div className="flex items-center gap-4 bg-dark-bg p-4 rounded-[1.5rem] border border-dark-border hover:border-cyan-500/30 transition-colors">
                                 <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-12 h-12 rounded-[1rem] object-cover" />
                                 <div>
-                                    <p className="text-sm font-black text-gray-900 tracking-tight">Sarah Williams</p>
-                                    <p className="text-[9px] uppercase tracking-widest font-black text-[#3bb4a1] mt-1">Tomorrow, 3:00 PM</p>
+                                    <p className="text-sm font-black text-slate-900 tracking-tight">Sarah Williams</p>
+                                    <p className="text-[9px] uppercase tracking-widest font-black text-cyan-500 mt-1">Tomorrow, 3:00 PM</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 bg-[#fafafa] p-4 rounded-[1.5rem] border border-gray-100 hover:border-[#3bb4a1]/30 transition-colors">
+                            <div className="flex items-center gap-4 bg-dark-bg p-4 rounded-[1.5rem] border border-dark-border hover:border-cyan-500/30 transition-colors">
                                 <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" className="w-12 h-12 rounded-[1rem] object-cover" />
                                 <div>
-                                    <p className="text-sm font-black text-gray-900 tracking-tight">Alex Johnson</p>
-                                    <p className="text-[9px] uppercase tracking-widest font-black text-[#3bb4a1] mt-1">Friday, 10:00 AM</p>
+                                    <p className="text-sm font-black text-slate-900 tracking-tight">Alex Johnson</p>
+                                    <p className="text-[9px] uppercase tracking-widest font-black text-cyan-500 mt-1">Friday, 10:00 AM</p>
                                 </div>
                             </div>
                         </div>

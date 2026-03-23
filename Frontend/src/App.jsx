@@ -21,15 +21,18 @@ import Chat from "./Pages/Chat/Chat";
 import Notifications from "./Pages/Notifications/Notifications";
 import Report from "./Pages/Report/Report";
 import Credits from "./Pages/Credits/Credits";
+import Sessions from "./Pages/Sessions/Sessions";
 import PrivateRoutes from "./util/PrivateRoutes";
 import OnboardingGuard from "./util/OnboardingGuard";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import Register from "./Pages/Register/Register";
 import ForgotPassword from "./Pages/Login/ForgotPassword";
 import ResetPassword from "./Pages/Login/ResetPassword";
 
 import ScrollToTop from "./Components/ScrollToTop";
+import GlobalCallNotification from "./Components/GlobalCallNotification";
 
 const App = () => {
   const location = useLocation();
@@ -38,10 +41,13 @@ const App = () => {
     <>
       <ScrollToTop />
       <Header />
+      <GlobalCallNotification />
       <ToastContainer position="top-right" />
+
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/about_us" element={<AboutUs />} />
@@ -71,6 +77,7 @@ const App = () => {
           <Route path="/chat" element={<Chat />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/credits" element={<Credits />} />
+          <Route path="/sessions" element={<Sessions />} />
 
           {/* Profile Routes */}
           {/* Profile Routes - allow both :id and :username implicitly by using just :id and handling in component */}
@@ -83,7 +90,7 @@ const App = () => {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {location.pathname !== '/chat' && <Footer />}
+      {!['/chat', '/feed'].includes(location.pathname) && <Footer />}
     </>
   );
 };

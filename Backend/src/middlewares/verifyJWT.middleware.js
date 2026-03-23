@@ -6,73 +6,90 @@ import dotenv from "dotenv";
 import { UnRegisteredUser } from "../models/unRegisteredUser.model.js";
 dotenv.config();
 
+// ─── EMAIL-STAGE TOKEN VERIFICATION ──────────────────────────────────────────
+// Used during onboarding — verifies unregistered users only.
 const verifyJWT_email = asyncHandler(async (req, res, next) => {
   try {
-    console.log("\n******** Inside verifyJWT_email Function ********");
+    const token =
+      req.cookies?.accessTokenRegistration ||
+      req.header("Authorization")?.replace("Bearer ", "");
 
-    const token = req.cookies?.accessTokenRegistration || req.header("Authorization")?.replace("Bearer ", "");
     if (!token) {
-      console.log("token not found");
       throw new ApiError(401, "Please Login");
     }
 
-    // console.log("Token Found : ", token);
-
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log("Decoded Token is : ", decodedToken);
-    const user = await UnRegisteredUser.findOne({ email: decodedToken?.email }).select(
-      "-_id -__v -createdAt -updatedAt"
-    );
+
+    const user = await UnRegisteredUser.findOne({
+      email: decodedToken?.email,
+    }).select("-_id -__v -createdAt -updatedAt");
+
     if (!user) {
       throw new ApiError(401, "Invalid Access Token");
     }
-    console.log("middleware", user);
+
     req.user = user;
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      console.log("Token Expired");
       throw new ApiError(401, "Login Again, Session Expired");
     } else {
-      console.log("Error in VerifyJWT Middleware:", error);
       throw new ApiError(401, error.message || "Invalid Access Token");
     }
   }
 });
 
+// ─── REGISTERED USER TOKEN VERIFICATION ─────────────────────────────────────
+// Used for all authenticated routes — verifies registered users.
+// Also enforces:
+//   ✅ Ban check         — banned users are kicked out immediately
+//   ✅ Token revocation  — tokenVersion mismatch = token was invalidated
 const verifyJWT_username = asyncHandler(async (req, res, next) => {
   try {
-    console.log("\n******** Inside verifyJWT_username Function ********");
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
 
-    const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
     if (!token) {
-      console.log("token not found");
       throw new ApiError(401, "Please Login");
     }
 
-    // console.log("Token Found : ", token);
-
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log("Decoded Token is : ", decodedToken);
-    const user = await User.findOne({ username: decodedToken?.username }).select("-__v -createdAt -updatedAt");
+
+    const user = await User.findOne({ username: decodedToken?.username }).select(
+      "-__v -createdAt -updatedAt"
+    );
+
     if (!user) {
       throw new ApiError(401, "Invalid Access Token");
     }
 
-    if (user.status === 'banned') {
-      res.clearCookie("accessToken");
-      res.clearCookie("hasSession");
+    // ✅ BAN CHECK: Immediately reject banned users and clear their cookies
+    if (user.status === "banned") {
+      res.clearCookie("accessToken", { path: "/" });
+      res.clearCookie("hasSession", { path: "/" });
       throw new ApiError(403, "Your account has been banned. Please contact support.");
     }
-    // console.log(user);
+
+    // ✅ TOKEN REVOCATION CHECK:
+    // If the token's embedded version is lower than the DB's current version,
+    // the token has been invalidated (e.g., user logged out, was banned,
+    // or changed their password on another device).
+    const tokenVersion = decodedToken?.tokenVersion ?? 0;
+    const dbVersion = user.tokenVersion ?? 0;
+
+    if (tokenVersion !== dbVersion) {
+      res.clearCookie("accessToken", { path: "/" });
+      res.clearCookie("hasSession", { path: "/" });
+      throw new ApiError(401, "Session expired. Please login again.");
+    }
+
     req.user = user;
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      console.log("Token Expired");
       throw new ApiError(401, "Please Login");
     } else {
-      console.log("Error in VerifyJWT Middleware:", error);
       throw new ApiError(401, error.message || "Invalid Access Token");
     }
   }

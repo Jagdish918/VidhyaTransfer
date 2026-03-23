@@ -14,6 +14,22 @@ export const rateUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Please provide all the details");
   }
 
+  // ✅ FIX: Prevent self-rating
+  if (req.user.username === username) {
+    throw new ApiError(400, "You cannot rate yourself");
+  }
+
+  // ✅ FIX: Validate rating is between 1 and 5
+  const numRating = Number(rating);
+  if (isNaN(numRating) || numRating < 1 || numRating > 5) {
+    throw new ApiError(400, "Rating must be a number between 1 and 5");
+  }
+
+  // ✅ FIX: Cap description length
+  if (description.length > 500) {
+    throw new ApiError(400, "Review description must be under 500 characters");
+  }
+
   const user = await User.findOne({ username: username });
   if (!user) {
     throw new ApiError(400, "User not found");
@@ -44,7 +60,7 @@ export const rateUser = asyncHandler(async (req, res) => {
   }
 
   var rate = await Rating.create({
-    rating: rating,
+    rating: numRating,  // use validated number
     description: description,
     username: username,
     rater: rateGiver,

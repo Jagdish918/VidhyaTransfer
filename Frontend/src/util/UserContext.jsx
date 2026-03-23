@@ -3,12 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { storeSanitizedUserData, getSanitizedUserData } from "./sanitizeUserData";
+import { io } from "socket.io-client";
 
 const UserContext = createContext();
 
 const UserContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [wasAccepted, setWasAccepted] = useState(false);
+  const socketRef = React.useRef(null);
 
   const navigate = useNavigate();
 
@@ -90,7 +95,6 @@ const UserContextProvider = ({ children }) => {
 
   // Global Axios Interceptor for 403 (Banned) and 401 (Unauthorized) handling
   useEffect(() => {
-    // Add a unique identifier to interceptors to prevent duplicates if strict mode mounts twice
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
@@ -118,6 +122,7 @@ const UserContextProvider = ({ children }) => {
             }
           }
         }
+
         return Promise.reject(error);
       }
     );
@@ -136,11 +141,94 @@ const UserContextProvider = ({ children }) => {
     }
   }, [user]);
 
+  // ✅ Socket Initialization — use user._id as stable dependency
+  const userIdRef = React.useRef(null);
+  
+  useEffect(() => {
+    const userId = user?._id;
+    
+    // User logged out
+    if (!userId) {
+      if (socketRef.current) {
+        console.log("[Socket] User logged out, disconnecting...");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
+        userIdRef.current = null;
+      }
+      return;
+    }
+
+    // Already connected for this user
+    if (socketRef.current && userIdRef.current === userId) return;
+    
+    // Different user or first connection — clean up old if needed
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const host = window.location.hostname;
+    const backendUrl = host === 'localhost' ? `${protocol}//localhost:8000` : `${protocol}//${host}:8000`;
+
+    console.log(`[Socket] Initializing connection to ${backendUrl} for user: ${user.username}...`);
+    
+    const newSocket = io(backendUrl, {
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+      forceNew: true
+    });
+
+    newSocket.on("connect", () => {
+      console.log("[Socket] Connected! ID:", newSocket.id);
+      newSocket.emit("setup", { userId: user._id, username: user.username });
+    });
+
+    newSocket.on("connected", () => {
+      console.log("[Socket] Backend confirmed setup! User room joined.");
+    });
+
+    newSocket.on("connect_error", (err) => {
+      console.error("[Socket] Connection Error:", err.message);
+    });
+
+    newSocket.on("callUser", (data) => {
+      console.log("[Socket] INCOMING CALL from:", data.name, "signal:", data.signal ? "yes" : "no");
+      setIncomingCall(data);
+    });
+
+    newSocket.on("callEnded", () => {
+      console.log("[Socket] Call Ended signal received");
+      setIncomingCall(null);
+    });
+
+    socketRef.current = newSocket;
+    userIdRef.current = userId;
+    setSocket(newSocket);
+
+    return () => {
+      // Only cleanup on true unmount (component destruction)
+    };
+  }, [user?._id]);
+
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>;
   }
 
-  return <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={{ 
+      user, 
+      setUser, 
+      socket, 
+      incomingCall, 
+      setIncomingCall,
+      wasAccepted,
+      setWasAccepted
+    }}>
+      {children}
+    </UserContext.Provider>
+  );
 };
 
 const useUser = () => {

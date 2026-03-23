@@ -77,7 +77,7 @@ export const createPost = asyncHandler(async (req, res) => {
 // Get feed with pagination
 export const getFeed = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = Math.min(parseInt(req.query.limit) || 10, 100); // ✅ FIX: cap at 100 to prevent DoS
   const domain = req.query.domain; // Filter by domain/category
   const skip = (page - 1) * limit;
 
@@ -135,6 +135,8 @@ export const toggleLike = asyncHandler(async (req, res) => {
       postId: post._id,
       likesCount: post.likes.length,
       commentsCount: post.comments.length,
+      userId: userId,
+      type: "like"
     });
   }
 
@@ -187,6 +189,8 @@ export const addComment = asyncHandler(async (req, res) => {
       postId: post._id,
       likesCount: post.likes.length,
       commentsCount: post.comments.length,
+      comment: newComment,
+      type: "comment"
     });
   }
 
@@ -244,16 +248,32 @@ export const deletePost = asyncHandler(async (req, res) => {
 export const reportPost = asyncHandler(async (req, res) => {
   const { postId } = req.params;
   const { reason } = req.body;
+  const userId = req.user._id;
 
   const post = await Post.findById(postId);
   if (!post) {
     throw new ApiError(404, "Post not found");
   }
 
-  post.reportedCount += 1;
+  // ✅ FIX: Prevent self-reporting a post
+  if (post.author.toString() === userId.toString()) {
+    throw new ApiError(400, "You cannot report your own post");
+  }
 
-  // Auto-moderate if reported multiple times
-  if (post.reportedCount >= 3) {
+  // ✅ FIX: Prevent duplicate reports — track who has already reported
+  if (!post.reportedBy) post.reportedBy = [];
+  const alreadyReported = post.reportedBy.some(
+    (id) => id.toString() === userId.toString()
+  );
+  if (alreadyReported) {
+    throw new ApiError(429, "You have already reported this post");
+  }
+
+  post.reportedBy.push(userId);
+  post.reportedCount = post.reportedBy.length;
+
+  // Auto-moderate only after 5 UNIQUE reporters (not 3)
+  if (post.reportedCount >= 5) {
     post.isModerated = true;
   }
 
@@ -293,6 +313,9 @@ export const replyToComment = asyncHandler(async (req, res) => {
   const userId = req.user._id || req.user.id;
 
   if (!content || content.trim().length === 0) throw new ApiError(400, "Reply content is required");
+
+  // ✅ FIX: Add character limit matching comments (500 chars)
+  if (content.length > 500) throw new ApiError(400, "Reply should be less than 500 characters");
 
   const post = await Post.findById(postId);
   if (!post) throw new ApiError(404, "Post not found");

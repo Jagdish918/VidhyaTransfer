@@ -54,13 +54,13 @@ const Chats = () => {
     if (user) {
       socket.emit("setup", user);
     }
-    socket.on("message recieved", (newMessageRecieved) => {
+    socket.on("message received", (newMessageRecieved) => {
       if (selectedChat && selectedChat.id === newMessageRecieved.chatId._id) {
         setChatMessages((prevState) => [...prevState, newMessageRecieved]);
       }
     });
     return () => {
-      socket.off("message recieved");
+      socket.off("message received");
     };
   }, [selectedChat]);
 
@@ -87,7 +87,7 @@ const Chats = () => {
         if (err.response.data.message === "Please Login") {
           localStorage.removeItem("userInfo");
           setUser(null);
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           navigate("/login");
         }
       } else {
@@ -106,7 +106,7 @@ const Chats = () => {
     try {
       setChatMessageLoading(true);
       const { data } = await axios.get(`/message/getMessages/${chatId}`);
-      setChatMessages(data.data);
+      setChatMessages(data?.data?.messages || data?.data || []);
       //       setMessage("");
       //       const chatDetails = chats.find((chat) => chat.id === chatId);
       setSelectedChat(chatDetails);
@@ -118,7 +118,7 @@ const Chats = () => {
         if (err.response.data.message === "Please Login") {
           localStorage.removeItem("userInfo");
           setUser(null);
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           navigate("/login");
         }
       } else {
@@ -145,7 +145,7 @@ const Chats = () => {
       if (err?.response?.data?.message) {
         toast.error(err.response.data.message);
         if (err.response.data.message === "Please Login") {
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           setUser(null);
           localStorage.removeItem("userInfo");
           navigate("/login");
@@ -166,7 +166,7 @@ const Chats = () => {
       if (err?.response?.data?.message) {
         toast.error(err.response.data.message);
         if (err.response.data.message === "Please Login") {
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           setUser(null);
           localStorage.removeItem("userInfo");
           navigate("/login");
@@ -208,7 +208,7 @@ const Chats = () => {
       if (err?.response?.data?.message) {
         toast.error(err.response.data.message);
         if (err.response.data.message === "Please Login") {
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           setUser(null);
           localStorage.removeItem("userInfo");
           navigate("/login");
@@ -232,7 +232,7 @@ const Chats = () => {
       if (err?.response?.data?.message) {
         toast.error(err.response.data.message);
         if (err.response.data.message === "Please Login") {
-          await axios.get("/auth/logout");
+          await axios.post("/auth/logout");
           setUser(null);
           localStorage.removeItem("userInfo");
           navigate("/login");
@@ -247,7 +247,7 @@ const Chats = () => {
   };
 
   return (
-    <div className="min-h-[90vh] bg-[#2d2d2d] font-['Montserrat'] text-white border-r border-[#3bb4a1]">
+    <div className="app-container min-h-[90vh] bg-[#2d2d2d] font-['Montserrat'] text-white border-r border-[#3bb4a1]">
       <div className="flex flex-col md:flex-row bg-gray-300">
         {/* Chat History */}
         <div className="flex-[3] bg-[#2d2d2d] min-h-[90vh]">
@@ -587,7 +587,7 @@ const Chats = () => {
                       if (error.response.data.message === "Please Login") {
                         localStorage.removeItem("userInfo");
                         setUser(null);
-                        await axios.get("/auth/logout");
+                        await axios.post("/auth/logout");
                         navigate("/login");
                       }
                     } else {

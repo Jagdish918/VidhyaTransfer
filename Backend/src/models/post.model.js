@@ -89,9 +89,20 @@ const postSchema = new Schema(
       type: Number,
       default: 0,
     },
+    // ✅ FIX: Track who reported the post to prevent duplicates and enable accurate auto-moderation
+    reportedBy: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );
+
+// ✅ Indexes for high-traffic feed queries
+postSchema.index({ isDeleted: 1, isModerated: 1, createdAt: -1 });
+postSchema.index({ author: 1 });
 
 export const Post = mongoose.model("Post", postSchema);
 
