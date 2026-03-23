@@ -26,8 +26,8 @@ function cookieOptions(expiryDate, httpOnly = true) {
   return {
     httpOnly,
     expires: expiryDate,
-    secure: IS_PROD,       // ✅ FIX: true in prod — HTTPS only
-    sameSite: IS_PROD ? "Strict" : "Lax",
+    secure: IS_PROD,       // ✅ true in prod — HTTPS only
+    sameSite: IS_PROD ? "None" : "Lax", // ✅ FIX: Must be "None" for cross-domain cookies
     path: "/",
   };
 }

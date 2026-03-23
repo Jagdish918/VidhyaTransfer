@@ -168,9 +168,9 @@ const UserContextProvider = ({ children }) => {
       socketRef.current = null;
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-    const host = window.location.hostname;
-    const backendUrl = host === 'localhost' ? `${protocol}//localhost:8000` : `${protocol}//${host}:8000`;
+    const backendUrl = import.meta.env.DEV 
+      ? import.meta.env.VITE_LOCALHOST 
+      : import.meta.env.VITE_SERVER_URL;
 
     console.log(`[Socket] Initializing connection to ${backendUrl} for user: ${user.username}...`);
     
