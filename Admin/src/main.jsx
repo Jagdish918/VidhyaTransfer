@@ -8,7 +8,7 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { AuthProvider } from './context/AuthContext'
 
-axios.defaults.baseURL = 'https://vidhyatransfer-q02k.onrender.com';
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

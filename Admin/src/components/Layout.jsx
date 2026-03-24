@@ -41,7 +41,7 @@ const Layout = () => {
                         </Link>
                     ))}
                     <div className="mt-auto pt-6 border-t border-gray-100">
-                        <button onClick={() => window.location.href = 'http://localhost:5173'} className="w-full text-left px-4 py-3 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors font-medium text-sm">
+                        <button onClick={() => window.location.href = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173'} className="w-full text-left px-4 py-3 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors font-medium text-sm">
                             Return to App
                         </button>
                     </div>
@@ -51,7 +51,7 @@ const Layout = () => {
             {/* Mobile Header */}
             <div className="md:hidden w-full bg-white border-b border-gray-200 p-4 fixed top-0 z-20 flex justify-between items-center shadow-sm">
                 <span className="text-lg font-bold text-blue-600">Admin</span>
-                <button onClick={() => window.location.href = 'http://localhost:5173'} className="text-sm font-medium text-gray-500">Exit</button>
+                <button onClick={() => window.location.href = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173'} className="text-sm font-medium text-gray-500">Exit</button>
             </div>
 
             {/* Main Content */}

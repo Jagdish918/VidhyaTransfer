@@ -142,7 +142,7 @@ const Chat = () => {
         const fetchMessages = async () => {
             setLoadingMessages(true);
             try {
-                const { data } = await axios.get(`http://localhost:8000/message/getMessages/${selectedChatId}?page=1`, { withCredentials: true });
+                const { data } = await axios.get(`/message/getMessages/${selectedChatId}?page=1`, { withCredentials: true });
                 const fetchedMessages = data?.data?.messages || data?.data || [];
                 setMessages([...fetchedMessages].reverse());
                 setHasMore(data?.data?.pagination?.hasMore ?? false);
@@ -162,7 +162,7 @@ const Chat = () => {
 
         try {
             const nextPage = page + 1;
-            const { data } = await axios.get(`http://localhost:8000/message/getMessages/${selectedChatId}?page=${nextPage}`, { withCredentials: true });
+            const { data } = await axios.get(`/message/getMessages/${selectedChatId}?page=${nextPage}`, { withCredentials: true });
 
             // Getting scroll height before adding new messages
             const container = chatContainerRef.current;
@@ -289,7 +289,7 @@ const Chat = () => {
         }
 
         try {
-            const { data } = await axios.post("http://localhost:8000/payment/transfer-credits", {
+            const { data } = await axios.post("/payment/transfer-credits", {
                 receiverId: partner._id,
                 amount: Number(amount)
             }, { withCredentials: true });
@@ -315,7 +315,7 @@ const Chat = () => {
 
                 setMessages(prev => [optimisticMessage, ...prev]);
 
-                const msgRes = await axios.post("http://localhost:8000/message/sendMessage", {
+                const msgRes = await axios.post("/message/sendMessage", {
                     chatId: selectedChatId,
                     content: paymentMessage
                 }, { withCredentials: true });
