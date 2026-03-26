@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { AuthProvider } from './context/AuthContext'
 
 // ✅ Set axios baseURL and credentials
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://vidhyatransfer-q02k.onrender.com';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 axios.defaults.baseURL = SERVER_URL;
 axios.defaults.withCredentials = true;
 

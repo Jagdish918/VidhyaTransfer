@@ -68,7 +68,7 @@ const Resources = () => {
     setHistoryLoading(true);
     setError("");
     try {
-      const response = await axios.get("http://localhost:8000/resources/saved", { withCredentials: true });
+      const response = await axios.get("/resources/saved", { withCredentials: true });
       setHistoryData(response.data.data);
     } catch (err) {
       console.error(err);
@@ -95,7 +95,7 @@ const Resources = () => {
 
     try {
       const payload = { skill: selectedSkill.trim(), timeframe };
-      const response = await axios.post("http://localhost:8000/resources/generate-roadmap", payload, {
+      const response = await axios.post("/resources/generate-roadmap", payload, {
         withCredentials: true,
       });
       setActiveResource(response.data.data);
@@ -137,7 +137,7 @@ const Resources = () => {
         mainSkill: activeResource.skill,
         subtopicTitle: subtopic.title,
       };
-      const response = await axios.post("http://localhost:8000/resources/generate-subtopic-note", payload, {
+      const response = await axios.post("/resources/generate-subtopic-note", payload, {
         withCredentials: true,
       });
 
@@ -186,7 +186,7 @@ const Resources = () => {
 
     try {
       await axios.put(
-        "http://localhost:8000/resources/update-progress",
+        "/resources/update-progress",
         {
           resourceId: activeResource._id,
           topicIndex: tIndex,
@@ -253,7 +253,7 @@ const Resources = () => {
     try {
       // 1. Generate Test on Backend (this locks the record and returns questions)
       const response = await axios.post(
-        "http://localhost:8000/resources/generate-final-test",
+        "/resources/generate-final-test",
         { resourceId: activeResource._id },
         { withCredentials: true }
       );
@@ -310,7 +310,7 @@ const Resources = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/resources/submit-final-test",
+        "/resources/submit-final-test",
         {
           resourceId: activeResource._id,
           answers: testAnswers,

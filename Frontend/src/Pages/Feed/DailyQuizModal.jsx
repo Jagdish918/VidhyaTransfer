@@ -29,7 +29,7 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
         setLoading(true);
         setStatus("loading");
         try {
-            const response = await axios.get("http://localhost:8000/quiz/daily", { withCredentials: true });
+            const response = await axios.get("/quiz/daily", { withCredentials: true });
             setStatus(response.data.status); // 'active' or 'completed'
             setStreak(response.data.streak);
             if (response.data.status === "active") {
@@ -48,7 +48,7 @@ const DailyQuizModal = ({ isOpen, onClose }) => {
         if (selectedOption === null) return;
         setSubmitting(true);
         try {
-            const response = await axios.post("http://localhost:8000/quiz/daily", { answerIndex: selectedOption }, { withCredentials: true });
+            const response = await axios.post("/quiz/daily", { answerIndex: selectedOption }, { withCredentials: true });
             setResultData(response.data);
             setStreak(response.data.streak);
 
