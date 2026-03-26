@@ -28,7 +28,6 @@ const port = process.env.PORT || 8000;
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
   : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "https://vidhya-transfer.vercel.app"];
-
 connectDB()
   .then(() => {
     console.log("Database connected");
@@ -168,6 +167,10 @@ connectDB()
       socket.on("sendReaction", ({ to, emoji }) => {
         io.to(to).emit("partnerReaction", { emoji });
       });
+
+      // Typing indicators within chat rooms
+      socket.on("typing", (room) => socket.in(room).emit("typing", room));
+      socket.on("stop typing", (room) => socket.in(room).emit("stop typing", room));
     });
 
     // Make io available globally for controllers

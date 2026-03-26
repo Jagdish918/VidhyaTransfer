@@ -219,33 +219,34 @@ const PostCard = ({ post }) => {
   const contentExcerpt = post.content?.length > 150 ? post.content.substring(0, 150) + "..." : post.content;
 
   return (
-    <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border mb-6 overflow-hidden max-w-[580px] mx-auto transition-all hover:border-cyan-500/20 group/post">
+    <div className="bg-white rounded-3xl shadow-soft border border-slate-100 mb-8 overflow-hidden transition-all duration-300 hover:shadow-card hover:border-cyan-500/20 group/post">
       {/* Header */}
-      <div className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-3">
-          <Link to={`/profile/${post.author?.username || post.author?._id}`}>
+      <div className="flex items-center justify-between p-6">
+        <div className="flex items-center gap-4">
+          <Link to={`/profile/${post.author?.username || post.author?._id}`} className="relative group/avatar">
+            <div className="absolute inset-0 bg-cyan-500 rounded-2xl blur opacity-0 group-hover/avatar:opacity-20 transition-opacity"></div>
             <img
               src={post.author?.picture || "/default-avatar.png"}
               alt={post.author?.name}
-              className="w-10 h-10 rounded-full object-cover border border-dark-border"
+              className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-50 group-hover/avatar:ring-white transition-all relative z-10"
             />
           </Link>
           <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <Link to={`/profile/${post.author?.username || post.author?._id}`} className="text-sm font-bold text-slate-900 no-underline hover:text-cyan-700 transition-colors leading-tight">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link to={`/profile/${post.author?.username || post.author?._id}`} className="text-[15px] font-bold text-slate-900 no-underline hover:text-cyan-600 transition-colors leading-tight">
                 {post.author?.name || "Anonymous"}
               </Link>
               {!isAuthor && (
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-600 block w-1 h-1 rounded-full bg-slate-600"></span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                   <button
                     onClick={
                       connectStatus === "Connect" ? handleConnect
                         : connectStatus === "Pending" ? handleCancelRequest
                           : undefined
                     }
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all ${connectStatus === "Connect" ? "text-cyan-700 bg-cyan-500/10 hover:bg-cyan-500 hover:text-dark-bg" :
-                        connectStatus === "Pending" ? "text-amber-700 bg-amber-500/10 hover:bg-red-500/10 hover:text-red-700" : "text-slate-600 bg-white border border-dark-border"
+                    className={`text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-lg transition-all ${connectStatus === "Connect" ? "text-cyan-600 bg-cyan-50 hover:bg-cyan-600 hover:text-white" :
+                        connectStatus === "Pending" ? "text-amber-600 bg-amber-50 hover:bg-red-50 hover:text-red-600" : "text-slate-400 bg-slate-50"
                       }`}
                   >
                     {connectStatus === "Connect" ? "Connect" : connectStatus === "Pending" ? "Sent" : "Connected"}
@@ -253,7 +254,7 @@ const PostCard = ({ post }) => {
                 </div>
               )}
             </div>
-            <span className="text-xs text-slate-600 font-medium mt-0.5">{formatTime(post.createdAt)}</span>
+            <span className="text-xs text-slate-400 font-semibold mt-1">{formatTime(post.createdAt)}</span>
           </div>
         </div>
         <div className="relative">
@@ -285,15 +286,15 @@ const PostCard = ({ post }) => {
       </div>
 
       {/* Content */}
-      <div className="px-5 pb-4">
-        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-normal">
+      <div className="px-6 pb-6 mt-[-8px]">
+        <p className="text-[15px] text-slate-600 leading-[1.6] whitespace-pre-wrap font-medium">
           {showFullContent ? post.content : contentExcerpt}
           {post.content?.length > 150 && !showFullContent && (
             <button
               onClick={() => setShowFullContent(true)}
-              className="ml-1 text-cyan-700 font-bold uppercase text-[10px] tracking-widest hover:text-cyan-600 transition-colors outline-none"
+              className="ml-1 text-cyan-600 font-bold text-xs hover:underline transition-all"
             >
-              See more
+              read more
             </button>
           )}
         </p>
@@ -313,25 +314,25 @@ const PostCard = ({ post }) => {
       )}
 
       {/* Actions */}
-      <div className="p-1 px-3 flex items-center justify-between border-t border-dark-border bg-dark-card">
+      <div className="px-4 py-2 flex items-center justify-between border-t border-slate-50 bg-white">
         <button
           onClick={handleLike}
-          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:bg-dark-hover group/btn ${isLiked ? "text-red-600" : "text-slate-600 hover:text-slate-900"}`}
+          className={`flex-1 py-3 rounded-2xl flex items-center justify-center gap-2.5 transition-all hover:bg-slate-50 group/btn ${isLiked ? "text-red-500" : "text-slate-500 hover:text-slate-900"}`}
         >
           <div className="flex items-center gap-2">
-            {isLiked ? <FaHeart size={16} /> : <FaRegHeart size={16} className="group-hover/btn:scale-110 transition-transform" />}
-            <span className="text-xs font-semibold">Like</span>
-            {likesCount > 0 && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isLiked ? 'bg-red-50' : 'bg-white border border-dark-border'}`}>{likesCount.toLocaleString()}</span>}
+            {isLiked ? <FaHeart size={18} /> : <FaRegHeart size={18} className="group-hover/btn:scale-110 transition-transform" />}
+            <span className="text-[13px] font-bold">Like</span>
+            {likesCount > 0 && <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-lg ${isLiked ? 'bg-red-50' : 'bg-slate-100'}`}>{likesCount.toLocaleString()}</span>}
           </div>
         </button>
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition-all hover:bg-dark-hover group/btn"
+          className="flex-1 py-3 rounded-2xl flex items-center justify-center gap-2.5 text-slate-500 hover:text-slate-900 transition-all hover:bg-slate-50 group/btn"
         >
           <div className="flex items-center gap-2">
-            <FaComment size={16} className="group-hover/btn:scale-110 transition-transform" />
-            <span className="text-xs font-semibold">Comment</span>
-            {commentsCount > 0 && <span className="text-[10px] font-bold bg-white border border-dark-border px-2 py-0.5 rounded-full">{commentsCount.toLocaleString()}</span>}
+            <FaComment size={18} className="group-hover/btn:scale-110 transition-transform" />
+            <span className="text-[13px] font-bold">Comment</span>
+            {commentsCount > 0 && <span className="text-[11px] font-extrabold bg-slate-100 px-2 py-0.5 rounded-lg">{commentsCount.toLocaleString()}</span>}
           </div>
         </button>
         <button
@@ -342,26 +343,18 @@ const PostCard = ({ post }) => {
               toast.info("Sharing not supported on this browser");
             }
           }}
-          className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition-all hover:bg-dark-hover group/btn"
+          className="flex-1 py-3 rounded-2xl flex items-center justify-center gap-2.5 text-slate-500 hover:text-slate-900 transition-all hover:bg-slate-50 group/btn"
         >
-          <div className="flex items-center gap-2">
-            <FaShare size={16} className="group-hover/btn:scale-110 transition-transform" />
-            <span className="text-xs font-semibold">Share</span>
-          </div>
-        </button>
-        <button className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition-all hover:bg-dark-hover group/btn">
-          <div className="flex items-center gap-2">
-            <FaRegBookmark size={16} className="group-hover/btn:scale-110 transition-transform" />
-            <span className="text-xs font-semibold">Save</span>
-          </div>
+          <FaShare size={18} className="group-hover/btn:scale-110 transition-transform" />
+          <span className="text-[13px] font-bold">Share</span>
         </button>
       </div>
 
 
       {/* ── Comments Section ── */}
       {showComments && (
-        <div className="bg-dark-bg/40 border-t border-dark-border animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="px-5 py-4 space-y-3">
+        <div className="bg-slate-50 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="px-6 py-6 space-y-6">
             {comments.map((comment) => {
               const commentLiked = isCommentLiked(comment);
               const commentLikesCount = comment._likesCount ?? (comment.likes?.length || 0);
@@ -369,43 +362,43 @@ const PostCard = ({ post }) => {
 
               return (
                 <div key={comment._id} className="group/comment">
-                  <div className="flex gap-3">
+                  <div className="flex gap-4">
                     <img
                       src={comment.user?.picture || "/default-avatar.png"}
                       alt={comment.user?.name}
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5 border border-dark-border"
+                      className="w-10 h-10 rounded-2xl object-cover flex-shrink-0 mt-0.5 border border-white shadow-sm"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="bg-dark-bg border border-dark-border rounded-xl px-3 py-2 shadow-sm inline-block">
+                      <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm inline-block max-w-full">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-bold text-slate-900">{comment.user?.name}</span>
-                          <span className="text-xs text-slate-600 font-medium">{formatTime(comment.createdAt)}</span>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{formatTime(comment.createdAt)}</span>
                         </div>
-                        <p className="text-sm text-slate-700 leading-relaxed break-words">
+                        <p className="text-[13px] text-slate-600 leading-relaxed break-words font-medium">
                           {comment.content}
                         </p>
                       </div>
 
                       {/* Interaction Options */}
-                      <div className="flex items-center gap-4 mt-2 ml-2">
+                      <div className="flex items-center gap-6 mt-3 ml-1">
                         <button
                           onClick={() => handleCommentLike(comment._id)}
-                          className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${commentLiked ? "text-red-600" : "text-slate-600 hover:text-slate-800"}`}
+                          className={`flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-widest transition-colors ${commentLiked ? "text-red-500" : "text-slate-400 hover:text-slate-900"}`}
                         >
-                          <FaHeart size={11} className={commentLiked ? "fill-current" : ""} />
+                          <FaHeart size={12} className={commentLiked ? "fill-current" : ""} />
                           {commentLikesCount > 0 && <span>{commentLikesCount}</span>}
                           <span>Like</span>
                         </button>
                         <button
                           onClick={() => toggleReplyInput(comment._id)}
-                          className="text-xs font-bold text-slate-600 hover:text-slate-800 transition-colors"
+                          className="text-[11px] font-extrabold text-slate-400 hover:text-slate-900 uppercase tracking-widest transition-colors"
                         >
                           Reply
                         </button>
                         {comment.replies?.length > 0 && (
                           <button
                             onClick={() => setReplyState(prev => ({ ...prev, [comment._id]: { ...prev[comment._id], showReplies: !(prev[comment._id]?.showReplies ?? true) } }))}
-                            className="text-xs font-bold text-cyan-500 hover:text-cyan-400 transition-colors"
+                            className="text-[11px] font-extrabold text-cyan-500 hover:text-cyan-600 uppercase tracking-widest transition-colors"
                           >
                             {(rs.showReplies ?? true) ? "Hide replies" : `Show ${comment.replies.length} ${comment.replies.length === 1 ? "reply" : "replies"}`}
                           </button>
@@ -414,24 +407,24 @@ const PostCard = ({ post }) => {
 
                       {/* Reply input */}
                       {rs.show && (
-                        <form onSubmit={(e) => handleReply(e, comment._id)} className="flex gap-3 mt-4 ml-2">
+                        <form onSubmit={(e) => handleReply(e, comment._id)} className="flex gap-3 mt-4">
                           <img
                             src={user?.picture || "/default-avatar.png"}
                             alt="Your avatar"
-                            className="w-7 h-7 rounded-full object-cover border border-dark-border"
+                            className="w-8 h-8 rounded-xl object-cover border border-white shadow-sm"
                           />
                           <div className="flex-1 relative">
                             <input
                               type="text"
-                              placeholder={`Reply to ${comment.user?.name}...`}
+                              placeholder={`Reply to ${comment.user?.name.split(' ')[0]}...`}
                               value={rs.input || ""}
                               onChange={(e) => setReplyState(prev => ({ ...prev, [comment._id]: { ...prev[comment._id], input: e.target.value } }))}
-                              className="w-full bg-white border border-dark-border rounded-lg pl-3 pr-10 py-1.5 text-sm text-slate-900 placeholder:text-slate-600 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all"
+                              className="w-full bg-white border border-slate-100 rounded-xl pl-4 pr-12 py-2 text-[13px] text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-cyan-500/5 focus:border-cyan-500 outline-none transition-all shadow-sm font-medium"
                             />
                             <button
                               type="submit"
                               disabled={rs.loading || !rs.input?.trim()}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-500 hover:text-cyan-400 disabled:opacity-30 p-1"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-500 hover:text-cyan-600 disabled:opacity-30 p-2"
                             >
                               <FaShare size={14} />
                             </button>
@@ -441,31 +434,31 @@ const PostCard = ({ post }) => {
 
                       {/* Threaded Replies */}
                       {(rs.showReplies ?? true) && comment.replies?.length > 0 && (
-                        <div className="mt-3 space-y-3 border-l-2 border-dark-border ml-3 pl-4">
+                        <div className="mt-5 space-y-4 border-l-2 border-slate-200 ml-5 pl-5">
                           {comment.replies.map((reply) => {
                             const replyLiked = isReplyLiked(reply);
                             const replyLikesCount = reply._likesCount ?? (reply.likes?.length || 0);
                             return (
-                              <div key={reply._id} className="flex gap-3">
+                              <div key={reply._id} className="flex gap-4">
                                 <img
                                   src={reply.user?.picture || "/default-avatar.png"}
                                   alt={reply.user?.name}
-                                  className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5 border border-dark-border"
+                                  className="w-8 h-8 rounded-xl object-cover flex-shrink-0 mt-0.5 border border-white shadow-sm"
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <div className="bg-dark-bg border border-dark-border rounded-xl px-3 py-2 shadow-sm inline-block">
-                                    <div className="flex items-center gap-2 mb-1">
+                                  <div className="bg-white border border-slate-100 rounded-2xl px-4 py-2.5 shadow-sm inline-block max-w-full">
+                                    <div className="flex items-center gap-2 mb-0.5">
                                       <span className="text-sm font-bold text-slate-900">{reply.user?.name}</span>
-                                      <span className="text-xs text-slate-600 font-medium">{formatTime(reply.createdAt)}</span>
+                                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{formatTime(reply.createdAt)}</span>
                                     </div>
-                                    <p className="text-sm text-slate-700 leading-relaxed break-words">
+                                    <p className="text-[13px] text-slate-600 leading-relaxed break-words font-medium">
                                       {reply.content}
                                     </p>
                                   </div>
-                                  <div className="mt-1.5 ml-2">
+                                  <div className="mt-2 ml-1">
                                     <button
                                       onClick={() => handleReplyLike(comment._id, reply._id)}
-                                      className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors ${replyLiked ? "text-red-600" : "text-slate-600 hover:text-slate-800"}`}
+                                      className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest transition-colors ${replyLiked ? "text-red-500" : "text-slate-400 hover:text-slate-900"}`}
                                     >
                                       <FaHeart size={10} className={replyLiked ? "fill-current" : ""} />
                                       {replyLikesCount > 0 && <span>{replyLikesCount}</span>}
@@ -486,27 +479,27 @@ const PostCard = ({ post }) => {
           </div>
 
           {/* New Comment Input */}
-          <div className="p-4 border-t border-dark-border bg-dark-card">
-            <form onSubmit={handleComment} className="flex items-center gap-3">
+          <div className="p-6 border-t border-slate-100 bg-white">
+            <form onSubmit={handleComment} className="flex items-center gap-4">
               <img
                 src={user?.picture || "/default-avatar.png"}
                 alt="My avatar"
-                className="w-8 h-8 rounded-full object-cover border border-dark-border"
+                className="w-10 h-10 rounded-2xl object-cover border border-slate-100"
               />
               <div className="flex-1 relative flex items-center">
                 <input
                   type="text"
-                  placeholder="Write a comment..."
+                  placeholder="Share your thoughts..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  className="w-full bg-white border border-dark-border rounded-full px-5 py-2.5 text-sm text-slate-900 font-medium placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] px-6 py-3.5 text-sm text-slate-900 font-bold placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-cyan-500/5 focus:border-cyan-500 transition-all shadow-inner"
                 />
                 <button
                   type="submit"
                   disabled={loading || !newComment.trim()}
-                  className="absolute right-4 text-cyan-500 hover:text-cyan-400 disabled:opacity-30 transition-colors p-1"
+                  className="absolute right-4 bg-cyan-500 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-cyan-600 disabled:opacity-30 transition-all shadow-lg shadow-cyan-500/20"
                 >
-                  <FaShare size={18} />
+                  <FaShare size={16} />
                 </button>
               </div>
             </form>

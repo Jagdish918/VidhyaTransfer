@@ -66,8 +66,10 @@ const verifyJWT_username = asyncHandler(async (req, res, next) => {
 
     // ✅ BAN CHECK: Immediately reject banned users and clear their cookies
     if (user.status === "banned") {
-      res.clearCookie("accessToken", { path: "/" });
-      res.clearCookie("hasSession", { path: "/" });
+      const IS_PROD = process.env.NODE_ENV === "production";
+      const cookieOpts = { path: "/", sameSite: IS_PROD ? "None" : "Lax", secure: IS_PROD };
+      res.clearCookie("accessToken", cookieOpts);
+      res.clearCookie("hasSession", cookieOpts);
       throw new ApiError(403, "Your account has been banned. Please contact support.");
     }
 
@@ -79,8 +81,10 @@ const verifyJWT_username = asyncHandler(async (req, res, next) => {
     const dbVersion = user.tokenVersion ?? 0;
 
     if (tokenVersion !== dbVersion) {
-      res.clearCookie("accessToken", { path: "/" });
-      res.clearCookie("hasSession", { path: "/" });
+      const IS_PROD = process.env.NODE_ENV === "production";
+      const cookieOpts = { path: "/", sameSite: IS_PROD ? "None" : "Lax", secure: IS_PROD };
+      res.clearCookie("accessToken", cookieOpts);
+      res.clearCookie("hasSession", cookieOpts);
       throw new ApiError(401, "Session expired. Please login again.");
     }
 

@@ -27,6 +27,9 @@ const Chat = () => {
     const [contextMenu, setContextMenu] = useState(null); // { msgId, x, y, isMe }
     const [replyingTo, setReplyingTo] = useState(null); // message object
     const [emojiPickerFor, setEmojiPickerFor] = useState(null); // msgId
+    const [isPartnerTyping, setIsPartnerTyping] = useState(false);
+    const [typing, setTyping] = useState(false);
+    const typingTimeoutRef = useRef(null);
 
     const messagesEndRef = useRef(null);
     const contextMenuRef = useRef(null); // Socket Initialization moved to UserContext
@@ -85,8 +88,18 @@ const Chat = () => {
 
         socket.on("message received", handleMessageReceived);
 
+        socket.on("typing", (room) => {
+            if (room === selectedChatIdRef.current) setIsPartnerTyping(true);
+        });
+
+        socket.on("stop typing", (room) => {
+            if (room === selectedChatIdRef.current) setIsPartnerTyping(false);
+        });
+
         return () => {
             socket.off("message received", handleMessageReceived);
+            socket.off("typing");
+            socket.off("stop typing");
         };
     }, [socket]);
 
@@ -142,7 +155,7 @@ const Chat = () => {
         const fetchMessages = async () => {
             setLoadingMessages(true);
             try {
-                const { data } = await axios.get(`http://localhost:8000/message/getMessages/${selectedChatId}?page=1`, { withCredentials: true });
+                const { data } = await axios.get(`/message/getMessages/${selectedChatId}?page=1`, { withCredentials: true });
                 const fetchedMessages = data?.data?.messages || data?.data || [];
                 setMessages([...fetchedMessages].reverse());
                 setHasMore(data?.data?.pagination?.hasMore ?? false);
@@ -162,7 +175,7 @@ const Chat = () => {
 
         try {
             const nextPage = page + 1;
-            const { data } = await axios.get(`http://localhost:8000/message/getMessages/${selectedChatId}?page=${nextPage}`, { withCredentials: true });
+            const { data } = await axios.get(`/message/getMessages/${selectedChatId}?page=${nextPage}`, { withCredentials: true });
 
             // Getting scroll height before adding new messages
             const container = chatContainerRef.current;
@@ -231,6 +244,23 @@ const Chat = () => {
         }
     };
 
+    const handleInputChange = (e) => {
+        setMessageInput(e.target.value);
+        if (!socket || !selectedChatId) return;
+
+        if (!typing) {
+            setTyping(true);
+            socket.emit("typing", selectedChatId);
+        }
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+        typingTimeoutRef.current = setTimeout(() => {
+            socket.emit("stop typing", selectedChatId);
+            setTyping(false);
+        }, 3000);
+    };
+
     // ── Delete Message ────────────────────────────────────────
     const handleDeleteMessage = async (msgId) => {
         setContextMenu(null);
@@ -266,7 +296,7 @@ const Chat = () => {
             reactions: [],
             createdAt: new Date().toISOString()
         };
-        setMessages(prev => [...prev, optimisticMessage]);
+        setMessages(prev => [optimisticMessage, ...prev]);
         try {
             const { data } = await axios.post("/message/sendMessage", { chatId: selectedChatId, content: meetingMessage }, { withCredentials: true });
             await axios.post("/events/schedule", { chatId: selectedChatId, title, date, time, type, link }, { withCredentials: true });
@@ -289,7 +319,7 @@ const Chat = () => {
         }
 
         try {
-            const { data } = await axios.post("http://localhost:8000/payment/transfer-credits", {
+            const { data } = await axios.post("/payment/transfer-credits", {
                 receiverId: partner._id,
                 amount: Number(amount)
             }, { withCredentials: true });
@@ -315,7 +345,7 @@ const Chat = () => {
 
                 setMessages(prev => [optimisticMessage, ...prev]);
 
-                const msgRes = await axios.post("http://localhost:8000/message/sendMessage", {
+                const msgRes = await axios.post("/message/sendMessage", {
                     chatId: selectedChatId,
                     content: paymentMessage
                 }, { withCredentials: true });
@@ -622,6 +652,18 @@ const Chat = () => {
                                 <div ref={messagesEndRef} />
                             </div>
 
+                            {/* Typing Indicator */}
+                            {isPartnerTyping && (
+                                <div className="px-6 py-1 text-[11px] text-gray-500 font-medium animate-pulse flex items-center gap-1.5 opacity-80 transition-all">
+                                   <div className="flex gap-0.5">
+                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></span>
+                                   </div>
+                                   {partner.name} is typing...
+                                </div>
+                            )}
+
                             {/* Reply Banner */}
                             {replyingTo && (
                                 <div className="px-4 py-2 bg-blue-50 border-t border-blue-100 flex items-center gap-3">
@@ -643,7 +685,7 @@ const Chat = () => {
                                         className="flex-1 bg-transparent border-none outline-none px-3 py-2 max-h-24 resize-none text-gray-700 placeholder-gray-400 text-sm"
                                         placeholder="Type your message..."
                                         value={messageInput}
-                                        onChange={(e) => setMessageInput(e.target.value)}
+                                        onChange={handleInputChange}
                                     />
                                     <button
                                         type="submit"
