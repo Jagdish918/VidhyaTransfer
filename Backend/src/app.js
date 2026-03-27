@@ -58,6 +58,7 @@ import eventRouter from "./routes/event.routes.js";
 import resourceRouter from "./routes/resource.routes.js";
 import quizRouter from "./routes/quiz.routes.js";
 import sessionRouter from "./routes/session.routes.js";
+import instantHelpRouter from "./routes/instantHelp.routes.js";
 
 app.use("/user", userRouter);
 app.use("/auth", authRouter);
@@ -75,6 +76,7 @@ app.use("/events", eventRouter);
 app.use("/resources", resourceRouter);
 app.use("/quiz", quizRouter);
 app.use("/sessions", sessionRouter);
+app.use("/instant-help", instantHelpRouter);
 
 // ─── GLOBAL ERROR HANDLER ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {

@@ -12,6 +12,8 @@ const UserContextProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
   const [incomingCall, setIncomingCall] = useState(null);
+  const [incomingInstantHelp, setIncomingInstantHelp] = useState(null);
+  const [activeInstantHelpSession, setActiveInstantHelpSession] = useState(null);
   const [wasAccepted, setWasAccepted] = useState(false);
   const socketRef = React.useRef(null);
 
@@ -203,6 +205,51 @@ const UserContextProvider = ({ children }) => {
       setIncomingCall(null);
     });
 
+    // ─── Instant Help Socket Events ───────────────────────────────────────
+    newSocket.on("instantHelpRequest", (data) => {
+      console.log("[Socket] INCOMING INSTANT HELP REQUEST from:", data.learner?.name);
+      setIncomingInstantHelp(data);
+    });
+
+    newSocket.on("instantHelpAccepted", (data) => {
+      console.log("[Socket] Instant help ACCEPTED by provider:", data.provider?.name);
+      // Store session info so Chat.jsx can auto-select and start call
+      setActiveInstantHelpSession({
+        sessionId: data.sessionId,
+        partnerId: data.provider?._id,
+        partnerName: data.provider?.name,
+        partnerPicture: data.provider?.picture,
+        skill: data.skill,
+        role: "learner",
+      });
+      import("react-toastify").then(({ toast }) => {
+        toast.success(`${data.provider?.name} accepted your instant help request! Starting meeting...`);
+      });
+      window.dispatchEvent(new CustomEvent("instantHelpNavigateToChat", { detail: data }));
+    });
+
+    newSocket.on("instantHelpDeclined", (data) => {
+      console.log("[Socket] Instant help DECLINED");
+      import("react-toastify").then(({ toast }) => {
+        toast.info(data.message || "Your instant help request was declined. Credits refunded.");
+      });
+      // Refresh user credits
+      import("axios").then(({ default: axios }) => {
+        axios.get("/user/registered/getDetails").then(({ data: userData }) => {
+          if (userData.success && userData.data) {
+            setUser(prev => ({ ...prev, credits: userData.data.credits }));
+          }
+        }).catch(() => {});
+      });
+    });
+
+    newSocket.on("instantHelpSessionEnded", (data) => {
+      console.log("[Socket] Instant help session ENDED");
+      import("react-toastify").then(({ toast }) => {
+        toast.info(data.message || "The instant help session has ended.");
+      });
+    });
+
     socketRef.current = newSocket;
     userIdRef.current = userId;
     setSocket(newSocket);
@@ -223,6 +270,10 @@ const UserContextProvider = ({ children }) => {
       socket, 
       incomingCall, 
       setIncomingCall,
+      incomingInstantHelp,
+      setIncomingInstantHelp,
+      activeInstantHelpSession,
+      setActiveInstantHelpSession,
       wasAccepted,
       setWasAccepted
     }}>

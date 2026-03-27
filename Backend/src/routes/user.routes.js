@@ -11,6 +11,7 @@ import {
   saveRegRegisteredUser,
   saveEduRegisteredUser,
   saveAddRegisteredUser,
+  saveDecorationRegisteredUser,
   uploadPic,
   removePic,
   uploadVid,
@@ -38,6 +39,7 @@ router.route("/registerUser").post(verifyJWT_email, registerUser);
 router.route("/registered/saveRegDetails").post(verifyJWT_username, saveRegRegisteredUser);
 router.route("/registered/saveEduDetail").post(verifyJWT_username, saveEduRegisteredUser);
 router.route("/registered/saveAddDetail").post(verifyJWT_username, saveAddRegisteredUser);
+router.route("/registered/saveDecoration").post(verifyJWT_username, saveDecorationRegisteredUser);
 // router.route("/registered/updateDetails").post(verifyJWT_username, updateRegisteredUser);
 
 router.route("/uploadPicture").post(verifyJWT_username, upload.fields([{ name: "picture", maxCount: 1 }]), uploadPic);

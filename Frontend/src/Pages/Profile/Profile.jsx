@@ -207,7 +207,39 @@ const Profile = () => {
     )
   }
 
+  // ── Decoration Helpers ──────────────────────────────────────────
+  const getAvatarFrameClass = (frame) => {
+    const frames = {
+      'none': '',
+      'golden-ring': 'ring-[3px] ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)]',
+      'neon-pulse': 'ring-[3px] ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] animate-pulse',
+      'emerald-glow': 'ring-[3px] ring-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.5)]',
+      'ruby-blaze': 'ring-[3px] ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]',
+      'ice-crystal': 'ring-[3px] ring-blue-300 shadow-[0_0_20px_rgba(147,197,253,0.6)]',
+      'aurora-borealis': 'ring-[3px] ring-purple-400 shadow-[0_0_20px_rgba(192,132,252,0.5)] animate-pulse',
+    };
+    return frames[frame] || '';
+  };
+
+  const getCardThemeClass = (card) => {
+    const cards = {
+      'default': '',
+      'gradient-ocean': 'bg-gradient-to-br from-cyan-500 to-blue-600',
+      'dark-cosmos': 'bg-gradient-to-br from-slate-900 to-indigo-950',
+      'sunset-blaze': 'bg-gradient-to-br from-orange-400 to-rose-500',
+      'forest-mist': 'bg-gradient-to-br from-emerald-500 to-teal-700',
+      'lavender-dream': 'bg-gradient-to-br from-purple-400 to-pink-500',
+    };
+    return cards[card] || '';
+  };
+
+  const isCustomCard = profileUser?.profileDecoration?.profileCard && profileUser.profileDecoration.profileCard !== 'default';
+  const cardTextClass = isCustomCard ? 'text-white' : '';
+  const cardSubTextClass = isCustomCard ? 'text-white/70' : 'text-slate-600';
+  const cardBorderClass = isCustomCard ? 'border-white/10' : 'border-dark-border';
+
   return (
+    <>
     <div className="min-h-screen bg-dark-bg py-4 pt-4 font-sans">
       <div className="app-container">
 
@@ -216,24 +248,29 @@ const Profile = () => {
 
           {/* Left Column: Sidebar (Sticky) */}
           <div className="lg:col-span-1">
-            <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border p-3 lg:sticky lg:top-20 space-y-4 max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
+            <div className={`rounded-2xl shadow-card border p-3 lg:sticky lg:top-20 space-y-4 max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar relative overflow-hidden ${isCustomCard ? getCardThemeClass(profileUser?.profileDecoration?.profileCard) + ' ' + cardBorderClass : 'bg-dark-card border-dark-border'}`}>
+
+              {/* Profile Effect Overlay */}
+              {profileUser?.profileDecoration?.profileEffect && profileUser.profileDecoration.profileEffect !== 'none' && (
+                <div className={`absolute inset-0 pointer-events-none z-0 profile-effect-${profileUser.profileDecoration.profileEffect}`}></div>
+              )}
 
               {/* Profile Header */}
-              <div className="flex flex-col items-center text-center">
+              <div className="flex flex-col items-center text-center relative z-10">
                 <img
                   src={profileUser.picture || "/default-avatar.png"}
                   alt={profileUser.name}
-                  className="w-20 h-20 rounded-2xl object-cover border-4 border-dark-card ring-2 ring-dark-border shadow-sm mb-3"
+                  className={`w-20 h-20 rounded-2xl object-cover border-4 shadow-sm mb-3 ${isCustomCard ? 'border-white/20' : 'border-dark-card ring-2 ring-dark-border'} ${getAvatarFrameClass(profileUser?.profileDecoration?.avatarFrame)}`}
                 />
-                <h1 className="text-xl font-bold text-slate-900 tracking-tight">{profileUser.name}</h1>
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-0.5">@{profileUser.username || "username"}</p>
+                <h1 className={`text-xl font-bold tracking-tight ${isCustomCard ? 'text-white' : 'text-slate-900'}`}>{profileUser.name}</h1>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${cardSubTextClass}`}>@{profileUser.username || "username"}</p>
 
                 {/* Bio */}
-                {profileUser.bio && <p className="text-slate-700 mt-4 leading-relaxed font-medium text-sm">{profileUser.bio}</p>}
+                {profileUser.bio && <p className={`mt-4 leading-relaxed font-medium text-sm ${isCustomCard ? 'text-white/90' : 'text-slate-700'}`}>{profileUser.bio}</p>}
 
                 {/* Edit Profile Button */}
                 {isOwnProfile && (
-                  <Link to="/edit_profile" className="mt-4 inline-flex items-center px-4 h-9 border border-dark-border shadow-soft text-[10px] uppercase tracking-widest font-bold rounded-xl text-slate-700 bg-white hover:bg-dark-hover hover:text-cyan-700 hover:border-cyan-500/30 transition-all w-full justify-center no-underline">
+                  <Link to="/edit_profile" className={`mt-4 inline-flex items-center px-4 h-9 border shadow-soft text-[10px] uppercase tracking-widest font-bold rounded-xl transition-all w-full justify-center no-underline ${isCustomCard ? 'border-white/20 text-white bg-white/10 hover:bg-white/20' : 'border-dark-border text-slate-700 bg-white hover:bg-dark-hover hover:text-cyan-700 hover:border-cyan-500/30'}`}>
                     <FaEdit className="mr-2 text-cyan-500 text-sm" />
                     Edit Profile
                   </Link>
@@ -284,11 +321,11 @@ const Profile = () => {
                 )}
               </div>
 
-              <hr className="border-dark-border" />
+              <hr className={isCustomCard ? 'border-white/10' : 'border-dark-border'} />
 
               {/* Social Handles */}
-              <div>
-                <h3 className="text-[9px] font-bold text-slate-600 uppercase tracking-widest mb-4 text-center">Social Handles</h3>
+              <div className="relative z-10">
+                <h3 className={`text-[9px] font-bold uppercase tracking-widest mb-4 text-center ${cardSubTextClass}`}>Social Handles</h3>
                 <div className="flex gap-4 justify-center">
                   {profileUser.githubLink && (
                     <a href={profileUser.githubLink} target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center bg-white rounded-xl text-slate-600 hover:text-slate-900 hover:bg-dark-hover transition-all border border-dark-border">
@@ -311,10 +348,10 @@ const Profile = () => {
                 </div>
               </div>
 
-              <hr className="border-dark-border" />
+              <hr className={isCustomCard ? 'border-white/10' : 'border-dark-border'} />
 
               {/* Details */}
-              <div className="space-y-3 text-sm bg-dark-bg p-4 rounded-xl border border-dark-border">
+              <div className={`space-y-3 text-sm p-4 rounded-xl border relative z-10 ${isCustomCard ? 'bg-white/10 border-white/10' : 'bg-dark-bg border-dark-border'}`}>
                 {profileUser.email && (
                   <div className="flex flex-col gap-1">
                     <span className="text-[9px] uppercase font-bold tracking-widest text-slate-600">Email</span>
@@ -567,6 +604,62 @@ const Profile = () => {
         onRatingSuccess={onRatingSuccess}
       />
     </div >
+
+      {/* Profile Effect CSS Keyframes */}
+      <style>{`
+        .profile-effect-sparkle {
+          background-image: radial-gradient(2px 2px at 20% 30%, rgba(255,215,0,0.8), transparent),
+                            radial-gradient(2px 2px at 40% 20%, rgba(255,215,0,0.6), transparent),
+                            radial-gradient(2px 2px at 60% 50%, rgba(255,215,0,0.7), transparent),
+                            radial-gradient(2px 2px at 80% 40%, rgba(255,215,0,0.5), transparent),
+                            radial-gradient(2px 2px at 10% 70%, rgba(255,215,0,0.6), transparent),
+                            radial-gradient(2px 2px at 70% 80%, rgba(255,215,0,0.4), transparent),
+                            radial-gradient(2px 2px at 50% 10%, rgba(255,215,0,0.7), transparent),
+                            radial-gradient(2px 2px at 30% 60%, rgba(255,215,0,0.5), transparent);
+          animation: sparkleAnim 3s ease-in-out infinite;
+        }
+        @keyframes sparkleAnim {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.8; }
+        }
+        .profile-effect-aurora {
+          background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(34,211,238,0.15), rgba(139,92,246,0.15));
+          background-size: 400% 400%;
+          animation: auroraAnim 6s ease infinite;
+        }
+        @keyframes auroraAnim {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .profile-effect-fireflies {
+          background-image: radial-gradient(3px 3px at 15% 25%, rgba(251,191,36,0.7), transparent),
+                            radial-gradient(3px 3px at 45% 65%, rgba(251,191,36,0.5), transparent),
+                            radial-gradient(3px 3px at 75% 35%, rgba(251,191,36,0.6), transparent),
+                            radial-gradient(3px 3px at 25% 85%, rgba(251,191,36,0.4), transparent),
+                            radial-gradient(3px 3px at 85% 75%, rgba(251,191,36,0.5), transparent);
+          animation: firefliesAnim 4s ease-in-out infinite alternate;
+        }
+        @keyframes firefliesAnim {
+          0% { opacity: 0.2; transform: translateY(0); }
+          100% { opacity: 0.7; transform: translateY(-5px); }
+        }
+        .profile-effect-matrix-rain {
+          background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 10px,
+            rgba(34,197,94,0.05) 10px,
+            rgba(34,197,94,0.05) 20px
+          );
+          animation: matrixAnim 2s linear infinite;
+        }
+        @keyframes matrixAnim {
+          0% { background-position: 0 0; }
+          100% { background-position: 0 20px; }
+        }
+      `}</style>
+    </>
   );
 };
 

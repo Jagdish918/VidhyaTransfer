@@ -12,7 +12,7 @@ import ScheduleMeeting from "./ScheduleMeeting";
 const EMOJIS = ['❤️', '😂', '😮', '😢', '👍', '🙏'];
 
 const Chat = () => {
-    const { user, setUser, socket, incomingCall, setIncomingCall, wasAccepted, setWasAccepted } = useUser();
+    const { user, setUser, socket, incomingCall, setIncomingCall, wasAccepted, setWasAccepted, activeInstantHelpSession, setActiveInstantHelpSession } = useUser();
     const [chats, setChats] = useState([]);
     const [selectedChatId, setSelectedChatId] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -53,7 +53,54 @@ const Chat = () => {
     }, []);
 
     const startCall = () => { if (!selectedChatId) return; setActiveCall(true); };
-    const endCall = () => { setActiveCall(false); setIncomingCall(null); };
+    const endCall = async () => {
+        setActiveCall(false);
+        setIncomingCall(null);
+        // If this was an instant help session and user is the provider, release credits
+        if (activeInstantHelpSession) {
+            if (activeInstantHelpSession.role === "provider") {
+                try {
+                    const { data } = await axios.patch(
+                        `/instant-help/${activeInstantHelpSession.sessionId}/end`
+                    );
+                    if (data.success) {
+                        toast.success(`Session completed! ${data.data?.providerCredits !== undefined ? `Your balance: ${data.data.providerCredits} credits` : 'Credits transferred to you.'}`);
+                    }
+                } catch (error) {
+                    console.error("Error ending instant help session:", error);
+                    toast.error(error.response?.data?.message || "Failed to end session. Please contact support.");
+                }
+            }
+            setActiveInstantHelpSession(null);
+        }
+    };
+
+    // Auto-start call when navigated here from an instant help acceptance
+    // Only the PROVIDER initiates the call; the learner receives it via incomingCall
+    useEffect(() => {
+        if (!activeInstantHelpSession || !chats.length) return;
+        if (activeInstantHelpSession.role !== "provider") return; // learner waits for incoming call
+        const partnerId = activeInstantHelpSession.partnerId;
+        if (!partnerId) return;
+
+        // Find the chat with this partner
+        const targetChat = chats.find(c => 
+            c.users?.some(u => (u._id || u) === partnerId)
+        );
+
+        if (targetChat) {
+            if (selectedChatId !== targetChat._id) {
+                setSelectedChatId(targetChat._id);
+            }
+            setTimeout(() => {
+                setActiveCall(true);
+            }, 500);
+        } else {
+            setTimeout(() => {
+                setActiveCall(true);
+            }, 500);
+        }
+    }, [activeInstantHelpSession, chats]);
 
     // Scroll variables
     const chatContainerRef = useRef(null);
@@ -383,9 +430,17 @@ const Chat = () => {
     );
 
     const chatPartnerData = activeChat ? getChatPartner(activeChat) : { _id: null, name: "Unknown", avatar: "", status: "" };
-    const videoCallPartner = incomingCall
-        ? { id: incomingCall.from, name: incomingCall.name, avatar: incomingCall.avatar || "https://ui-avatars.com/api/?background=random" }
-        : { id: chatPartnerData._id, name: chatPartnerData.name, avatar: chatPartnerData.avatar };
+    
+    // If there's an active instant help session, use the partner from that session
+    const videoCallPartner = activeInstantHelpSession
+        ? { 
+            id: activeInstantHelpSession.partnerId, 
+            name: activeInstantHelpSession.partnerName, 
+            avatar: activeInstantHelpSession.partnerPicture || "https://ui-avatars.com/api/?background=random" 
+          }
+        : incomingCall
+            ? { id: incomingCall.from, name: incomingCall.name, avatar: incomingCall.avatar || "https://ui-avatars.com/api/?background=random" }
+            : { id: chatPartnerData._id, name: chatPartnerData.name, avatar: chatPartnerData.avatar };
 
     return (
         <div className="h-[calc(100vh-65px)] bg-gray-50 flex flex-col p-4 md:p-6 overflow-hidden">

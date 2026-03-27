@@ -1,4 +1,5 @@
-import { Route, Routes, Navigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Footer from "./Components/Footer/Footer";
 import Login from "./Pages/Login/Login";
 import Header from "./Components/Navbar/Navbar";
@@ -33,15 +34,27 @@ import ResetPassword from "./Pages/Login/ResetPassword";
 
 import ScrollToTop from "./Components/ScrollToTop";
 import GlobalCallNotification from "./Components/GlobalCallNotification";
+import GlobalInstantHelpNotification from "./Components/GlobalInstantHelpNotification";
 
 const App = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Listen for instant help accepted event to auto-navigate learner to chat
+  useEffect(() => {
+    const handleInstantHelpNav = () => {
+      navigate('/chat');
+    };
+    window.addEventListener('instantHelpNavigateToChat', handleInstantHelpNav);
+    return () => window.removeEventListener('instantHelpNavigateToChat', handleInstantHelpNav);
+  }, [navigate]);
 
   return (
     <>
       <ScrollToTop />
       <Header />
       <GlobalCallNotification />
+      <GlobalInstantHelpNotification />
       <ToastContainer position="top-right" />
 
       <Routes>

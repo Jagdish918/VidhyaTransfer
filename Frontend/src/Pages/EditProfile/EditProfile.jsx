@@ -5,14 +5,14 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { useUser } from "../../util/UserContext";
 import { skills as availableSkills } from "../Register/Skills";
-import { FaPlus, FaTrash, FaSave, FaArrowLeft, FaArrowRight, FaCamera, FaLinkedin, FaGithub, FaLink } from "react-icons/fa";
+import { FaPlus, FaTrash, FaSave, FaArrowLeft, FaArrowRight, FaCamera, FaLinkedin, FaGithub, FaLink, FaPalette } from "react-icons/fa";
 import { storeSanitizedUserData } from "../../util/sanitizeUserData";
 
 const EditProfile = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("basic");
+  const [activeTab, setActiveTab] = useState("decoration");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
 
@@ -31,6 +31,9 @@ const EditProfile = () => {
     skillsToLearn: [],
     education: [],
     projects: [],
+    avatarFrame: "none",
+    profileEffect: "none",
+    profileCard: "default",
   });
 
   // Helper states for selects
@@ -53,6 +56,9 @@ const EditProfile = () => {
         skillsToLearn: user.skillsToLearn || [],
         education: user.education?.length ? user.education.map(e => ({ ...e, id: e.id || uuidv4() })) : [],
         projects: user.projects?.length ? user.projects.map(p => ({ ...p, id: p.id || uuidv4() })) : [],
+        avatarFrame: user.profileDecoration?.avatarFrame || "none",
+        profileEffect: user.profileDecoration?.profileEffect || "none",
+        profileCard: user.profileDecoration?.profileCard || "default",
       });
     }
   }, [user]);
@@ -437,6 +443,12 @@ const EditProfile = () => {
         tutorialVideo: form.tutorialVideo
       });
 
+      await axios.post("/user/registered/saveDecoration", {
+        avatarFrame: form.avatarFrame,
+        profileEffect: form.profileEffect,
+        profileCard: form.profileCard,
+      });
+
       toast.success("Profile updated successfully!");
 
       const { data: freshData } = await axios.get("/user/registered/getDetails");
@@ -451,6 +463,31 @@ const EditProfile = () => {
       toast.error(error.response?.data?.message || "Failed to save some changes. Please check each tab.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveDecoration = async () => {
+    setLoading(true);
+    try {
+      await axios.post("/user/registered/saveDecoration", {
+        avatarFrame: form.avatarFrame,
+        profileEffect: form.profileEffect,
+        profileCard: form.profileCard,
+      });
+      toast.success("Decoration saved!");
+
+      const { data: freshData } = await axios.get("/user/registered/getDetails");
+      if (freshData.success) {
+        setUser(freshData.data);
+        storeSanitizedUserData(freshData.data);
+      }
+      setLoading(false);
+      return true;
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to save decoration");
+      setLoading(false);
+      return false;
     }
   };
 
@@ -469,11 +506,12 @@ const EditProfile = () => {
         {/* Compact Header */}
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-black text-slate-900 mb-1 tracking-tight">Profile Setup</h1>
-          <p className="text-[11px] uppercase font-black tracking-widest text-slate-400">Step {activeTab === 'basic' ? '1' : activeTab === 'education' ? '2' : '3'} of 3</p>
+          <p className="text-[11px] uppercase font-black tracking-widest text-slate-400">Step {activeTab === 'decoration' ? '1' : activeTab === 'basic' ? '2' : activeTab === 'education' ? '3' : '4'} of 4</p>
         </div>
 
         <div className="flex gap-2 mb-4 bg-dark-card rounded-2xl shadow-card border border-dark-border p-1.5 w-full">
           {[
+            { id: "decoration", label: "Decoration", icon: "✨" },
             { id: "basic", label: "Basic", icon: "👤" },
             { id: "education", label: "Education", icon: "🎓" },
             { id: "portfolio", label: "Portfolio", icon: "💼" }
@@ -493,6 +531,135 @@ const EditProfile = () => {
         </div>
 
         <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border p-6 mb-4 relative z-10 animate-fade-in">
+
+          {/* DECORATION TAB */}
+          {activeTab === "decoration" && (
+            <div className="space-y-6">
+              <div className="text-center mb-2">
+                <h3 className="text-xl font-bold text-slate-900 tracking-tight">Profile Decoration</h3>
+                <p className="text-xs text-slate-500 mt-1">Customize your profile with avatar frames, effects, and card themes</p>
+              </div>
+
+              {/* Avatar Frame */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Avatar Frame</label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: "none", label: "None", style: "border-2 border-dashed border-slate-300" },
+                    { id: "golden-ring", label: "Golden Ring", style: "border-[3px] border-transparent bg-clip-padding", ring: "ring-[3px] ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)]" },
+                    { id: "neon-pulse", label: "Neon Pulse", style: "border-[3px] border-transparent", ring: "ring-[3px] ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] animate-pulse" },
+                    { id: "emerald-glow", label: "Emerald Glow", style: "border-[3px] border-transparent", ring: "ring-[3px] ring-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.5)]" },
+                    { id: "ruby-blaze", label: "Ruby Blaze", style: "border-[3px] border-transparent", ring: "ring-[3px] ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]" },
+                    { id: "ice-crystal", label: "Ice Crystal", style: "border-[3px] border-transparent", ring: "ring-[3px] ring-blue-300 shadow-[0_0_20px_rgba(147,197,253,0.6)]" },
+                    { id: "aurora-borealis", label: "Aurora", style: "border-[3px] border-transparent", ring: "ring-[3px] ring-purple-400 shadow-[0_0_20px_rgba(192,132,252,0.5)] animate-pulse" },
+                  ].map(frame => (
+                    <button
+                      key={frame.id}
+                      onClick={() => setForm(prev => ({ ...prev, avatarFrame: frame.id }))}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                        form.avatarFrame === frame.id
+                          ? 'border-cyan-500 bg-cyan-50 shadow-md'
+                          : 'border-dark-border bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className={`w-14 h-14 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 ${frame.ring || frame.style}`}>
+                        <img
+                          src={form.picture || "https://ui-avatars.com/api/?name=" + (form.name || "U") + "&background=random&size=100"}
+                          alt=""
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">{frame.label}</span>
+                      {form.avatarFrame === frame.id && <span className="text-[8px] font-black text-cyan-600 uppercase">Selected</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <hr className="border-dark-border" />
+
+              {/* Profile Effect */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Profile Effect</label>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                  {[
+                    { id: "none", label: "None", emoji: "🚫", bg: "bg-slate-100" },
+                    { id: "sparkle", label: "Sparkle", emoji: "✨", bg: "bg-gradient-to-br from-yellow-50 to-amber-100" },
+                    { id: "aurora", label: "Aurora", emoji: "🌌", bg: "bg-gradient-to-br from-purple-100 to-cyan-100" },
+                    { id: "fireflies", label: "Fireflies", emoji: "🔥", bg: "bg-gradient-to-br from-amber-50 to-orange-100" },
+                    { id: "matrix-rain", label: "Matrix", emoji: "💚", bg: "bg-gradient-to-br from-green-50 to-emerald-100" },
+                  ].map(effect => (
+                    <button
+                      key={effect.id}
+                      onClick={() => setForm(prev => ({ ...prev, profileEffect: effect.id }))}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                        form.profileEffect === effect.id
+                          ? 'border-cyan-500 bg-cyan-50 shadow-md'
+                          : 'border-dark-border bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl ${effect.bg} flex items-center justify-center text-2xl`}>
+                        {effect.emoji}
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">{effect.label}</span>
+                      {form.profileEffect === effect.id && <span className="text-[8px] font-black text-cyan-600 uppercase">Selected</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <hr className="border-dark-border" />
+
+              {/* Profile Card Theme */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Profile Card Theme</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { id: "default", label: "Default", bg: "bg-white border-slate-200" },
+                    { id: "gradient-ocean", label: "Ocean", bg: "bg-gradient-to-br from-cyan-500 to-blue-600 text-white" },
+                    { id: "dark-cosmos", label: "Cosmos", bg: "bg-gradient-to-br from-slate-900 to-indigo-950 text-white" },
+                    { id: "sunset-blaze", label: "Sunset", bg: "bg-gradient-to-br from-orange-400 to-rose-500 text-white" },
+                    { id: "forest-mist", label: "Forest", bg: "bg-gradient-to-br from-emerald-500 to-teal-700 text-white" },
+                    { id: "lavender-dream", label: "Lavender", bg: "bg-gradient-to-br from-purple-400 to-pink-500 text-white" },
+                  ].map(card => (
+                    <button
+                      key={card.id}
+                      onClick={() => setForm(prev => ({ ...prev, profileCard: card.id }))}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:scale-105 ${
+                        form.profileCard === card.id
+                          ? 'border-cyan-500 shadow-lg ring-2 ring-cyan-200'
+                          : 'border-transparent hover:border-slate-300'
+                      }`}
+                    >
+                      <div className={`w-full h-16 rounded-lg ${card.bg} border flex items-center justify-center shadow-inner`}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-white/30 border border-white/20"></div>
+                          <div className="space-y-1">
+                            <div className="w-12 h-1.5 rounded-full bg-white/30"></div>
+                            <div className="w-8 h-1 rounded-full bg-white/20"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">{card.label}</span>
+                      {form.profileCard === card.id && <span className="text-[8px] font-black text-cyan-600 uppercase">Selected</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end items-center pt-5 mt-3 border-t border-dark-border">
+                <button
+                  onClick={async () => {
+                    const ok = await saveDecoration();
+                    if (ok) setActiveTab('basic');
+                  }}
+                  className="px-8 py-3 bg-cyan-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
+                >
+                  Next: Basic Info <FaArrowRight className="text-sm" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* BASIC INFO TAB */}
           {activeTab === "basic" && (
