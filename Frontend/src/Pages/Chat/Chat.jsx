@@ -12,6 +12,23 @@ import ScheduleMeeting from "./ScheduleMeeting";
 const EMOJIS = ['❤️', '😂', '😮', '😢', '👍', '🙏'];
 
 const Chat = () => {
+    const formatChatListTime = (timestamp) => {
+        if (!timestamp) return "";
+        const date = new Date(timestamp);
+        const today = new Date();
+        const isToday = date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+        if (isToday) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const isYesterday = date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth() && date.getFullYear() === yesterday.getFullYear();
+        if (isYesterday) {
+            return "Yesterday";
+        }
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
+    };
+
     const { user, setUser, socket, incomingCall, setIncomingCall, wasAccepted, setWasAccepted } = useUser();
     const [chats, setChats] = useState([]);
     const [selectedChatId, setSelectedChatId] = useState(null);
@@ -75,6 +92,12 @@ const Chat = () => {
             // Add message to the messages list if this chat is currently open
             if (msgChatId === selectedChatIdRef.current) {
                 setMessages(prev => [newMessage, ...prev]);
+            } else {
+                setUnreadChatIds(prev => {
+                    const next = new Set(prev);
+                    next.add(msgChatId);
+                    return next;
+                });
             }
 
             // Always update the chat list sidebar with the latest message
@@ -146,8 +169,12 @@ const Chat = () => {
                 setChats(fetchedChats);
                 const newUnreadIds = new Set();
                 fetchedChats.forEach(chat => {
-                    if (chat.latestMessage && chat.latestMessage.sender && chat.latestMessage.sender !== user._id) {
-                        newUnreadIds.add(chat._id);
+                    const latestMsg = chat.latestMessage;
+                    if (latestMsg) {
+                        const senderId = latestMsg.sender?._id || latestMsg.sender;
+                        if (senderId !== user._id && !latestMsg.isRead) {
+                            newUnreadIds.add(chat._id);
+                        }
                     }
                 });
                 setUnreadChatIds(newUnreadIds);
@@ -509,7 +536,7 @@ const Chat = () => {
                                             <h3 className={`text-sm truncate ${isUnread ? 'font-bold text-gray-900' : 'font-semibold text-gray-800'} ${selectedChatId === chat._id ? 'text-blue-700' : ''}`}>
                                                 {chatPartner.name}
                                             </h3>
-                                            <span className="text-[10px] text-gray-400">Now</span>
+                                            <span className="text-[10px] text-gray-400">{formatChatListTime(chat.latestMessage?.createdAt)}</span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <p className={`text-xs truncate ${isUnread ? 'font-bold text-gray-900' : 'text-gray-500'} ${selectedChatId === chat._id ? 'text-blue-600' : ''}`}>
@@ -603,6 +630,11 @@ const Chat = () => {
                                         {messages.map((msg, idx) => {
                                             const isMe = msg.sender?._id === user?._id || msg.sender === user?._id;
                                             const isDeleted = msg.deleted;
+                                            const isPaymentMsg = !isDeleted && msg.content.startsWith('💰 Sent ') && msg.content.includes(' credits to ');
+                                            
+                                            // Extract the amount if it's a payment message
+                                            const creditAmount = isPaymentMsg ? msg.content.match(/\d+/)?.[0] : null;
+
                                             return (
                                                 <div
                                                     key={msg._id || idx}
@@ -620,18 +652,52 @@ const Chat = () => {
 
                                                         <div className="relative">
                                                             <div
-                                                                className={`rounded-2xl px-4 py-2 text-sm select-none cursor-default
+                                                                className={`rounded-2xl px-4 py-2 text-sm select-none cursor-default relative overflow-hidden transition-all
                                                                     ${isDeleted ? 'bg-gray-100 text-gray-400 italic' :
-                                                                        isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none shadow-sm'}`}
+                                                                    isPaymentMsg ? 'bg-gradient-to-br from-gray-400 via-gray-500 to-gray-500 text-white shadow-lg shadow-amber-500/20 border border-amber-300/50 min-w-[200px]' :
+                                                                    isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none shadow-sm'}`}
+                                                                style={isPaymentMsg ? { borderRadius: '20px' } : undefined}
                                                             >
-                                                                <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                                                                <div className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>
+                                                                {isPaymentMsg && (
+                                                                    <div className="absolute -right-4 -top-4 text-white/20 transform rotate-12 scale-[2] pointer-events-none">
+                                                                        <FaCoins />
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                {isPaymentMsg ? (
+                                                                    <div className="flex flex-col relative z-10 pt-1">
+                                                                        <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-100 mb-1.5 drop-shadow-sm">
+                                                                            Transfer Complete
+                                                                        </span>
+                                                                        <div className="flex items-center gap-3 mb-2">
+                                                                            <div className="bg-white p-2.5 rounded-full shadow-inner">
+                                                                                <FaCoins className="text-amber-500 text-lg" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-2xl font-black leading-none drop-shadow-md">{creditAmount}</p>
+                                                                                <p className="text-[10px] font-bold text-amber-100 uppercase mt-0.5">Credits</p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <p className="text-white text-xs font-semibold drop-shadow-sm border-t border-white/20 pt-1.5 mt-0.5">
+                                                                            {isMe ? `Sent to ${partner.name}` : `Received from ${partner.name}`}
+                                                                        </p>
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                                                )}
+                                                                
+                                                                <div className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 relative z-10 ${isDeleted ? 'text-gray-400' : isPaymentMsg ? 'text-amber-100 mt-2' : isMe ? 'text-blue-200' : 'text-gray-400'}`}>
                                                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                    {isMe && (
+                                                                    {isMe && !isPaymentMsg && (
                                                                         <span className={`text-[10px] flex items-center ${msg.isRead ? 'text-cyan-300' : 'text-blue-100/70'}`}>
                                                                             {msg.isRead ? (
                                                                                 <span title={`Seen at ${new Date(msg.readAt).toLocaleTimeString()}`}>✓✓ Seen</span>
                                                                             ) : '✓✓ Sent'}
+                                                                        </span>
+                                                                    )}
+                                                                    {isMe && isPaymentMsg && (
+                                                                        <span className={`text-[10px] flex items-center ${msg.isRead ? 'text-white' : 'text-amber-100/70'}`}>
+                                                                            {msg.isRead ? '✓✓ Seen' : '✓✓ Sent'}
                                                                         </span>
                                                                     )}
                                                                 </div>
