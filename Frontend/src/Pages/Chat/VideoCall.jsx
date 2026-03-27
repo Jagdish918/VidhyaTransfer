@@ -139,7 +139,18 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
     useEffect(() => {
         if (activeCall && stream && !connectionRef.current) {
             console.log("[VideoCall] Initiating call to:", partner.id);
-            const peer = new Peer({ initiator: true, trickle: false, stream });
+            const peer = new Peer({ 
+                initiator: true, 
+                trickle: false, 
+                stream,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' }
+                    ]
+                }
+            });
 
             peer.on("signal", (data) => {
                 socket.emit("callUser", {
@@ -166,7 +177,18 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
         if (!stream || !incomingCall) return;
         console.log("[VideoCall] Answering call from:", incomingCall.from);
         setCallAccepted(true);
-        const peer = new Peer({ initiator: false, trickle: false, stream });
+        const peer = new Peer({ 
+            initiator: false, 
+            trickle: false, 
+            stream,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
+        });
 
         peer.on("signal", (data) => {
             socket.emit("answerCall", { signal: data, to: incomingCall.from });
