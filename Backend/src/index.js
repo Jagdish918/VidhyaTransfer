@@ -55,7 +55,10 @@ connectDB()
       try {
         const rawCookie = socket.handshake.headers?.cookie || "";
         const cookies = cookie.parse(rawCookie);
-        const token = cookies.accessToken;
+        
+        // 🔹 FIX: Support token via handshake auth/query for cross-domain environments
+        const token = socket.handshake.auth?.token || socket.handshake.query?.token || cookies.accessToken;
+        
         if (!token) return next(new Error("No token"));
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
