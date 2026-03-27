@@ -280,6 +280,23 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    profileDecoration: {
+      avatarFrame: {
+        type: String,
+        enum: ["none", "golden-ring", "neon-pulse", "emerald-glow", "ruby-blaze", "ice-crystal", "aurora-borealis"],
+        default: "none",
+      },
+      profileEffect: {
+        type: String,
+        enum: ["none", "sparkle", "aurora", "fireflies", "matrix-rain"],
+        default: "none",
+      },
+      profileCard: {
+        type: String,
+        enum: ["default", "gradient-ocean", "dark-cosmos", "sunset-blaze", "forest-mist", "lavender-dream"],
+        default: "default",
+      },
+    },
     dailyQuiz: {
       streak: { type: Number, default: 0 },
       lastAttemptDate: { type: Date, default: null },

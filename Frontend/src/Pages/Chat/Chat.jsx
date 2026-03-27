@@ -29,7 +29,7 @@ const Chat = () => {
         return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
     };
 
-    const { user, setUser, socket, incomingCall, setIncomingCall, wasAccepted, setWasAccepted } = useUser();
+    const { user, setUser, socket, incomingCall, setIncomingCall, wasAccepted, setWasAccepted, activeInstantHelpSession, setActiveInstantHelpSession, instantHelpMeetingPending, setInstantHelpMeetingPending } = useUser();
     const [chats, setChats] = useState([]);
     const [selectedChatId, setSelectedChatId] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -70,7 +70,58 @@ const Chat = () => {
     }, []);
 
     const startCall = () => { if (!selectedChatId) return; setActiveCall(true); };
-    const endCall = () => { setActiveCall(false); setIncomingCall(null); };
+    const endCall = async () => {
+        setActiveCall(false);
+        setIncomingCall(null);
+        // If this was an instant help session and user is the provider, release credits
+        if (activeInstantHelpSession) {
+            if (activeInstantHelpSession.role === "provider") {
+                try {
+                    const { data } = await axios.patch(
+                        `/instant-help/${activeInstantHelpSession.sessionId}/end`
+                    );
+                    if (data.success) {
+                        toast.success(`Session completed! ${data.data?.providerCredits !== undefined ? `Your balance: ${data.data.providerCredits} credits` : 'Credits transferred to you.'}`);
+                    }
+                } catch (error) {
+                    console.error("Error ending instant help session:", error);
+                    toast.error(error.response?.data?.message || "Failed to end session. Please contact support.");
+                }
+            }
+            setActiveInstantHelpSession(null);
+        }
+    };
+
+    // Auto-select chat when navigated here from an instant help acceptance
+    useEffect(() => {
+        if (!activeInstantHelpSession || !chats.length) return;
+        const partnerId = activeInstantHelpSession.partnerId;
+        if (!partnerId) return;
+
+        // Find the chat with this partner
+        const targetChat = chats.find(c =>
+            c.users?.some(u => (u._id || u) === partnerId)
+        );
+
+        if (targetChat && selectedChatId !== targetChat._id) {
+            setSelectedChatId(targetChat._id);
+        }
+    }, [activeInstantHelpSession, chats]);
+
+    // Auto-start video call when meeting is triggered from instant help
+    // Only the LEARNER initiates the call; the provider just navigates here
+    // and receives the incoming call via normal WebRTC signaling.
+    useEffect(() => {
+        if (instantHelpMeetingPending && selectedChatId) {
+            if (activeInstantHelpSession?.role === "learner") {
+                console.log("[Chat] Learner auto-starting video call for instant help meeting");
+                setActiveCall(true);
+            } else {
+                console.log("[Chat] Provider navigated to chat, waiting for incoming call...");
+            }
+            setInstantHelpMeetingPending(false);
+        }
+    }, [instantHelpMeetingPending, selectedChatId]);
 
     // Scroll variables
     const chatContainerRef = useRef(null);
@@ -123,7 +174,7 @@ const Chat = () => {
 
         socket.on("message seen", ({ messageId, chatId }) => {
             if (chatId === selectedChatIdRef.current) {
-                setMessages(prev => prev.map(m => 
+                setMessages(prev => prev.map(m =>
                     m._id === messageId ? { ...m, isRead: true, readAt: new Date() } : m
                 ));
             }
@@ -454,9 +505,17 @@ const Chat = () => {
     );
 
     const chatPartnerData = activeChat ? getChatPartner(activeChat) : { _id: null, name: "Unknown", avatar: "", status: "" };
-    const videoCallPartner = incomingCall
-        ? { id: incomingCall.from, name: incomingCall.name, avatar: incomingCall.avatar || "https://ui-avatars.com/api/?background=random" }
-        : { id: chatPartnerData._id, name: chatPartnerData.name, avatar: chatPartnerData.avatar };
+
+    // If there's an active instant help session, use the partner from that session
+    const videoCallPartner = activeInstantHelpSession
+        ? {
+            id: activeInstantHelpSession.partnerId,
+            name: activeInstantHelpSession.partnerName,
+            avatar: activeInstantHelpSession.partnerPicture || "https://ui-avatars.com/api/?background=random"
+        }
+        : incomingCall
+            ? { id: incomingCall.from, name: incomingCall.name, avatar: incomingCall.avatar || "https://ui-avatars.com/api/?background=random" }
+            : { id: chatPartnerData._id, name: chatPartnerData.name, avatar: chatPartnerData.avatar };
 
     return (
         <div className="h-[calc(100vh-65px)] bg-gray-50 flex flex-col p-4 md:p-6 overflow-hidden">
@@ -631,7 +690,7 @@ const Chat = () => {
                                             const isMe = msg.sender?._id === user?._id || msg.sender === user?._id;
                                             const isDeleted = msg.deleted;
                                             const isPaymentMsg = !isDeleted && msg.content.startsWith('💰 Sent ') && msg.content.includes(' credits to ');
-                                            
+
                                             // Extract the amount if it's a payment message
                                             const creditAmount = isPaymentMsg ? msg.content.match(/\d+/)?.[0] : null;
 
@@ -654,8 +713,8 @@ const Chat = () => {
                                                             <div
                                                                 className={`rounded-2xl px-4 py-2 text-sm select-none cursor-default relative overflow-hidden transition-all
                                                                     ${isDeleted ? 'bg-gray-100 text-gray-400 italic' :
-                                                                    isPaymentMsg ? 'bg-gradient-to-br from-gray-400 via-gray-500 to-gray-500 text-white shadow-lg shadow-amber-500/20 border border-amber-300/50 min-w-[200px]' :
-                                                                    isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none shadow-sm'}`}
+                                                                        isPaymentMsg ? 'bg-gradient-to-br from-gray-400 via-gray-500 to-gray-500 text-white shadow-lg shadow-amber-500/20 border border-amber-300/50 min-w-[200px]' :
+                                                                            isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none shadow-sm'}`}
                                                                 style={isPaymentMsg ? { borderRadius: '20px' } : undefined}
                                                             >
                                                                 {isPaymentMsg && (
@@ -663,7 +722,7 @@ const Chat = () => {
                                                                         <FaCoins />
                                                                     </div>
                                                                 )}
-                                                                
+
                                                                 {isPaymentMsg ? (
                                                                     <div className="flex flex-col relative z-10 pt-1">
                                                                         <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-100 mb-1.5 drop-shadow-sm">
@@ -685,7 +744,7 @@ const Chat = () => {
                                                                 ) : (
                                                                     <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                                                                 )}
-                                                                
+
                                                                 <div className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 relative z-10 ${isDeleted ? 'text-gray-400' : isPaymentMsg ? 'text-amber-100 mt-2' : isMe ? 'text-blue-200' : 'text-gray-400'}`}>
                                                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                                     {isMe && !isPaymentMsg && (
@@ -779,12 +838,12 @@ const Chat = () => {
                             {/* Typing Indicator */}
                             {isPartnerTyping && (
                                 <div className="px-6 py-1 text-[11px] text-gray-500 font-medium animate-pulse flex items-center gap-1.5 opacity-80 transition-all">
-                                   <div className="flex gap-0.5">
-                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></span>
-                                   </div>
-                                   {partner.name} is typing...
+                                    <div className="flex gap-0.5">
+                                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                        <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></span>
+                                    </div>
+                                    {partner.name} is typing...
                                 </div>
                             )}
 

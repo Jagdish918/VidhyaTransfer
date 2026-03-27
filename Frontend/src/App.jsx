@@ -1,4 +1,5 @@
-import { Route, Routes, Navigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Footer from "./Components/Footer/Footer";
 import Login from "./Pages/Login/Login";
 import Header from "./Components/Navbar/Navbar";
@@ -33,15 +34,33 @@ import ResetPassword from "./Pages/Login/ResetPassword";
 
 import ScrollToTop from "./Components/ScrollToTop";
 import GlobalCallNotification from "./Components/GlobalCallNotification";
+import GlobalInstantHelpNotification from "./Components/GlobalInstantHelpNotification";
+import InstantHelpChatWidget from "./Components/InstantHelpChatWidget";
+import { useUser } from "./util/UserContext";
 
 const App = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const { setInstantHelpChatOpen } = useUser();
+
+  // Listen for instant help accepted event to auto-open chat widget
+  useEffect(() => {
+    const handleInstantHelpNav = () => {
+      // Open the widget instead of navigating away
+      setInstantHelpChatOpen(true);
+    };
+    window.addEventListener('instantHelpNavigateToChat', handleInstantHelpNav);
+    return () => window.removeEventListener('instantHelpNavigateToChat', handleInstantHelpNav);
+  }, [setInstantHelpChatOpen]);
 
   return (
     <>
       <ScrollToTop />
       <Header />
       <GlobalCallNotification />
+      <GlobalInstantHelpNotification />
+      <InstantHelpChatWidget />
       <ToastContainer position="top-right" />
 
       <Routes>

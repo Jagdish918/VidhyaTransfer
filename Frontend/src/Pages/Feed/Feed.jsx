@@ -179,7 +179,7 @@ const Feed = () => {
       if (data.success) {
         toast.success("Post created successfully");
         setIsPostModalOpen(false);
-          fetchPosts(1);
+        fetchPosts(1);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Error creating post");
@@ -211,7 +211,7 @@ const Feed = () => {
                   onClick={() => navigate('/profile')}
                   className="w-full py-2.5 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 hover:-translate-y-0.5 transition-all"
                 >
-                  Edit Profile
+                  View Profile
                 </button>
               </div>
             </div>
@@ -347,7 +347,7 @@ const Feed = () => {
                       </span>
                       <span className="text-[11px] text-slate-400 font-medium truncate">@{peer.username}</span>
                     </div>
-                    <button 
+                    <button
                       onClick={() => navigate(`/profile/${peer.username}`)}
                       className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-cyan-500 hover:text-white transition-all shadow-sm"
                     >

@@ -2,6 +2,11 @@ import mongoose, { Schema } from "mongoose";
 
 const sessionSchema = new Schema(
   {
+    type: {
+      type: String,
+      enum: ["mentorship", "instant_help"],
+      default: "mentorship",
+    },
     learner: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -36,7 +41,7 @@ const sessionSchema = new Schema(
     // Scheduling
     scheduledAt: {
       type: Date,
-      required: true,
+      default: null,
     },
     // Optional message from learner
     message: {
