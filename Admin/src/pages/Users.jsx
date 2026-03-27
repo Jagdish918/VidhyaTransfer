@@ -134,8 +134,16 @@ const Users = () => {
                                             )}
                                         </div>
                                         <div>
-                                            <div className="font-medium text-gray-900">{user.name}</div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="font-medium text-gray-900">{user.name}</div>
+                                                <div className={`w-2 h-2 rounded-full ${user.isOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`} title={user.isOnline ? 'Online Now' : `Last seen: ${new Date(user.lastSeen).toLocaleString()}`}></div>
+                                            </div>
                                             <div className="text-sm text-gray-500">{user.email}</div>
+                                            {!user.isOnline && user.lastSeen && (
+                                                <div className="text-[10px] text-gray-400 font-medium italic mt-0.5">
+                                                    Saw at: {new Date(user.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </td>

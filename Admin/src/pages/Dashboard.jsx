@@ -30,8 +30,8 @@ const Dashboard = () => {
 
     const cards = [
         { title: 'Total Users', count: stats.totalUsers, icon: <FaUsers />, color: 'bg-blue-500' },
+        { title: 'Online Users', count: stats.onlineUsers, icon: <div className="w-3 h-3 bg-white rounded-full animate-pulse" />, color: 'bg-emerald-500' },
         { title: 'Total Posts', count: stats.totalPosts, icon: <FaStickyNote />, color: 'bg-green-500' },
-        { title: 'Conn. Requests', count: analytics?.totalRequests || 0, icon: <FaUserPlus />, color: 'bg-purple-500' },
         { title: 'Reported Content', count: stats.reportedPosts, icon: <FaExclamationTriangle />, color: 'bg-red-500' },
     ];
 

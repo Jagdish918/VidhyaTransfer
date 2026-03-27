@@ -6,8 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { FaUserShield, FaSpinner } from 'react-icons/fa';
 
 const Login = () => {
-    const [email, setEmail] = useState('admin@skillswap.com');
-    const [password, setPassword] = useState('admin123');
+    const [email, setEmail] = useState('superadmin@vidhya.com');
+    const [password, setPassword] = useState('password123');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const { setAdmin } = useAuth();

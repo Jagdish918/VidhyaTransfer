@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { FaHeart, FaRegHeart, FaComment, FaShare, FaBookmark, FaRegBookmark, FaEllipsisH, FaTrash } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaComment, FaShare, FaBookmark, FaRegBookmark, FaEllipsisH, FaTrash, FaExclamationTriangle } from "react-icons/fa";
 import { useUser } from "../../util/UserContext";
 
 const PostCard = ({ post }) => {
@@ -168,6 +168,22 @@ const PostCard = ({ post }) => {
     }
   };
 
+  const handleReport = async () => {
+    if (isAuthor) {
+      toast.error("You cannot report your own post");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to report this post?")) return;
+    try {
+      const { data } = await axios.post(`/post/${post._id}/report`, { reason: "Inappropriate content" });
+      if (data.success) {
+        toast.success("Post reported. Our moderators will review it.");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error reporting post");
+    }
+  };
+
   const handleConnect = async () => {
     setConnectStatus("Pending"); // optimistic update
     try {
@@ -274,6 +290,12 @@ const PostCard = ({ post }) => {
                   <FaTrash size={12} /> Delete Post
                 </button>
               )}
+              <button
+                onClick={() => { handleReport(); setShowOptions(false); }}
+                className="w-full text-left px-4 py-2.5 text-xs font-semibold text-amber-600 hover:bg-amber-50 flex items-center gap-2 transition-colors"
+              >
+                <FaExclamationTriangle size={12} /> Report Post
+              </button>
               <button
                 onClick={() => setShowOptions(false)}
                 className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-dark-hover hover:text-slate-900 transition-colors"

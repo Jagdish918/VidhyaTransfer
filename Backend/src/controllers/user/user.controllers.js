@@ -18,9 +18,9 @@ const SCHEDULE_MEET_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
 
 export const userDetailsWithoutID = asyncHandler(async (req, res) => {
   console.log("\n******** Inside userDetailsWithoutID Controller function ********");
-
   // Remove sensitive fields before sending
-  const { password, resetPasswordToken, resetPasswordExpires, __v, ...safeUser } = req.user.toObject ? req.user.toObject() : req.user;
+  const user = req.user.toObject ? req.user.toObject() : req.user;
+  const { password, resetPasswordToken, resetPasswordExpires, __v, ...safeUser } = user;
 
   return res.status(200).json(new ApiResponse(200, safeUser, "User details fetched successfully"));
 });
@@ -56,11 +56,19 @@ export const UserDetails = asyncHandler(async (req, res) => {
 
   const status = request.length > 0 ? request[0].status : "Connect";
 
-  // console.log(" userDetail: ", userDetail);
-  // console.log("user", user);
+  // 🔒 PRIVACY CHECK: Only connections or admins can see online status/last seen
+  const isConnected = status === "Connected";
+  const isAdmin = req.user.role === "admin";
+
+  const userObj = user.toObject();
+  if (!isConnected && !isAdmin && req.params.username !== req.user.username) {
+    delete userObj.isOnline;
+    delete userObj.lastSeen;
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, { ...user._doc, status: status }, "User details fetched successfully"));
+    .json(new ApiResponse(200, { ...userObj, status: status }, "User details fetched successfully"));
 });
 
 export const UnRegisteredUserDetails = asyncHandler(async (req, res) => {
@@ -839,6 +847,7 @@ export const getSkillGainExperts = asyncHandler(async (req, res) => {
   const matchQuery = {
     username: { $ne: currentUser.username },
     status: { $nin: ["banned", "deleted"] },
+    role: { $ne: "admin" }, // ✅ FIX: Hide admins from discovery
     isDeleted: { $ne: true },
     "preferences.rates.mentorship": { $gt: 0 }
   };
@@ -915,6 +924,7 @@ export const getUtilizationProviders = asyncHandler(async (req, res) => {
   const query = {
     username: { $ne: req.user.username },
     status: { $nin: ["banned", "deleted"] },
+    role: { $ne: "admin" }, // ✅ FIX: Hide admins from utilization
     isDeleted: { $ne: true },
     "preferences.utilization": type
   };
@@ -956,7 +966,7 @@ export const getConnections = asyncHandler(async (req, res) => {
   );
 
   const users = await User.find({ _id: { $in: connectedUserIds } }).select(
-    "name username picture"
+    "name username picture isOnline lastSeen"
   );
 
   res.status(200).json(new ApiResponse(200, users, "Connections fetched"));

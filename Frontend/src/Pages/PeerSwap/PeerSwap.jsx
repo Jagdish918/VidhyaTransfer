@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 
 const PeerSwap = () => {
-  const { user } = useUser();
+  const { user, socket } = useUser();
   const navigate = useNavigate();
   const [peers, setPeers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,6 +83,18 @@ const PeerSwap = () => {
     };
     fetchChats();
   }, []);
+
+  // Real-time status update for peers
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleStatusUpdate = ({ userId, isOnline }) => {
+      setPeers(prev => prev.map(p => p._id === userId ? { ...p, isOnline } : p));
+    };
+
+    socket.on("user status update", handleStatusUpdate);
+    return () => socket.off("user status update", handleStatusUpdate);
+  }, [socket]);
 
   const isConnected = (peerId) => {
     return existingChats.some(chat => chat.users.some(u => u._id === peerId || u === peerId));
@@ -179,10 +191,21 @@ const PeerSwap = () => {
               alt={peer.name}
               className="w-14 h-14 rounded-xl object-cover ring-4 ring-white group-hover:ring-indigo-200 transition-all duration-300 shadow-sm"
             />
-            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-dark-card rounded-full shadow-sm"></span>
+            {/* ✅ Dynamic Online Status Dot (Only for connections) */}
+            {(connected || peer.isOnline !== undefined) && (
+              <span className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 border-2 border-dark-card rounded-full shadow-sm transition-colors ${peer.isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+            )}
           </div>
 
           <h3 className="text-base font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors mb-0.5 leading-tight line-clamp-1">{peer.name}</h3>
+          
+          {/* ✅ Offline status for connections */}
+          {peer.isOnline !== undefined && !peer.isOnline && (
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
+              Offline
+            </p>
+          )}
+
           <p className="text-sm text-slate-600 font-medium mb-3 line-clamp-1">{role}</p>
 
           <div className="space-y-3 w-full mb-5 relative">

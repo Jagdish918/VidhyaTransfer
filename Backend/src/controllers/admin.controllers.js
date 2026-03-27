@@ -8,11 +8,12 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
 const getDashboardStats = asyncHandler(async (req, res) => {
     const totalUsers = await User.countDocuments();
+    const onlineUsers = await User.countDocuments({ isOnline: true });
     const totalPosts = await Post.countDocuments({ isDeleted: false });
     const reportedPosts = await Post.countDocuments({ reportedCount: { $gt: 0 } });
 
     return res.status(200).json(
-        new ApiResponse(200, { totalUsers, totalPosts, reportedPosts }, "Dashboard stats fetched successfully")
+        new ApiResponse(200, { totalUsers, onlineUsers, totalPosts, reportedPosts }, "Dashboard stats fetched successfully")
     );
 });
 

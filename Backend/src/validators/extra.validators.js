@@ -5,10 +5,10 @@ import { z } from "zod";
  */
 export const createReportSchema = z.object({
     body: z.object({
+        username: z.string().min(1, "Reporter username is required"),
         reportedUsername: z.string().min(1, "Target username is required"),
-        type: z.enum(["user", "post", "comment"]),
-        reason: z.string().min(10, "Reason must be at least 10 characters long"),
-        details: z.string().optional(),
+        issue: z.enum(["Personal conduct", "Professional expertise", "Others"]),
+        issueDescription: z.string().min(10, "Description must be at least 10 characters long").max(1000),
     }),
 });
 
