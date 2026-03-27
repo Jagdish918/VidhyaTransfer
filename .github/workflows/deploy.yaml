@@ -1,0 +1,32 @@
+name: Deploy Node.js Backend to EC2
+
+on:
+  push:
+    branches:
+      - main  # Set this to the branch you want to trigger the deployment (e.g., dev-3 or main)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # 1. Go to the project directory
+            # (Make sure this matches the path where you cloned the repo in Phase 2)
+            cd /home/${{ secrets.EC2_USERNAME }}/VidhyaTransfer
+            
+            # 2. Pull the latest code from GitHub
+            git pull origin main
+            
+            # 3. Go into the Backend folder and install dependencies
+            cd Backend
+            npm install
+            
+            # 4. Restart the running server safely using PM2
+            pm2 restart "vidhya-backend"
