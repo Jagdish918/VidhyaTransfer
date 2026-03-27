@@ -237,6 +237,14 @@ const userSchema = new Schema(
       type: Date,
       default: null,
     },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
     // OTP attempt tracking (brute-force protection)
     otpAttempts: {
       type: Number,

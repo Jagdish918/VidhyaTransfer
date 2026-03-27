@@ -11,7 +11,7 @@ import RatingModal from "../Rating/RatingModal";
 
 
 const Profile = () => {
-  const { user, setUser } = useUser();
+  const { user, setUser, socket } = useUser();
   const [profileUser, setProfileUser] = useState(null);
   const { id } = useParams(); // Changed from username to id as per App.jsx
   const [loading, setLoading] = useState(true);
@@ -89,6 +89,20 @@ const Profile = () => {
       getUser();
     }
   }, [id, user, setUser]);
+
+  // Real-time status update
+  useEffect(() => {
+    if (!socket || !profileUser?._id) return;
+    
+    const handleStatusUpdate = ({ userId, isOnline }) => {
+      if (profileUser._id === userId) {
+        setProfileUser(prev => prev ? { ...prev, isOnline } : prev);
+      }
+    };
+
+    socket.on("user status update", handleStatusUpdate);
+    return () => socket.off("user status update", handleStatusUpdate);
+  }, [socket, profileUser?._id]);
 
   useEffect(() => {
     if (profileUser?.username) {
@@ -225,8 +239,20 @@ const Profile = () => {
                   alt={profileUser.name}
                   className="w-20 h-20 rounded-2xl object-cover border-4 border-dark-card ring-2 ring-dark-border shadow-sm mb-3"
                 />
-                <h1 className="text-xl font-bold text-slate-900 tracking-tight">{profileUser.name}</h1>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2 justify-center">
+                  {profileUser.name}
+                  {profileUser.isOnline !== undefined && (
+                    <span className={`w-3 h-3 rounded-full ${profileUser.isOnline ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] animate-pulse' : 'bg-slate-300'}`} title={profileUser.isOnline ? 'Online' : 'Offline'}></span>
+                  )}
+                </h1>
                 <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-0.5">@{profileUser.username || "username"}</p>
+                
+                {/* last seen message */}
+                {profileUser.isOnline !== undefined && !profileUser.isOnline && (
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+                    Offline
+                  </p>
+                )}
 
                 {/* Bio */}
                 {profileUser.bio && <p className="text-slate-700 mt-4 leading-relaxed font-medium text-sm">{profileUser.bio}</p>}

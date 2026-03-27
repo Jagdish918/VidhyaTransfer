@@ -27,6 +27,9 @@ const Chat = () => {
     const [contextMenu, setContextMenu] = useState(null); // { msgId, x, y, isMe }
     const [replyingTo, setReplyingTo] = useState(null); // message object
     const [emojiPickerFor, setEmojiPickerFor] = useState(null); // msgId
+    const [isPartnerTyping, setIsPartnerTyping] = useState(false);
+    const [typing, setTyping] = useState(false);
+    const typingTimeoutRef = useRef(null);
 
     const messagesEndRef = useRef(null);
     const contextMenuRef = useRef(null); // Socket Initialization moved to UserContext
@@ -85,8 +88,45 @@ const Chat = () => {
 
         socket.on("message received", handleMessageReceived);
 
+        socket.on("user status update", ({ userId, isOnline, lastSeen }) => {
+            setChats(prev => prev.map(chat => {
+                const updatedUsers = chat.users.map(u => {
+                    if (u._id === userId) return { ...u, isOnline, lastSeen };
+                    return u;
+                });
+                return { ...chat, users: updatedUsers };
+            }));
+        });
+
+        socket.on("message seen", ({ messageId, chatId }) => {
+            if (chatId === selectedChatIdRef.current) {
+                setMessages(prev => prev.map(m => 
+                    m._id === messageId ? { ...m, isRead: true, readAt: new Date() } : m
+                ));
+            }
+            // Update the latest message info in the sidebar too
+            setChats(prev => prev.map(c => {
+                if (c._id === chatId && c.latestMessage?._id === messageId) {
+                    return { ...c, latestMessage: { ...c.latestMessage, isRead: true } };
+                }
+                return c;
+            }));
+        });
+
+        socket.on("typing", (room) => {
+            if (room === selectedChatIdRef.current) setIsPartnerTyping(true);
+        });
+
+        socket.on("stop typing", (room) => {
+            if (room === selectedChatIdRef.current) setIsPartnerTyping(false);
+        });
+
         return () => {
             socket.off("message received", handleMessageReceived);
+            socket.off("user status update");
+            socket.off("message seen");
+            socket.off("typing");
+            socket.off("stop typing");
         };
     }, [socket]);
 
@@ -147,6 +187,13 @@ const Chat = () => {
                 setMessages([...fetchedMessages].reverse());
                 setHasMore(data?.data?.pagination?.hasMore ?? false);
                 setPage(1);
+
+                // Mark unread messages as read
+                fetchedMessages.forEach(msg => {
+                    if (!msg.isRead && msg.sender._id !== user._id && socket) {
+                        socket.emit("message read", { messageId: msg._id, chatId: selectedChatId });
+                    }
+                });
             } catch (error) {
                 console.error("Error fetching messages:", error);
             } finally {
@@ -154,7 +201,16 @@ const Chat = () => {
             }
         };
         fetchMessages();
-    }, [selectedChatId]);
+    }, [selectedChatId, socket]);
+
+    // Handle marking incoming message as read if chat is open
+    useEffect(() => {
+        if (!selectedChatId || !socket || messages.length === 0) return;
+        const lastMsg = messages[0]; // Messages are in reverse order (newest first)
+        if (lastMsg.sender._id !== user._id && !lastMsg.isRead) {
+            socket.emit("message read", { messageId: lastMsg._id, chatId: selectedChatId });
+        }
+    }, [messages, selectedChatId, socket]);
 
     // Fetch older messages
     const fetchMoreMessages = async () => {
@@ -191,7 +247,8 @@ const Chat = () => {
             _id: partner?._id,
             name: partner?.name || partner?.username || "User",
             avatar: partner?.picture || "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-            status: "Online"
+            isOnline: partner?.isOnline,
+            lastSeen: partner?.lastSeen
         };
     };
 
@@ -231,6 +288,23 @@ const Chat = () => {
         }
     };
 
+    const handleInputChange = (e) => {
+        setMessageInput(e.target.value);
+        if (!socket || !selectedChatId) return;
+
+        if (!typing) {
+            setTyping(true);
+            socket.emit("typing", selectedChatId);
+        }
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+        typingTimeoutRef.current = setTimeout(() => {
+            socket.emit("stop typing", selectedChatId);
+            setTyping(false);
+        }, 3000);
+    };
+
     // ── Delete Message ────────────────────────────────────────
     const handleDeleteMessage = async (msgId) => {
         setContextMenu(null);
@@ -266,7 +340,7 @@ const Chat = () => {
             reactions: [],
             createdAt: new Date().toISOString()
         };
-        setMessages(prev => [...prev, optimisticMessage]);
+        setMessages(prev => [optimisticMessage, ...prev]);
         try {
             const { data } = await axios.post("/message/sendMessage", { chatId: selectedChatId, content: meetingMessage }, { withCredentials: true });
             await axios.post("/events/schedule", { chatId: selectedChatId, title, date, time, type, link }, { withCredentials: true });
@@ -426,7 +500,7 @@ const Chat = () => {
                                 >
                                     <div className="relative flex-shrink-0">
                                         <img src={chatPartner.avatar} alt={chatPartner.name} className="w-10 h-10 rounded-full object-cover" />
-                                        {chatPartner.status === "Online" && (
+                                        {chatPartner.isOnline && (
                                             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
                                         )}
                                     </div>
@@ -472,13 +546,21 @@ const Chat = () => {
                                     <button className="md:hidden text-gray-500 mr-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedChatId(null); }}>←</button>
                                     <div className="relative">
                                         <img src={partner.avatar} alt={partner.name} className="w-8 h-8 rounded-full object-cover" />
-                                        <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full"></div>
+                                        {partner.isOnline && (
+                                            <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full animate-pulse"></div>
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-gray-900 text-sm leading-tight">{partner.name}</h3>
                                         <div className="flex items-center gap-1">
-                                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                                            <p className="text-[10px] text-green-600 font-medium">Online</p>
+                                            {partner.isOnline ? (
+                                                <>
+                                                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                                    <p className="text-[10px] text-green-600 font-bold">Online</p>
+                                                </>
+                                            ) : (
+                                                <p className="text-[10px] text-gray-400 font-medium italic">Offline</p>
+                                            )}
                                         </div>
                                     </div>
                                 </Link>
@@ -545,7 +627,13 @@ const Chat = () => {
                                                                 <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                                                                 <div className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>
                                                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                    {isMe && <span className="text-[10px]">✓✓</span>}
+                                                                    {isMe && (
+                                                                        <span className={`text-[10px] flex items-center ${msg.isRead ? 'text-cyan-300' : 'text-blue-100/70'}`}>
+                                                                            {msg.isRead ? (
+                                                                                <span title={`Seen at ${new Date(msg.readAt).toLocaleTimeString()}`}>✓✓ Seen</span>
+                                                                            ) : '✓✓ Sent'}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
 
@@ -622,6 +710,18 @@ const Chat = () => {
                                 <div ref={messagesEndRef} />
                             </div>
 
+                            {/* Typing Indicator */}
+                            {isPartnerTyping && (
+                                <div className="px-6 py-1 text-[11px] text-gray-500 font-medium animate-pulse flex items-center gap-1.5 opacity-80 transition-all">
+                                   <div className="flex gap-0.5">
+                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                       <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></span>
+                                   </div>
+                                   {partner.name} is typing...
+                                </div>
+                            )}
+
                             {/* Reply Banner */}
                             {replyingTo && (
                                 <div className="px-4 py-2 bg-blue-50 border-t border-blue-100 flex items-center gap-3">
@@ -643,7 +743,7 @@ const Chat = () => {
                                         className="flex-1 bg-transparent border-none outline-none px-3 py-2 max-h-24 resize-none text-gray-700 placeholder-gray-400 text-sm"
                                         placeholder="Type your message..."
                                         value={messageInput}
-                                        onChange={(e) => setMessageInput(e.target.value)}
+                                        onChange={handleInputChange}
                                     />
                                     <button
                                         type="submit"

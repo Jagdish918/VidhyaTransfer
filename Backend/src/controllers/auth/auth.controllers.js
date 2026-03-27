@@ -282,7 +282,7 @@ export const handleLogout = asyncHandler(async (req, res) => {
   }
 
   const IS_PROD = process.env.NODE_ENV === "production";
-  const cookieOpts = { path: "/", sameSite: IS_PROD ? "Strict" : "Lax" };
+  const cookieOpts = { path: "/", sameSite: IS_PROD ? "None" : "Lax", secure: IS_PROD };
   res.clearCookie("accessToken", cookieOpts);
   res.clearCookie("accessTokenRegistration", cookieOpts);
   res.clearCookie("hasSession", cookieOpts);
