@@ -161,8 +161,14 @@ const Login = () => {
           return;
         }
 
-        if (password.length < 6) {
-          toast.error("Password must be at least 6 characters");
+        if (name.length < 3) {
+          toast.error("Name must be at least 3 characters");
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 8) {
+          toast.error("Password must be at least 8 characters");
           setLoading(false);
           return;
         }

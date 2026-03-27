@@ -111,6 +111,11 @@ const UserContextProvider = ({ children }) => {
               navigate("/login");
             }
           } else if (error.response.status === 401) {
+            // ✅ FIX: Ignore 401s if the user is intentionally logging out
+            if (error.config?.url?.includes("/auth/logout") || !localStorage.getItem("userInfo")) {
+              return Promise.reject(error);
+            }
+
             // If token has expired or is invalid, force logout
             const errorMessage = String(error.response.data?.message || "").toLowerCase();
             if (errorMessage.includes("login") || errorMessage.includes("expired") || errorMessage.includes("invalid")) {
