@@ -461,6 +461,44 @@ export const saveAddRegisteredUser = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, user, "User details saved successfully"));
 });
 
+export const saveDecorationRegisteredUser = asyncHandler(async (req, res) => {
+  console.log("******** Inside saveDecorationRegisteredUser Function *******");
+
+  const { avatarFrame, profileEffect, profileCard } = req.body;
+
+  const validFrames = ["none", "golden-ring", "neon-pulse", "emerald-glow", "ruby-blaze", "ice-crystal", "aurora-borealis"];
+  const validEffects = ["none", "sparkle", "aurora", "fireflies", "matrix-rain"];
+  const validCards = ["default", "gradient-ocean", "dark-cosmos", "sunset-blaze", "forest-mist", "lavender-dream"];
+
+  if (avatarFrame && !validFrames.includes(avatarFrame)) {
+    throw new ApiError(400, "Invalid avatar frame selection");
+  }
+  if (profileEffect && !validEffects.includes(profileEffect)) {
+    throw new ApiError(400, "Invalid profile effect selection");
+  }
+  if (profileCard && !validCards.includes(profileCard)) {
+    throw new ApiError(400, "Invalid profile card selection");
+  }
+
+  const user = await User.findOneAndUpdate(
+    { username: req.user.username },
+    {
+      profileDecoration: {
+        avatarFrame: avatarFrame || "none",
+        profileEffect: profileEffect || "none",
+        profileCard: profileCard || "default",
+      }
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    throw new ApiError(500, "Error in saving decoration settings");
+  }
+
+  return res.status(200).json(new ApiResponse(200, user, "Decoration saved successfully"));
+});
+
 // export const updateRegisteredUser = asyncHandler(async (req, res) => {
 //   console.log("******** Inside updateRegisteredUser Function *******");
 

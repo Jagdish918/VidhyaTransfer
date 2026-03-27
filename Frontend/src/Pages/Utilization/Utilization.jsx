@@ -1,20 +1,64 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaBolt, FaBriefcase, FaCalendarAlt, FaStar, FaSearch, FaArrowRight, FaClock, FaMapMarkerAlt } from "react-icons/fa";
+import { FaSearch, FaStar, FaMapMarkerAlt, FaGraduationCap, FaBrain, FaRegCalendarAlt, FaHistory, FaVideo, FaBolt, FaFilter, FaClock, FaRegClock, FaBriefcase, FaCalendarAlt, FaArrowRight, FaTimes } from "react-icons/fa";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useUser } from "../../util/UserContext";
+import { toast } from "react-toastify";
+
+// Helper component for a live countdown timer
+const PendingTimer = ({ createdAt, onExpire }) => {
+    const [timeLeft, setTimeLeft] = useState(120);
+
+    useEffect(() => {
+        const checkTime = () => {
+            const createdTime = new Date(createdAt).getTime();
+            const now = Date.now();
+            const elapsed = Math.floor((now - createdTime) / 1000);
+            const remaining = Math.max(0, 120 - elapsed);
+            
+            setTimeLeft(remaining);
+            if (remaining === 0 && onExpire) {
+                onExpire();
+            }
+        };
+
+        checkTime();
+        const interval = setInterval(checkTime, 1000);
+        return () => clearInterval(interval);
+    }, [createdAt, onExpire]);
+
+    if (timeLeft <= 0) return <span className="text-red-500 font-bold ml-2">Expired</span>;
+    
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    return (
+        <span className="text-amber-600 font-semibold ml-2 flex items-center gap-1 text-[11px]">
+            <FaRegClock /> {minutes}:{seconds.toString().padStart(2, '0')}
+        </span>
+    );
+};
 
 const Utilization = () => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const { user, setUser, setActiveInstantHelpSession, setInstantHelpChatOpen } = useUser();
     const tabs = ["Instant Help", "Hire Expert", "Events"];
     const rawTab = searchParams.get("tab");
     const activeTab = tabs.includes(rawTab) ? rawTab : "Instant Help";
 
+    const [instantHelpMode, setInstantHelpMode] = useState("providers"); // "providers" or "sessions"
+
     const [providers, setProviders] = useState([]);
     const [events, setEvents] = useState([]);
+    const [mySessions, setMySessions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    // Instant help request modal state
+    const [selectedProvider, setSelectedProvider] = useState(null);
+    const [selectedSkill, setSelectedSkill] = useState("");
+    const [requestLoading, setRequestLoading] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -23,13 +67,20 @@ const Utilization = () => {
         return () => clearTimeout(timer);
     }, [search]);
 
-    const fetchProviders = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
             if (activeTab === "Events") {
                 const { data } = await axios.get("/events");
                 if (data.success) {
                     setEvents(data.data?.events || data.data || []);
+                }
+            } else if (activeTab === "Instant Help" && instantHelpMode === "sessions") {
+                const { data } = await axios.get("/instant-help/sessions", {
+                    withCredentials: true
+                });
+                if (data.success) {
+                    setMySessions(data.data?.sessions || []);
                 }
             } else {
                 const { data } = await axios.get("/user/providers", {
@@ -45,6 +96,7 @@ const Utilization = () => {
         } catch (error) {
             console.error("Error fetching data", error);
             if (activeTab === "Events") setEvents([]);
+            else if (activeTab === "My Sessions") setMySessions([]);
             else setProviders([]);
         } finally {
             setLoading(false);
@@ -52,13 +104,83 @@ const Utilization = () => {
     };
 
     useEffect(() => {
-        fetchProviders();
-    }, [activeTab, debouncedSearch]);
+        fetchData();
+    }, [activeTab, debouncedSearch, instantHelpMode]);
 
-    const renderCard = (user) => {
+    const handleSearch = (e) => {
+        setSearch(e.target.value);
+    };
+
+    const handleAcceptSession = async (sessionId) => {
+        try {
+            const { data } = await axios.patch(`/instant-help/${sessionId}/accept`);
+            if (data.success) {
+                toast.success('Instant help accepted!');
+                // Re-fetch sessions to update status
+                const sessionsRes = await axios.get("/instant-help/sessions", { withCredentials: true });
+                if (sessionsRes.data.success) setMySessions(sessionsRes.data.data?.sessions || []);
+                
+                // We should also theoretically open the chat, but let's let them click "Open Chat" 
+                // button now that it's in_progress.
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to accept request');
+        }
+    };
+
+    const handleDeclineSession = async (sessionId) => {
+        try {
+            const { data } = await axios.patch(`/instant-help/${sessionId}/decline`);
+            if (data.success) {
+                toast.info('Request declined. Credits refunded to learner.');
+                // Re-fetch sessions
+                const sessionsRes = await axios.get("/instant-help/sessions", { withCredentials: true });
+                if (sessionsRes.data.success) setMySessions(sessionsRes.data.data?.sessions || []);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to decline request');
+        }
+    };    
+    const handleInquire = (provider) => {
+        setSelectedProvider(provider);
+        setSelectedSkill(provider.skillsProficientAt?.[0]?.name || provider.skillsProficientAt?.[0] || "");
+    };
+
+    const handleSendRequest = async () => {
+        if (!selectedSkill) {
+            toast.error("Please select a skill");
+            return;
+        }
+
+        const rate = selectedProvider?.preferences?.rates?.instantHelp || 0;
+        if ((user?.credits || 0) < rate) {
+            toast.error(`Insufficient credits. You need ${rate} but have ${user?.credits || 0}.`);
+            return;
+        }
+
+        setRequestLoading(true);
+        try {
+            const { data } = await axios.post("/instant-help/request", {
+                providerId: selectedProvider._id,
+                skill: selectedSkill,
+            });
+            if (data.success) {
+                toast.success("Request sent! Waiting for provider to accept...");
+                setUser(prev => ({ ...prev, credits: data.data.learnerCredits }));
+                setSelectedProvider(null);
+                setSelectedSkill("");
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to send request");
+        } finally {
+            setRequestLoading(false);
+        }
+    };
+
+    const renderCard = (providerUser) => {
         const rate = activeTab === "Instant Help"
-            ? user.preferences?.rates?.instantHelp
-            : user.preferences?.rates?.freelance;
+            ? providerUser.preferences?.rates?.instantHelp
+            : providerUser.preferences?.rates?.freelance;
 
         const label = activeTab === "Instant Help" ? "Session Rate" : "Project Rate";
 
@@ -67,7 +189,7 @@ const Utilization = () => {
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                key={user._id}
+                key={providerUser._id}
                 className="bg-dark-card rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-dark-border flex flex-col h-full group relative overflow-hidden hover:-translate-y-1"
             >
                 {/* Background decoration */}
@@ -76,8 +198,8 @@ const Utilization = () => {
                 <div className="relative z-10 flex flex-col items-center text-center">
                     <div className="relative mb-4">
                         <img
-                            src={user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
-                            alt={user.name}
+                            src={providerUser.picture || `https://ui-avatars.com/api/?name=${providerUser.name}&background=random`}
+                            alt={providerUser.name}
                             className="w-14 h-14 rounded-xl object-cover ring-4 ring-white group-hover:ring-cyan-500/20 transition-all duration-300 shadow-sm"
                         />
                         {activeTab === "Instant Help" && (
@@ -87,16 +209,16 @@ const Utilization = () => {
                         )}
                     </div>
 
-                    <h3 className="text-base font-semibold text-slate-900 group-hover:text-cyan-700 transition-colors line-clamp-1">{user.name}</h3>
-                    <p className="text-[11px] text-slate-600 font-medium mb-2">@{user.username}</p>
+                    <h3 className="text-base font-semibold text-slate-900 group-hover:text-cyan-700 transition-colors line-clamp-1">{providerUser.name}</h3>
+                    <p className="text-[11px] text-slate-600 font-medium mb-2">@{providerUser.username}</p>
 
                     <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-[9px] font-bold mb-4">
                         <FaStar size={8} />
-                        <span>{user.rating || "New Talent"}</span>
+                        <span>{providerUser.rating || "New Talent"}</span>
                     </div>
 
                     <div className="flex flex-wrap justify-center gap-2 mb-5 w-full">
-                        {user.skillsProficientAt?.slice(0, 3).map((skill, idx) => (
+                        {providerUser.skillsProficientAt?.slice(0, 3).map((skill, idx) => (
                             <span key={idx} className="bg-white text-slate-700 text-[11px] px-2.5 py-1 rounded-lg font-medium border border-dark-border group-hover:border-cyan-500/30 group-hover:text-cyan-700 transition-colors">
                                 {skill.name || skill}
                             </span>
@@ -109,12 +231,21 @@ const Utilization = () => {
                         <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest leading-none mb-1">{label}</p>
                         <p className="text-cyan-700 font-black text-base">{rate || 0}<span className="text-[10px] ml-1 font-bold text-slate-600">Credits</span></p>
                     </div>
-                    <Link
-                        to={`/profile/${user.username}`}
-                        className="bg-cyan-500 text-dark-bg text-[9px] uppercase font-black tracking-widest px-5 py-2.5 rounded-xl hover:bg-cyan-400 hover:shadow-lg hover:shadow-cyan-500/20 transition-all no-underline hover:-translate-y-0.5"
-                    >
-                        Inquire
-                    </Link>
+                    {activeTab === "Instant Help" ? (
+                        <button
+                            onClick={() => handleInquire(providerUser)}
+                            className="bg-cyan-500 text-dark-bg text-[9px] uppercase font-black tracking-widest px-5 py-2.5 rounded-xl hover:bg-cyan-400 hover:shadow-lg hover:shadow-cyan-500/20 transition-all hover:-translate-y-0.5 border-0 cursor-pointer"
+                        >
+                            Inquire
+                        </button>
+                    ) : (
+                        <Link
+                            to={`/profile/${providerUser.username}`}
+                            className="bg-cyan-500 text-dark-bg text-[9px] uppercase font-black tracking-widest px-5 py-2.5 rounded-xl hover:bg-cyan-400 hover:shadow-lg hover:shadow-cyan-500/20 transition-all no-underline hover:-translate-y-0.5"
+                        >
+                            Inquire
+                        </Link>
+                    )}
                 </div>
             </motion.div>
         );
@@ -126,7 +257,6 @@ const Utilization = () => {
 
                 {/* Header Content */}
                 <div className="text-center mb-6 animate-fade-in">
-
                     <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 mb-3 leading-tight tracking-tight">
                         Power your <span className="text-cyan-700">growth</span>
                     </h1>
@@ -156,8 +286,34 @@ const Utilization = () => {
                     </div>
                 </div>
 
+                {/* Sub-Navigation for Instant Help */}
+                {activeTab === "Instant Help" && (
+                    <div className="max-w-xl mx-auto mb-6 flex bg-slate-100 p-1 rounded-2xl animate-fade-in relative z-10 shadow-inner">
+                        <button
+                            onClick={() => setInstantHelpMode("providers")}
+                            className={`flex-1 py-2.5 text-sm font-bold transition-all rounded-xl focus:outline-none ${
+                                instantHelpMode === "providers"
+                                    ? "bg-white text-cyan-600 shadow-md transform scale-100"
+                                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 scale-95"
+                            }`}
+                        >
+                            Find Providers
+                        </button>
+                        <button
+                            onClick={() => setInstantHelpMode("sessions")}
+                            className={`flex-1 py-2.5 text-sm font-bold transition-all rounded-xl focus:outline-none ${
+                                instantHelpMode === "sessions"
+                                    ? "bg-white text-cyan-600 shadow-md transform scale-100"
+                                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 scale-95"
+                            }`}
+                        >
+                            My Sessions
+                        </button>
+                    </div>
+                )}
+
                 {/* Search Bar */}
-                {activeTab !== "Events" && (
+                {activeTab !== "Events" && !(activeTab === "Instant Help" && instantHelpMode === "sessions") && (
                     <div className="max-w-xl mx-auto mb-10 relative group animate-fade-in">
                         <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none transition-colors">
                             <FaSearch className="text-slate-600 group-focus-within:text-cyan-700 scale-90" />
@@ -196,54 +352,43 @@ const Utilization = () => {
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {events.map((event, idx) => (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: idx * 0.1 }}
-                                                key={event._id}
-                                                className="group bg-dark-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden border border-dark-border flex flex-col h-full relative hover:-translate-y-1"
-                                            >
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: idx * 0.1 }}
+                                            key={event._id}
+                                            className="group bg-dark-card rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden border border-dark-border flex flex-col h-full relative hover:-translate-y-1"
+                                        >
                                             <div className="h-48 relative overflow-hidden">
                                                 {event.image ? (
-                                                    <img
-                                                        src={event.image}
-                                                        alt={event.title}
-                                                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                                                    />
+                                                    <img src={event.image} alt={event.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                                                 ) : (
                                                     <div className="flex flex-col items-center justify-center h-full text-slate-800 bg-dark-bg border-b border-dark-border">
                                                         <FaCalendarAlt className="text-4xl mb-4 opacity-30" />
                                                     </div>
                                                 )}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-dark-bg/90 via-dark-bg/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
                                                 <div className="absolute top-4 right-4 bg-dark-card border border-dark-border p-2.5 rounded-2xl shadow-xl flex flex-col items-center min-w-[55px]">
                                                     <span className="text-cyan-400 text-[9px] font-black uppercase tracking-widest">{new Date(event.date).toLocaleDateString(undefined, { month: 'short' })}</span>
                                                     <span className="text-xl font-black text-slate-900 leading-none mt-1">{new Date(event.date).getDate()}</span>
                                                 </div>
-
                                                 <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between translate-y-12 group-hover:translate-y-0 transition-transform duration-500">
                                                     <span className="bg-cyan-500 text-dark-bg px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
                                                         {event.credits > 0 ? `${event.credits} Credits` : "Free Access"}
                                                     </span>
                                                 </div>
                                             </div>
-
                                             <div className="p-6 flex-1 flex flex-col bg-dark-card">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <div className="flex items-center text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
-                                                        <FaClock size={8} className="mr-1.5" />
-                                                        {event.startTime}
+                                                        <FaClock size={8} className="mr-1.5" />{event.startTime}
                                                     </div>
                                                     <div className="flex items-center text-[9px] font-black uppercase tracking-widest text-slate-600 bg-dark-bg px-2.5 py-1 rounded-lg border border-dark-border">
-                                                        <FaMapMarkerAlt size={8} className="mr-1.5" />
-                                                        {event.location}
+                                                        <FaMapMarkerAlt size={8} className="mr-1.5" />{event.location}
                                                     </div>
                                                 </div>
-
                                                 <h3 className="text-xl font-black text-slate-900 mb-2 leading-tight truncate-2 group-hover:text-cyan-700 transition-colors">{event.title}</h3>
                                                 <p className="text-slate-600 text-sm mb-6 line-clamp-2 leading-relaxed">{event.shortDescription || event.description}</p>
-
                                                 <div className="mt-auto">
                                                     <Link
                                                         to={`/events/${event._id}`}
@@ -255,6 +400,125 @@ const Utilization = () => {
                                             </div>
                                         </motion.div>
                                     ))}
+                                </div>
+                            )}
+                        </motion.div>
+                    ) : activeTab === "Instant Help" && instantHelpMode === "sessions" ? (
+                        <motion.div
+                            key="my-sessions-list"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="max-w-4xl mx-auto"
+                        >
+                            {loading ? (
+                                <div className="space-y-4">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="bg-dark-card rounded-2xl p-6 shadow-sm border border-dark-border animate-pulse h-24"></div>
+                                    ))}
+                                </div>
+                            ) : mySessions.length === 0 ? (
+                                <div className="text-center py-20 bg-dark-card rounded-[3rem] border border-dark-border shadow-sm max-w-2xl mx-auto">
+                                    <div className="bg-dark-bg border border-dark-border rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 text-slate-600 shadow-inner">
+                                        <FaBolt size={32} />
+                                    </div>
+                                    <h3 className="text-2xl font-semibold text-slate-900 mb-2 tracking-tight">No sessions yet</h3>
+                                    <p className="text-slate-600 text-base">You haven't requested or received any instant help sessions.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {mySessions.map((session) => {
+                                        const isLearner = session.learner?._id === user?._id;
+                                        const partner = isLearner ? session.mentor : session.learner;
+                                        const statusColors = {
+                                            pending: "bg-amber-100 text-amber-700 border-amber-200",
+                                            in_progress: "bg-blue-100 text-blue-700 border-blue-200",
+                                            completed: "bg-emerald-100 text-emerald-700 border-emerald-200",
+                                            declined: "bg-red-100 text-red-700 border-red-200",
+                                            cancelled: "bg-slate-100 text-slate-700 border-slate-200",
+                                            expired: "bg-slate-100 text-slate-700 border-slate-200",
+                                        };
+
+                                        return (
+                                            <div key={session._id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col sm:flex-row gap-5 items-start sm:items-center hover:shadow-md transition-shadow">
+                                                <img 
+                                                    src={partner?.picture || `https://ui-avatars.com/api/?name=${partner?.name}&background=random`} 
+                                                    className="w-14 h-14 rounded-xl object-cover shadow-sm bg-slate-50"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-3 mb-1">
+                                                        <h4 className="font-bold text-slate-900 text-lg">{partner?.name}</h4>
+                                                        <div className="flex items-center">
+                                                            <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg border ${statusColors[session.status] || statusColors.pending}`}>
+                                                                {session.status.replace("_", " ")}
+                                                            </span>
+                                                            {session.status === "pending" && (
+                                                                <PendingTimer 
+                                                                    createdAt={session.createdAt} 
+                                                                    onExpire={() => {
+                                                                        // Optimistically update to expired internally if we want to
+                                                                        // or we can just let it show 0:00 until a refresh
+                                                                    }} 
+                                                                />
+                                                            )}
+                                                        </div>
+                                                        <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg ml-auto sm:ml-0">
+                                                            {isLearner ? "Learner (You)" : "Provider (You)"}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-600 font-medium mb-1">
+                                                        Skill: <span className="text-cyan-700 font-bold">{session.skill}</span>
+                                                    </p>
+                                                    <p className="text-xs text-slate-400">
+                                                        {new Date(session.createdAt).toLocaleDateString()} at {new Date(session.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-3 sm:w-32">
+                                                    <div className="text-right">
+                                                        <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Credits</span>
+                                                        <span className="font-black text-slate-900 text-lg">{session.creditsEscrowed}</span>
+                                                    </div>
+                                                    
+                                                    {session.status === "in_progress" && (
+                                                        <button 
+                                                            onClick={() => {
+                                                                setActiveInstantHelpSession({
+                                                                    sessionId: session._id,
+                                                                    partnerId: partner?._id,
+                                                                    partnerName: partner?.name,
+                                                                    partnerPicture: partner?.picture,
+                                                                    skill: session.skill,
+                                                                    role: isLearner ? "learner" : "provider",
+                                                                });
+                                                                setInstantHelpChatOpen(true);
+                                                            }}
+                                                            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-4 py-2 rounded-xl border-0 cursor-pointer shadow-sm transition-colors"
+                                                        >
+                                                            Open Chat
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {/* Accept & Decline actions for the provider on pending sessions */}
+                                                    {session.status === "pending" && !isLearner && (
+                                                        <div className="flex w-full gap-2 mt-2 sm:mt-0">
+                                                            <button 
+                                                                onClick={() => handleAcceptSession(session._id)}
+                                                                className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-bold py-2 rounded-lg border-0 cursor-pointer shadow-sm transition-colors"
+                                                            >
+                                                                Accept
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDeclineSession(session._id)}
+                                                                className="flex-1 bg-white hover:bg-red-50 text-red-500 border border-gray-200 text-[11px] font-bold py-2 rounded-lg cursor-pointer transition-colors"
+                                                            >
+                                                                Decline
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </motion.div>
@@ -284,6 +548,108 @@ const Utilization = () => {
                                     {providers.map(renderCard)}
                                 </div>
                             )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Instant Help Request Modal */}
+                <AnimatePresence>
+                    {selectedProvider && activeTab === "Instant Help" && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                            onClick={() => { setSelectedProvider(null); setSelectedSkill(""); }}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+                            >
+                                {/* Modal Header */}
+                                <div className="bg-gradient-to-r from-cyan-600 to-cyan-500 px-6 py-5 text-white relative">
+                                    <button
+                                        onClick={() => { setSelectedProvider(null); setSelectedSkill(""); }}
+                                        className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border-0 text-white cursor-pointer"
+                                    >
+                                        <FaTimes size={14} />
+                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <img
+                                            src={selectedProvider.picture || `https://ui-avatars.com/api/?name=${selectedProvider.name}&background=random`}
+                                            alt={selectedProvider.name}
+                                            className="w-12 h-12 rounded-xl object-cover border-2 border-white/30"
+                                        />
+                                        <div>
+                                            <h2 className="text-lg font-bold flex items-center gap-2">
+                                                <FaBolt size={14} /> Instant Help
+                                            </h2>
+                                            <p className="text-cyan-200 text-sm">with {selectedProvider.name}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Modal Body */}
+                                <div className="p-6 space-y-5">
+                                    {/* Skill Selection */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
+                                            Select a skill you need help with
+                                        </label>
+                                        <select
+                                            value={selectedSkill}
+                                            onChange={(e) => setSelectedSkill(e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-cyan-200 focus:border-cyan-300 outline-none transition-all"
+                                        >
+                                            <option value="">Select a skill</option>
+                                            {selectedProvider.skillsProficientAt?.map((s, i) => (
+                                                <option key={i} value={s.name || s}>
+                                                    {s.name || s} {s.proficiency ? `(${s.proficiency})` : ""}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Cost Summary */}
+                                    <div className="bg-gradient-to-r from-cyan-50 to-slate-50 rounded-xl p-4 border border-cyan-100">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-semibold text-slate-600">Session Rate</span>
+                                            <span className="text-sm font-bold text-slate-900">
+                                                {selectedProvider.preferences?.rates?.instantHelp || 0} credits
+                                            </span>
+                                        </div>
+                                        <div className="border-t border-cyan-100 pt-2 mt-2 flex items-center justify-between">
+                                            <span className="text-xs font-bold text-cyan-700 uppercase tracking-wider">Your Balance</span>
+                                            <span className={`text-sm font-bold ${
+                                                (user?.credits || 0) >= (selectedProvider.preferences?.rates?.instantHelp || 0)
+                                                    ? "text-emerald-600"
+                                                    : "text-red-600"
+                                            }`}>
+                                                {user?.credits || 0} credits
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 mt-2 leading-relaxed">
+                                            Credits will be held in escrow. They transfer to the provider only when the session ends.
+                                        </p>
+                                    </div>
+
+                                    {/* Send Request Button */}
+                                    <button
+                                        onClick={handleSendRequest}
+                                        disabled={
+                                            requestLoading ||
+                                            !selectedSkill ||
+                                            (user?.credits || 0) < (selectedProvider.preferences?.rates?.instantHelp || 0)
+                                        }
+                                        className="w-full py-3 bg-cyan-600 text-white text-sm font-bold rounded-xl hover:bg-cyan-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md border-0 cursor-pointer"
+                                    >
+                                        {requestLoading ? "Sending Request..." : "Send Instant Help Request"}
+                                    </button>
+                                </div>
+                            </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -5,11 +5,38 @@ import { FaBolt, FaTimes, FaCheck, FaCoins } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { useEffect } from "react";
 
 const GlobalInstantHelpNotification = () => {
-    const { incomingInstantHelp, setIncomingInstantHelp, setActiveInstantHelpSession } = useUser();
+    const { incomingInstantHelp, setIncomingInstantHelp, setActiveInstantHelpSession, setInstantHelpChatOpen, socket } = useUser();
     const navigate = useNavigate();
     const [actionLoading, setActionLoading] = useState(null);
+
+    useEffect(() => {
+        if (!socket) return;
+        const handleExpiry = (data) => {
+            if (incomingInstantHelp && incomingInstantHelp.sessionId === data.sessionId) {
+                setIncomingInstantHelp(null);
+                toast.info("The instant help request has expired.");
+            }
+        };
+        socket.on("instantHelpExpired", handleExpiry);
+        return () => socket.off("instantHelpExpired", handleExpiry);
+    }, [socket, incomingInstantHelp, setIncomingInstantHelp]);
+
+    // Auto-dismiss popup after 10 seconds
+    useEffect(() => {
+        if (!incomingInstantHelp) return;
+
+        const timer = setTimeout(() => {
+            setIncomingInstantHelp(null);
+            toast.info("Instant help request moved to \"My Sessions\" tab.", { autoClose: 3000 });
+        }, 10000); // 10 seconds
+
+        return () => clearTimeout(timer);
+    }, [incomingInstantHelp, setIncomingInstantHelp]);
+
+    if (!incomingInstantHelp) return null;
 
     const handleAccept = async () => {
         if (!incomingInstantHelp?.sessionId) return;
@@ -20,7 +47,7 @@ const GlobalInstantHelpNotification = () => {
             );
             if (data.success) {
                 toast.success('Instant help accepted! Starting meeting...');
-                // Store session info so Chat.jsx auto-selects partner and starts call
+                // Store session info 
                 setActiveInstantHelpSession({
                     sessionId: incomingInstantHelp.sessionId,
                     partnerId: incomingInstantHelp.learner?._id,
@@ -30,7 +57,7 @@ const GlobalInstantHelpNotification = () => {
                     role: "provider",
                 });
                 setIncomingInstantHelp(null);
-                navigate('/chat');
+                setInstantHelpChatOpen(true); // Open the chat widget
             }
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to accept request');
@@ -68,14 +95,21 @@ const GlobalInstantHelpNotification = () => {
                     className="fixed top-6 right-6 z-[9999] w-96 bg-white border border-gray-100 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden"
                 >
                     {/* Header with cyan gradient */}
-                    <div className="bg-gradient-to-r from-cyan-600 to-cyan-500 px-5 py-3 flex items-center gap-2 text-white">
+                    <div className="bg-gradient-to-r from-cyan-600 to-cyan-500 px-5 py-3 flex items-center gap-2 text-white relative">
                         <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                             <FaBolt size={14} />
                         </div>
-                        <div>
+                        <div className="flex-1">
                             <h4 className="text-sm font-bold mb-0">Instant Help Request</h4>
                             <p className="text-cyan-100 text-[10px]">Someone needs your expertise!</p>
                         </div>
+                        <button 
+                            onClick={() => setIncomingInstantHelp(null)}
+                            className="bg-transparent border-0 text-cyan-100 hover:text-white cursor-pointer ml-auto p-1 rounded-full hover:bg-white/20 transition-colors"
+                            aria-label="Close notification"
+                        >
+                            <FaTimes size={14} />
+                        </button>
                     </div>
 
                     {/* Body */}
