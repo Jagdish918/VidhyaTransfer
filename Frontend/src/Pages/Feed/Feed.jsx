@@ -186,6 +186,15 @@ const Feed = () => {
     }
   };
 
+  const handleUpdateConnection = useCallback((userId, newStatus) => {
+    setPosts(prev => prev.map(p => {
+      if (p.author && p.author._id === userId || p.author === userId) {
+        return { ...p, author: { ...p.author, status: newStatus } };
+      }
+      return p;
+    }));
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
@@ -197,7 +206,7 @@ const Feed = () => {
                 <div className="relative mb-4">
                   <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500 to-blue-500 rounded-full animate-pulse opacity-20 blur-xl group-hover:opacity-40 transition-opacity"></div>
                   <img
-                    src={user?.picture || "/default-avatar.png"}
+                    src={user?.picture || "https://ui-avatars.com/api/?name=" + (user?.name || "Me") + "&background=random&size=200"}
                     alt="Me"
                     className="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-xl relative z-10"
                   />
@@ -225,7 +234,7 @@ const Feed = () => {
             <div className="bg-white rounded-3xl border border-slate-100 p-4 mb-8 shadow-soft group transition-all hover:shadow-card">
               <div className="flex gap-4 mb-4">
                 <img
-                  src={user?.picture || "/default-avatar.png"}
+                  src={user?.picture || "https://ui-avatars.com/api/?name=" + (user?.name || "Me") + "&background=random&size=100"}
                   alt="My avatar"
                   className="w-12 h-12 rounded-full object-cover ring-2 ring-slate-50"
                 />
@@ -304,7 +313,11 @@ const Feed = () => {
                       key={post._id}
                       ref={index === posts.length - 1 ? lastPostElementRef : null}
                     >
-                      <PostCard post={post} />
+                      <PostCard
+                        post={post}
+                        onDelete={(postId) => setPosts(prev => prev.filter(p => p._id !== postId))}
+                        onUpdateConnection={handleUpdateConnection}
+                      />
                     </div>
                   ))
                 )}
@@ -332,11 +345,11 @@ const Feed = () => {
                 <button onClick={() => navigate('/discover')} className="text-[10px] font-bold text-cyan-500 hover:text-cyan-600 uppercase">View All</button>
               </div>
               <div className="flex flex-col gap-5">
-                {suggestedPeers.map((peer) => (
+                {suggestedPeers.slice(0, 3).map((peer) => (
                   <div key={peer._id} className="flex items-center gap-3 group">
                     <div className="relative cursor-pointer" onClick={() => navigate(`/profile/${peer.username}`)}>
                       <img
-                        src={peer.picture || "/default-avatar.png"}
+                        src={peer.picture || "https://ui-avatars.com/api/?name=" + (peer.name || "U") + "&background=random&size=100"}
                         alt={peer.name}
                         className="w-11 h-11 rounded-2xl object-cover ring-2 ring-slate-50 group-hover:ring-cyan-100 transition-all"
                       />
@@ -356,6 +369,47 @@ const Feed = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Trending Tags & Notes */}
+            <div className="bg-white rounded-3xl p-6 shadow-soft border border-slate-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Trending Tags</h3>
+                <button className="text-[10px] font-bold text-cyan-500 hover:text-cyan-600 uppercase">Explore</button>
+              </div>
+
+              {/* Search Widget */}
+              <div className="relative mb-5">
+                <input
+                  type="text"
+                  placeholder="Search topics (e.g. #python)"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-4 pr-10 py-2.5 text-[13px] font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+                />
+                <FaSearch className="absolute right-4 top-[11px] text-slate-300" size={14} />
+              </div>
+
+              {/* Tags List */}
+              <div className="flex flex-col gap-3">
+                {[
+                  { tag: "python", count: 124 },
+                  { tag: "reactjs", count: 86 },
+                  { tag: "c++", count: 42 },
+                  { tag: "node.js", count: 31 },
+                  { tag: "dsa", count: 28 },
+                ].map((topic, i) => (
+                  <div key={i} className="flex items-center justify-between group cursor-pointer">
+                    <span className="text-sm font-bold text-slate-700 group-hover:text-cyan-500 transition-colors">#{topic.tag}</span>
+                    <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 transition-all group-hover:border-cyan-100 group-hover:text-cyan-600">{topic.count} posts</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => navigate('/resources')}
+                className="w-full mt-6 py-3 bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-700 text-[13px] font-bold rounded-xl hover:from-cyan-100 hover:to-blue-100 transition-all border border-cyan-100/50 shadow-sm flex items-center justify-center gap-2"
+              >
+                Upload Your Notes
+              </button>
             </div>
 
           </div>

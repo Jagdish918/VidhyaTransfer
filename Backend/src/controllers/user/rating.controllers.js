@@ -8,11 +8,14 @@ import { Rating } from "../../models/rating.model.js";
 export const rateUser = asyncHandler(async (req, res) => {
   console.log("\n******** Inside rateUser Controller function ********");
 
-  const { rating, description, username } = req.body;
+  const { rating, description, targetUsername } = req.body;
 
-  if (!rating || !description || !username) {
+  if (!rating || !description || !targetUsername) {
     throw new ApiError(400, "Please provide all the details");
   }
+
+  // Use the username from the body consistently
+  const username = targetUsername;
 
   // ✅ FIX: Prevent self-rating
   if (req.user.username === username) {
@@ -48,42 +51,36 @@ export const rateUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Please connect first to rate the user");
   }
 
-  const rateExist = await Rating.findOne({
-    rater: rateGiver,
-    username: username,
-  });
-
-  console.log("rateExist: ", rateExist);
-
-  if (rateExist) {
-    throw new ApiError(400, "You have already rated this user");
+  // The unique index in the Rating model handles the race condition.
+  // We wrap the creation in a try-catch to handle the duplicate key error if it occurs.
+  let rate;
+  try {
+    rate = await Rating.create({
+      rating: numRating,
+      description: description,
+      username: username,
+      rater: rateGiver,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      throw new ApiError(400, "You have already rated this user");
+    }
+    throw error;
   }
-
-  var rate = await Rating.create({
-    rating: numRating,  // use validated number
-    description: description,
-    username: username,
-    rater: rateGiver,
-  });
-
   if (!rate) {
     throw new ApiError(500, "Rating not added");
   }
 
   const ratings = await Rating.find({ username: username });
 
-  //   find average of the ratings
-  let total = 0;
-  ratings.forEach((r) => {
-    total += r.rating;
-  });
+  // find average of the ratings
+  const total = ratings.reduce((sum, r) => sum + r.rating, 0);
   const avgRating = total / ratings.length;
 
-  await User.findByIdAndUpdate(
-    { _id: user._id },
-    {
-      rating: avgRating,
-    }
+  // Use atomic update for user rating
+  await User.findOneAndUpdate(
+    { username: username },
+    { $set: { rating: parseFloat(avgRating.toFixed(2)) } }
   );
 
   res.status(200).json(new ApiResponse(200, rate, "Rating added successfully"));

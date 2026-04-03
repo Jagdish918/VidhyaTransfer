@@ -6,6 +6,7 @@
 @tailwind utilities;
 
 @layer base {
+
   *,
   *::before,
   *::after {
@@ -23,7 +24,8 @@
   html,
   body {
     @apply h-full antialiased text-slate-900 selection:bg-indigo-500/20 selection:text-slate-900;
-    background-color: #f8fafc; /* slate-50 */
+    background-color: #f8fafc;
+    /* slate-50 */
     overflow-x: hidden;
     scrollbar-gutter: stable;
   }
@@ -35,12 +37,18 @@
 
 /* Custom CSS variables */
 :root {
-  --cyan: #3b82f6; /* Website Action Blue (blue-500) */
-  --light-grey: #94a3b8; /* Tailwind slate-400 */
-  --grey: #f8fafc; /* Page Background */
-  --yellow: #f59e0b; /* Accent Amber (amber-500) */
-  --dark-cyan: #1e3a8a; /* Deep Blue (blue-900) */
-  --red: #ef4444; /* Tailwind red-500 */
+  --cyan: #3b82f6;
+  /* Website Action Blue (blue-500) */
+  --light-grey: #94a3b8;
+  /* Tailwind slate-400 */
+  --grey: #f8fafc;
+  /* Page Background */
+  --yellow: #f59e0b;
+  /* Accent Amber (amber-500) */
+  --dark-cyan: #1e3a8a;
+  /* Deep Blue (blue-900) */
+  --red: #ef4444;
+  /* Tailwind red-500 */
   --basefont: "Inter", sans-serif;
   --secfont: "Inter", sans-serif;
 }

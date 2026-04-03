@@ -3,7 +3,8 @@ import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { Post } from "../../models/post.model.js";
 import { User } from "../../models/user.model.js";
-import { uploadOnCloudinary } from "../../config/connectCloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../../config/connectCloudinary.js";
+import { Request } from "../../models/request.model.js";
 
 // Helper function for basic content moderation
 const moderateContent = (content) => {
@@ -80,6 +81,7 @@ export const getFeed = asyncHandler(async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 10, 100); // ✅ FIX: cap at 100 to prevent DoS
   const domain = req.query.domain; // Filter by domain/category
   const skip = (page - 1) * limit;
+  const currentUserId = req.user._id || req.user.id;
 
   let query = { isDeleted: false, isModerated: false };
 
@@ -89,18 +91,50 @@ export const getFeed = asyncHandler(async (req, res) => {
 
   const posts = await Post.find(query)
     .populate("author", "name picture username")
-    .populate("likes", "name picture")
-    .populate("comments.user", "name picture username")
-    .populate("comments.replies.user", "name picture username")
+    .populate({
+      path: "comments.user",
+      select: "name picture username"
+    })
+    .populate({
+      path: "comments.replies.user",
+      select: "name picture username"
+    })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
   const total = await Post.countDocuments(query);
 
+  // Attach connection status dynamically
+  const authorIds = [...new Set(
+    posts.filter(post => post.author && post.author._id)
+      .map(post => post.author._id.toString())
+  )];
+  const requests = await Request.find({
+    $or: [
+      { sender: currentUserId, receiver: { $in: authorIds } },
+      { sender: { $in: authorIds }, receiver: currentUserId }
+    ]
+  });
+
+  const connectionStatusMap = {};
+  requests.forEach(r => {
+    const otherId = r.sender.toString() === currentUserId.toString() ? r.receiver.toString() : r.sender.toString();
+    connectionStatusMap[otherId] = r.status;
+  });
+
+  const postsWithStatus = posts.map(post => {
+    const postObj = post.toObject();
+    if (postObj.author) {
+      const isMe = postObj.author._id.toString() === currentUserId.toString();
+      postObj.author.status = isMe ? null : (connectionStatusMap[postObj.author._id.toString()] || "Connect");
+    }
+    return postObj;
+  });
+
   return res.status(200).json(
     new ApiResponse(200, {
-      posts,
+      posts: postsWithStatus,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       hasMore: skip + posts.length < total,
@@ -121,20 +155,27 @@ export const toggleLike = asyncHandler(async (req, res) => {
 
   const isLiked = post.likes.some((id) => id.toString() === userId.toString());
 
+  let updatedPost;
   if (isLiked) {
-    post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
+    updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      { $pull: { likes: userId } },
+      { new: true }
+    );
   } else {
-    post.likes.push(userId);
+    updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      { $addToSet: { likes: userId } },
+      { new: true }
+    );
   }
-
-  await post.save();
 
   // Emit real-time update
   if (io) {
     io.to("feed").emit("post updated", {
-      postId: post._id,
-      likesCount: post.likes.length,
-      commentsCount: post.comments.length,
+      postId: updatedPost._id,
+      likesCount: updatedPost.likes.length,
+      commentsCount: updatedPost.comments.length,
       userId: userId,
       type: "like"
     });
@@ -143,7 +184,7 @@ export const toggleLike = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new ApiResponse(200, {
       isLiked: !isLiked,
-      likesCount: post.likes.length,
+      likesCount: updatedPost.likes.length,
     }, isLiked ? "Post unliked" : "Post liked")
   );
 });
@@ -220,7 +261,6 @@ export const deletePost = asyncHandler(async (req, res) => {
 
     for (const fileUrl of post.attachments) {
       try {
-        const { deleteFromCloudinary } = await import("../../config/connectCloudinary.js");
         const result = await deleteFromCloudinary(fileUrl);
 
         if (result) {
@@ -296,14 +336,28 @@ export const likeComment = asyncHandler(async (req, res) => {
   if (!comment) throw new ApiError(404, "Comment not found");
 
   const alreadyLiked = comment.likes.some(id => id.toString() === userId.toString());
+
   if (alreadyLiked) {
-    comment.likes = comment.likes.filter(id => id.toString() !== userId.toString());
+    await Post.updateOne(
+      { _id: postId, "comments._id": commentId },
+      { $pull: { "comments.$.likes": userId } }
+    );
   } else {
-    comment.likes.push(userId);
+    await Post.updateOne(
+      { _id: postId, "comments._id": commentId },
+      { $addToSet: { "comments.$.likes": userId } }
+    );
   }
 
-  await post.save();
-  return res.status(200).json(new ApiResponse(200, { isLiked: !alreadyLiked, likesCount: comment.likes.length }, "Comment like toggled"));
+  const updatedPost = await Post.findById(postId);
+  const updatedComment = updatedPost.comments.id(commentId);
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      isLiked: !alreadyLiked,
+      likesCount: updatedComment.likes.length
+    }, "Comment like toggled")
+  );
 });
 
 // Reply to a comment
@@ -346,12 +400,32 @@ export const likeReply = asyncHandler(async (req, res) => {
   if (!reply) throw new ApiError(404, "Reply not found");
 
   const alreadyLiked = reply.likes.some(id => id.toString() === userId.toString());
+
   if (alreadyLiked) {
-    reply.likes = reply.likes.filter(id => id.toString() !== userId.toString());
+    await Post.updateOne(
+      { _id: postId, "comments._id": commentId, "comments.replies._id": replyId },
+      { $pull: { "comments.$[comment].replies.$[reply].likes": userId } },
+      {
+        arrayFilters: [{ "comment._id": commentId }, { "reply._id": replyId }]
+      }
+    );
   } else {
-    reply.likes.push(userId);
+    await Post.updateOne(
+      { _id: postId, "comments._id": commentId, "comments.replies._id": replyId },
+      { $addToSet: { "comments.$[comment].replies.$[reply].likes": userId } },
+      {
+        arrayFilters: [{ "comment._id": commentId }, { "reply._id": replyId }]
+      }
+    );
   }
 
-  await post.save();
-  return res.status(200).json(new ApiResponse(200, { isLiked: !alreadyLiked, likesCount: reply.likes.length }, "Reply like toggled"));
+  const updatedPost = await Post.findById(postId);
+  const updatedReply = updatedPost.comments.id(commentId).replies.id(replyId);
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      isLiked: !alreadyLiked,
+      likesCount: updatedReply.likes.length
+    }, "Reply like toggled")
+  );
 });

@@ -88,7 +88,7 @@ const BookSessionModal = ({ mentor, onClose, onBooked }) => {
           </button>
           <div className="flex items-center gap-3">
             <img
-              src={mentor?.picture || "/default-avatar.png"}
+              src={mentor?.picture || "https://ui-avatars.com/api/?name=" + (mentor?.name || "U") + "&background=random&size=100"}
               alt={mentor?.name}
               className="w-12 h-12 rounded-xl object-cover border-2 border-white/30"
             />

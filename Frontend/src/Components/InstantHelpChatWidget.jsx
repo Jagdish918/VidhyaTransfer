@@ -155,7 +155,7 @@ const InstantHelpChatWidget = () => {
             >
                 <div className="relative h-14 w-14">
                     <img 
-                        src={activeInstantHelpSession.partnerPicture || `https://ui-avatars.com/api/?name=${activeInstantHelpSession.partnerName}&background=random`} 
+                        src={activeInstantHelpSession.partnerPicture || "https://ui-avatars.com/api/?name=" + (activeInstantHelpSession.partnerName || "U") + "&background=random&size=100"} 
                         alt="Partner" 
                         className="w-full h-full object-cover"
                     />
@@ -191,7 +191,7 @@ const InstantHelpChatWidget = () => {
                     <div className="flex items-center gap-3 overflow-hidden">
                         <div className="relative flex-shrink-0">
                             <img 
-                                src={activeInstantHelpSession.partnerPicture || `https://ui-avatars.com/api/?background=random`} 
+                                src={activeInstantHelpSession.partnerPicture || "https://ui-avatars.com/api/?name=" + (activeInstantHelpSession.partnerName || "U") + "&background=random&size=100"} 
                                 className="w-10 h-10 rounded-full object-cover border-2 border-white/50" 
                                 alt="" 
                             />

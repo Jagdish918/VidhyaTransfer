@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { User } from "../models/user.model.js";
 import { Transaction } from "../models/transaction.model.js";
 import { ApiError } from "../utils/ApiError.js";
+import mongoose from "mongoose";
 
 // Initialize Razorpay
 let razorpay;
@@ -165,78 +166,61 @@ export const getTransactions = async (req, res) => {
 };
 
 export const transferCredits = async (req, res) => {
-    console.log("\n******** Inside transferCredits Controller function ********");
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const { receiverId, amount } = req.body;
         const senderId = req.user._id;
 
-        console.log(`Transfer Attempt: Sender ${senderId} -> Receiver ${receiverId}, Amount: ${amount}`);
-
         if (!receiverId || !amount || amount <= 0) {
-            console.log("Transfer Failed: Missing receiverId or invalid amount");
             return res.status(400).json({ message: "Receiver ID and valid amount are required" });
         }
 
         if (senderId.toString() === receiverId.toString()) {
-            console.log("Transfer Failed: Self-transfer attempted");
             return res.status(400).json({ message: "You cannot transfer credits to yourself" });
         }
 
-        const sender = await User.findById(senderId);
-        const receiver = await User.findById(receiverId);
+        const sender = await User.findById(senderId).session(session);
+        const receiver = await User.findById(receiverId).session(session);
 
-        if (!sender) {
-            console.log("Transfer Failed: Sender not found");
-            return res.status(404).json({ message: "Sender not found" });
-        }
-        if (!receiver) {
-            console.log("Transfer Failed: Receiver not found");
-            return res.status(404).json({ message: "Receiver not found" });
+        if (!sender || !receiver) {
+            throw new Error("Sender or Receiver not found");
         }
 
         if (sender.credits < amount) {
-            console.log(`Transfer Failed: Insufficient credits (Sender has ${sender.credits}, needs ${amount})`);
-            return res.status(400).json({ message: "Insufficient credits" });
+            throw new Error("Insufficient credits");
         }
 
-        // Perform transfer atomically
         sender.credits -= Number(amount);
         receiver.credits += Number(amount);
 
-        await sender.save();
-        await receiver.save();
+        await sender.save({ session });
+        await receiver.save({ session });
 
-        console.log("Transfer Success: Credits updated in User model");
-
-        // Log transaction for sender
-        const senderTrans = await Transaction.create({
+        await Transaction.create([{
             userId: senderId,
             amount: 0,
             credits: -Number(amount),
             status: "transfer_sent",
             description: `Sent to ${receiver.name}`,
-            paymentId: `P2P_S_${Date.now()}_${Math.floor(Math.random() * 1000)}`
-        });
+            paymentId: `P2P_S_${Date.now()}`
+        }], { session });
 
-        // Log transaction for receiver
-        const receiverTrans = await Transaction.create({
+        await Transaction.create([{
             userId: receiverId,
             amount: 0,
             credits: Number(amount),
             status: "transfer_received",
             description: `Received from ${sender.name}`,
-            paymentId: `P2P_R_${Date.now()}_${Math.floor(Math.random() * 1000)}`
-        });
+            paymentId: `P2P_R_${Date.now()}`
+        }], { session });
 
-        console.log("Transfer Success: Transaction logs created");
-
-        res.status(200).json({
-            success: true,
-            message: "Credits transferred successfully",
-            senderCredits: sender.credits
-        });
+        await session.commitTransaction();
+        res.status(200).json({ success: true, message: "Credits transferred", senderCredits: sender.credits });
     } catch (error) {
-        console.error("Transfer Credits Error:", error);
-        res.status(500).json({ message: error.message || "Error transferring credits" });
+        await session.abortTransaction();
+        res.status(400).json({ message: error.message });
+    } finally {
+        session.endSession();
     }
 };

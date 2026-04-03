@@ -216,7 +216,7 @@ const Sessions = () => {
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3 min-w-0">
                       <img
-                        src={otherPerson?.picture || "/default-avatar.png"}
+                        src={otherPerson?.picture || "https://ui-avatars.com/api/?name=" + (otherPerson?.name || "U") + "&background=random&size=100"}
                         alt={otherPerson?.name}
                         className="w-11 h-11 rounded-xl object-cover border border-dark-border flex-shrink-0"
                       />

@@ -21,6 +21,7 @@ import html2pdf from "html2pdf.js";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser } from "../../util/UserContext";
+import { skills } from "../Register/Skills";
 
 const Resources = () => {
   const { user, setUser } = useUser();
@@ -28,6 +29,8 @@ const Resources = () => {
 
   // Form State
   const [selectedSkill, setSelectedSkill] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionRef = useRef(null);
   const [timeframe, setTimeframe] = useState("");
 
   // Result State
@@ -38,6 +41,17 @@ const Resources = () => {
   // History State
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyData, setHistoryData] = useState([]);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Modal / Note Viewer State
   const [modalOpen, setModalOpen] = useState(false);
@@ -82,10 +96,12 @@ const Resources = () => {
     setError("");
     setActiveResource(null);
 
-    if (!selectedSkill.trim()) {
+    const normalizedSkill = selectedSkill.trim();
+    if (!normalizedSkill) {
       setError("Please enter a skill to learn.");
       return;
     }
+
     if (!timeframe) {
       setError("Please select a timeframe.");
       return;
@@ -104,6 +120,28 @@ const Resources = () => {
       setError(err.response?.data?.message || "Failed to generate roadmap. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCompleteWholeTopic = async (topicIndex, e) => {
+    e.stopPropagation();
+    if (!activeResource) return;
+
+    try {
+      const response = await axios.put(
+        "/resources/complete-topic",
+        { resourceId: activeResource._id, topicIndex },
+        { withCredentials: true }
+      );
+      if (response.data.success || response.data.roadmapData) {
+        setActiveResource((prev) => ({
+          ...prev,
+          roadmapData: response.data.roadmapData,
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to complete topic.");
     }
   };
 
@@ -371,8 +409,8 @@ const Resources = () => {
           <div className="flex justify-center mb-8 border-b border-gray-200">
             <button
               className={`flex items-center gap-2 px-6 py-3 font-black text-lg transition-colors border-b-2 ${activeTab === "roadmap"
-                  ? "border-cyan-500 text-cyan-500"
-                  : "border-transparent text-slate-400 hover:text-slate-700 hover:border-slate-300"
+                ? "border-cyan-500 text-cyan-500"
+                : "border-transparent text-slate-400 hover:text-slate-700 hover:border-slate-300"
                 }`}
               onClick={() => setActiveTab("roadmap")}
             >
@@ -380,8 +418,8 @@ const Resources = () => {
             </button>
             <button
               className={`flex items-center gap-2 px-6 py-3 font-black text-lg transition-colors border-b-2 ${activeTab === "history"
-                  ? "border-indigo-500 text-indigo-500"
-                  : "border-transparent text-slate-400 hover:text-slate-700 hover:border-slate-300"
+                ? "border-indigo-500 text-indigo-500"
+                : "border-transparent text-slate-400 hover:text-slate-700 hover:border-slate-300"
                 }`}
               onClick={() => setActiveTab("history")}
             >
@@ -393,7 +431,7 @@ const Resources = () => {
           {activeTab === "roadmap" && !activeResource && (
             <div className="max-w-4xl mx-auto">
               <div className="bg-dark-bg p-5 rounded-2xl border border-dark-border mb-4 flex flex-col md:flex-row gap-4 items-end shadow-inner">
-                <div className="flex-1 w-full relative">
+                <div className="flex-1 w-full relative" ref={suggestionRef}>
                   <label className="block text-[10px] font-black tracking-widest text-slate-400 uppercase mb-2 pl-4">
                     Skill or Path
                   </label>
@@ -401,10 +439,40 @@ const Resources = () => {
                     type="text"
                     placeholder="e.g. Python, AI..."
                     value={selectedSkill}
-                    onChange={(e) => setSelectedSkill(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedSkill(val ? val.charAt(0).toUpperCase() + val.slice(1) : "");
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
                     className="block w-full px-5 py-2.5 border-none rounded-xl bg-dark-card text-slate-900 focus:ring-4 focus:ring-cyan-500/10 transition-all shadow-soft placeholder:text-slate-300 text-sm font-semibold"
                     disabled={loading}
                   />
+                  <AnimatePresence>
+                    {showSuggestions && selectedSkill && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-[100] left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden max-h-40 overflow-y-auto"
+                      >
+                        {skills
+                          .filter(s => s.toLowerCase().includes(selectedSkill.toLowerCase()) && s.toLowerCase() !== selectedSkill.toLowerCase())
+                          .map((skill, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setSelectedSkill(skill);
+                                setShowSuggestions(false);
+                              }}
+                              className="w-full text-left px-5 py-2 hover:bg-slate-50 transition-colors border-0 bg-transparent text-slate-700 font-medium cursor-pointer"
+                            >
+                              {skill}
+                            </button>
+                          ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="flex-1 w-full relative">
@@ -528,9 +596,19 @@ const Resources = () => {
                         <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-cyan-900 to-cyan-500 rounded-[1.2rem] flex items-center justify-center text-white font-black text-xl shadow-[0_10px_20px_rgba(6,182,212,0.3)] border-2 border-white z-10">
                           {tIndex + 1}
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 border-b-2 border-dark-border pb-2 flex-grow tracking-tight">
-                          {topic.title}
-                        </h3>
+                        <div className="flex-grow flex items-center justify-between border-b-2 border-dark-border pb-2 min-w-0">
+                          <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">
+                            {topic.title}
+                          </h3>
+                          {!topic.subtopics.every((s) => s.completed) && (
+                            <button
+                              onClick={(e) => handleCompleteWholeTopic(tIndex, e)}
+                              className="ml-4 flex-shrink-0 px-3 py-1.5 bg-slate-900 hover:bg-cyan-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg shadow-sm transition-all hover:shadow-cyan-500/20"
+                            >
+                              Complete Module
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Subtopics */}

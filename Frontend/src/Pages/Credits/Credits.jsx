@@ -9,6 +9,7 @@ const Credits = () => {
     const [loading, setLoading] = useState(false);
 
     const [transactions, setTransactions] = useState([]);
+    const [activeTab, setActiveTab] = useState("all"); // 'all' means bought/payment, 'transfer' means p2p
 
     useEffect(() => {
         const fetchTransactions = async () => {
@@ -182,61 +183,100 @@ const Credits = () => {
                     {/* Row 3: History */}
                     <div className="lg:col-span-12">
                         <div className="bg-dark-card border border-dark-border rounded-xl shadow-card overflow-hidden">
-                            <div className="px-4 py-3 border-b border-dark-border bg-slate-50 flex items-center justify-between">
+                            <div className="px-4 py-3 border-b border-dark-border bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div className="flex items-center gap-2 text-slate-700">
                                     <FaHistory className="text-slate-600" />
-                                    <h3 className="text-sm font-semibold">Transaction history</h3>
+                                    <h3 className="text-sm font-semibold">Activity Logs</h3>
+                                </div>
+                                <div className="flex bg-white p-1 rounded-xl border border-dark-border shadow-sm">
+                                    <button
+                                        onClick={() => setActiveTab("all")}
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === "all" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-slate-500 hover:bg-slate-50"}`}
+                                    >
+                                        Purchases
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab("transfer")}
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === "transfer" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-slate-500 hover:bg-slate-50"}`}
+                                    >
+                                        Transfers
+                                    </button>
                                 </div>
                             </div>
-                            <div className="max-h-[360px] overflow-auto custom-scrollbar">
-                                {transactions.length === 0 ? (
-                                    <div className="text-center text-slate-600 py-10">
-                                        <p className="font-semibold text-sm">No transactions yet.</p>
-                                        <p className="text-sm mt-1">Your purchases will show up here.</p>
-                                    </div>
-                                ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-slate-200">
-                                            <thead className="bg-slate-50 sticky top-0 z-10">
-                                                <tr>
-                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Date</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Order</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Credits</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Amount</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white divide-y divide-slate-100">
-                                                {transactions.map((tx) => (
-                                                    <tr key={tx._id} className="hover:bg-slate-50 transition-colors">
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-700">
-                                                            {new Date(tx.createdAt).toLocaleDateString()}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-slate-600">
-                                                            {tx.orderId}
-                                                        </td>
-                                                        <td className={`px-4 py-3 whitespace-nowrap text-sm font-semibold ${tx.credits > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                                                            {tx.credits > 0 ? `+${tx.credits}` : tx.credits}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-slate-900">
-                                                            ₹{tx.amount}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap">
-                                                            <span className={`px-2.5 py-1 inline-flex text-xs font-semibold rounded-full ${tx.status === 'paid'
-                                                                ? 'bg-emerald-50 text-emerald-700'
-                                                                : tx.status === 'failed'
-                                                                    ? 'bg-red-50 text-red-700'
-                                                                    : 'bg-amber-50 text-amber-700'
-                                                                }`}>
-                                                                {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                                                            </span>
-                                                        </td>
+                            <div className="max-h-[420px] overflow-auto custom-scrollbar">
+                                {(() => {
+                                    const filteredTransactions = transactions.filter(tx => {
+                                        if (activeTab === "all") {
+                                            return ["paid", "failed", "created"].includes(tx.status);
+                                        }
+                                        return ["transfer_sent", "transfer_received"].includes(tx.status);
+                                    });
+
+                                    if (filteredTransactions.length === 0) {
+                                        return (
+                                            <div className="text-center text-slate-600 py-16">
+                                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-dark-border shadow-inner">
+                                                    <span className="text-2xl">📋</span>
+                                                </div>
+                                                <p className="font-bold text-sm text-slate-900">No {activeTab === "all" ? "purchases" : "transfers"} found.</p>
+                                                <p className="text-xs text-slate-500 mt-1">Your activity will appear here once you perform a transaction.</p>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-slate-200">
+                                                <thead className="bg-slate-50 sticky top-0 z-10">
+                                                    <tr>
+                                                        <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
+                                                        {activeTab === "all" && <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Order ID</th>}
+                                                        <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Type / Memo</th>
+                                                        <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Credits</th>
+                                                        {activeTab === "all" && <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Amount</th>}
+                                                        <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-slate-100">
+                                                    {filteredTransactions.map((tx) => (
+                                                        <tr key={tx._id} className="hover:bg-slate-50/80 transition-colors group">
+                                                            <td className="px-5 py-4 whitespace-nowrap text-xs font-bold text-slate-900">
+                                                                {new Date(tx.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                            </td>
+                                                            {activeTab === "all" && (
+                                                                <td className="px-5 py-4 whitespace-nowrap text-xs font-mono text-slate-500 group-hover:text-indigo-600 transition-colors">
+                                                                    {tx.orderId}
+                                                                </td>
+                                                            )}
+                                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                                <div className="text-xs font-bold text-slate-900">{tx.description || (activeTab === "all" ? "Credit Purchase" : "Transfer")}</div>
+                                                                {activeTab === "transfer" && <div className="text-[10px] text-slate-500 font-medium">{tx.paymentId}</div>}
+                                                            </td>
+                                                            <td className={`px-5 py-4 whitespace-nowrap text-sm font-black ${tx.credits > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                {tx.credits > 0 ? `+${tx.credits}` : tx.credits}
+                                                            </td>
+                                                            {activeTab === "all" && (
+                                                                <td className="px-5 py-4 whitespace-nowrap text-xs font-bold text-slate-900">
+                                                                    ₹{tx.amount}
+                                                                </td>
+                                                            )}
+                                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                                <span className={`px-3 py-1 inline-flex text-[9px] font-bold uppercase tracking-widest rounded-full border ${tx.status === 'paid' || tx.status === 'transfer_received'
+                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                                    : tx.status === 'failed' || tx.status === 'transfer_sent'
+                                                                        ? 'bg-rose-50 text-rose-700 border-rose-100'
+                                                                        : 'bg-amber-50 text-amber-700 border-amber-100'
+                                                                    }`}>
+                                                                    {tx.status.replace('_', ' ')}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>

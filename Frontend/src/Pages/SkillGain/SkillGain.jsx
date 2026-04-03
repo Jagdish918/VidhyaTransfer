@@ -119,7 +119,7 @@ const SkillGain = () => {
       <div className="relative z-10 flex flex-col items-center text-center">
         <div className="relative mb-2 mt-1">
           <img
-            src={mentor.picture || `https://ui-avatars.com/api/?name=${mentor.name}&background=random`}
+            src={mentor.picture || "https://ui-avatars.com/api/?name=" + (mentor.name || "U") + "&background=random&size=100"}
             alt={mentor.name}
             className="w-14 h-14 rounded-xl object-cover ring-4 ring-white group-hover:ring-cyan-500/20 transition-all duration-300 shadow-sm"
           />

@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Resource } from "../models/resource.model.js";
 import { User } from "../models/user.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -30,26 +31,26 @@ export const generateUnifiedRoadmap = async (req, res) => {
             generationConfig: { responseMimeType: "application/json" }
         });
 
-        const prompt = `You are an expert curriculum designer. Extract a detailed, sequential learning roadmap for the skill "${skill}" to be completed in ${timeframe}. 
-        Return ONLY a JSON array of topic objects. Each topic should have:
-        - "title": (String) The name of the main topic or module.
-        - "subtopics": (Array of Objects) List of specific items to learn under this topic.
-          Each subtopic must have:
-          - "title": (String) The name of the subtopic.
-          - "completed": (Boolean) Always false initially.
-          - "note": (String) Always an empty string "" initially.
+        const prompt = `You are an expert curriculum designer. 
+        Step 1: Analyze if the input "${skill}" is a valid skill, topic, or subject that can be learned or studied (e.g. Python, Chess, French, WWII History). If it's a random string, a specific person's name (like Virat Kohli) not related to a broader skill, nonsensical, or profanity, you MUST return an ERROR object.
+        
+        Step 2: If valid, extract a detailed, sequential learning roadmap for the skill "${skill}" to be completed in ${timeframe}.
+        
+        Return ONLY a JSON object. 
+        If invalid, return: {"error": "The topic provided is not a valid skill or path that can be learned. Please enter a valid learning topic."}
+        If valid, return a JSON array of topic objects. Each topic should have:
+        - "title": (String)
+        - "subtopics": (Array of Objects) with "title", "completed" (false), and "note" ("").
 
-        Example Format:
+        Format for valid skill (JUST the array):
         [
           {
-            "title": "Module 1: Basics",
-            "subtopics": [
-              { "title": "Setup", "completed": false, "note": "" },
-              { "title": "Syntax", "completed": false, "note": "" }
-            ]
+            "title": "Module 1",
+            "subtopics": [{ "title": "Sub 1", "completed": false, "note": "" }]
           }
         ]
-        Respond with ONLY the raw JSON array, no markdown wrappers.`;
+        
+        Respond only with the raw JSON.`;
 
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
@@ -60,6 +61,11 @@ export const generateUnifiedRoadmap = async (req, res) => {
         } catch (e) {
             console.error("Failed to parse Gemini JSON:", responseText);
             return res.status(500).json({ message: "AI response was not valid JSON." });
+        }
+
+        // Check for AI validation error
+        if (roadmapData.error) {
+            return res.status(400).json({ message: roadmapData.error });
         }
 
         const savedResource = await Resource.create({
@@ -76,6 +82,34 @@ export const generateUnifiedRoadmap = async (req, res) => {
         res.status(500).json({ message: "Failed to generate roadmap." });
     }
 };
+
+export const completeWholeTopic = asyncHandler(async (req, res) => {
+    try {
+        const { resourceId, topicIndex } = req.body;
+        const userId = req.user?._id;
+
+        if (!resourceId || topicIndex === undefined) {
+            return res.status(400).json({ message: "Missing required parameters." });
+        }
+
+        const resource = await Resource.findOne({ _id: resourceId, userId });
+        if (!resource) return res.status(404).json({ message: "Resource not found." });
+
+        if (resource.roadmapData && resource.roadmapData[topicIndex]) {
+            resource.roadmapData[topicIndex].subtopics.forEach(sub => {
+                sub.completed = true;
+            });
+        }
+
+        resource.markModified('roadmapData');
+        await resource.save();
+
+        res.status(200).json({ roadmapData: resource.roadmapData });
+    } catch (error) {
+        console.error("Error completing topic:", error);
+        res.status(500).json({ message: "Failed to complete topic." });
+    }
+});
 
 export const generateSubtopicNote = async (req, res) => {
     try {

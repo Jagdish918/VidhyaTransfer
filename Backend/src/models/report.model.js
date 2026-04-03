@@ -29,4 +29,7 @@ const reportSchema = new Schema(
   { timestamps: true }
 );
 
+// Prevent duplicate reports from same person to same person
+reportSchema.index({ reporter: 1, reported: 1 }, { unique: true });
+
 export const Report = mongoose.model("Report", reportSchema);

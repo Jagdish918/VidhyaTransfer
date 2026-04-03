@@ -368,127 +368,103 @@ const PreferenceSettings = ({ user }) => {
     <div className="bg-dark-card rounded-[2.5rem] shadow-card p-6 border border-dark-border animate-fadeIn">
       <h2 className="text-2xl font-black text-slate-900 mb-8 border-b border-dark-border pb-6 tracking-tight">Role & Preferences</h2>
 
-      <div className="space-y-8">
-        {/* 1. Learning */}
-        <div className="p-6 rounded-[1.5rem] bg-slate-50 border border-dark-border">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Learning Goal</h3>
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <button
-              onClick={() => setPreferences(p => ({ ...p, primaryGoal: "Skill Gain" }))}
-              className={`flex-1 w-full px-6 py-4 rounded-[1.2rem] transition-all shadow-sm text-[10px] uppercase font-black tracking-widest ${preferences.primaryGoal === "Skill Gain" ? "bg-cyan-900 text-white ring-2 ring-offset-2 ring-cyan-900 transform scale-[1.02]" : "bg-white text-slate-600 hover:bg-slate-50 border border-dark-border"}`}
-            >
-              I want to Learn (Skill Gain)
-            </button>
-            <button
-              onClick={() => setPreferences(p => ({ ...p, primaryGoal: "Peer Swap" }))}
-              className={`flex-1 w-full px-6 py-4 rounded-[1.2rem] transition-all shadow-sm text-[10px] uppercase font-black tracking-widest ${preferences.primaryGoal === "Peer Swap" ? "bg-cyan-500 text-dark-bg ring-2 ring-offset-2 ring-cyan-500 transform scale-[1.02]" : "bg-white text-slate-600 hover:bg-slate-50 border border-dark-border"}`}
-            >
-              Peer Swap
-            </button>
+      <div className="space-y-4">
+        {/* 1. Learning & Teaching Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-dark-border">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Learning Goal</h3>
+            <div className="flex bg-white rounded-xl border border-dark-border overflow-hidden">
+              <button
+                onClick={() => setPreferences(p => ({ ...p, primaryGoal: "Skill Gain" }))}
+                className={`flex-1 py-2 text-[10px] uppercase font-black tracking-widest transition-all ${preferences.primaryGoal === "Skill Gain" ? "bg-cyan-600 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+              >
+                Skill Gain
+              </button>
+              <button
+                onClick={() => setPreferences(p => ({ ...p, primaryGoal: "Peer Swap" }))}
+                className={`flex-1 py-2 text-[10px] uppercase font-black tracking-widest transition-all ${preferences.primaryGoal === "Peer Swap" ? "bg-cyan-600 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+              >
+                Peer Swap
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 border border-dark-border">
+             <div className="flex items-center justify-between mb-3">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Mentorship</h3>
+              <button
+                onClick={(e) => {
+                  setWantToTeach(!wantToTeach);
+                  if (wantToTeach) handleRateChange('mentorship', 0);
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shadow-inner ${wantToTeach ? 'bg-cyan-500' : 'bg-slate-200'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${wantToTeach ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+             {wantToTeach ? (
+                <div className="flex items-center gap-3 bg-white px-3 py-2 border border-dark-border rounded-xl">
+                  <span className="flex-shrink-0 whitespace-nowrap text-[10px] uppercase font-black text-slate-400">Rate (₹):</span>
+                  <input
+                    type="number" min="0" value={preferences.rates.mentorship} onChange={(e) => handleRateChange('mentorship', e.target.value)}
+                    className="flex-1 min-w-0 bg-transparent outline-none font-bold text-slate-900 text-sm"
+                  />
+                </div>
+              ) : (
+                <p className="text-[10px] font-bold text-slate-400">Enable to set a rate and appear as a mentor.</p>
+              )}
           </div>
         </div>
 
-        {/* 2. Teaching */}
-        <div className="p-6 rounded-[1.5rem] bg-slate-50 border border-dark-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-black text-slate-900 text-sm uppercase tracking-wider mb-1">Teaching</p>
-              <p className="text-[10px] font-bold text-slate-500">Enable this to appear in the "Mentors" section.</p>
-            </div>
-            <button
-              onClick={(e) => {
-                setWantToTeach(!wantToTeach);
-                if (wantToTeach) handleRateChange('mentorship', 0);
-              }}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${wantToTeach ? 'bg-cyan-500' : 'bg-slate-200'
-                }`}
-            >
-              <span
-                className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${wantToTeach ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-              />
-            </button>
-          </div>
-          {wantToTeach && (
-            <div className="mt-6 animate-fade-in bg-white p-6 rounded-[1.2rem] border border-dark-border shadow-sm">
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Hourly Rate (Credits)</label>
-              <div className="flex items-center gap-3">
-                <span className="text-slate-400 font-black">₹</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={preferences.rates.mentorship}
-                  onChange={(e) => handleRateChange('mentorship', e.target.value)}
-                  className="w-32 px-4 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-inner font-bold text-slate-900"
-                />
+        {/* Utilization Services */}
+        <div className="p-4 rounded-2xl bg-slate-50 border border-dark-border">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Utilization Services</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Instant Help */}
+            <div className="bg-white p-3 rounded-xl border border-dark-border">
+              <div className="flex items-center justify-between mb-2">
+                <label className="font-bold text-slate-700 text-xs uppercase tracking-wider cursor-pointer">Instant Help Provider</label>
+                <button
+                  onClick={() => handleUtilizationToggle("Instant Help")}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shadow-inner ${preferences.utilization.includes("Instant Help") ? 'bg-cyan-500' : 'bg-slate-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${preferences.utilization.includes("Instant Help") ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
               </div>
-            </div>
-          )}
-        </div>
-
-        <div className="p-6 rounded-[1.5rem] bg-white border border-dark-border shadow-card space-y-6">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Utilization Services</h3>
-
-          {/* Instant Help */}
-          <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-dark-border transition-all hover:shadow-md">
-            <div className="flex items-center justify-between">
-              <label className="font-black text-slate-900 text-sm uppercase tracking-wider mb-1 cursor-pointer select-none">Instant Help Provider</label>
-              <button
-                onClick={() => handleUtilizationToggle("Instant Help")}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${preferences.utilization.includes("Instant Help") ? 'bg-cyan-500' : 'bg-slate-200'
-                  }`}
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${preferences.utilization.includes("Instant Help") ? 'translate-x-7' : 'translate-x-1'
-                    }`}
-                />
-              </button>
-            </div>
-            {preferences.utilization.includes("Instant Help") && (
-              <div className="mt-5 animate-fade-in bg-white p-5 rounded-[1.2rem] shadow-sm border border-dark-border">
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Rate per Session</label>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400 font-black">₹</span>
+              {preferences.utilization.includes("Instant Help") && (
+                <div className="flex items-center gap-2 mt-2 bg-slate-50 p-2 rounded-lg">
+                  <span className="flex-shrink-0 whitespace-nowrap text-[10px] uppercase font-black text-slate-400">Rate/Session: ₹</span>
                   <input
-                    type="number" min="0"
-                    value={preferences.rates.instantHelp}
-                    onChange={(e) => handleRateChange('instantHelp', e.target.value)}
-                    className="w-32 px-4 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-inner font-bold text-slate-900"
+                    type="number" min="0" value={preferences.rates.instantHelp} onChange={(e) => handleRateChange('instantHelp', e.target.value)}
+                    className="flex-1 min-w-0 bg-transparent outline-none font-bold text-slate-900 text-xs"
                   />
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Expert */}
-          <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-dark-border transition-all hover:shadow-md">
-            <div className="flex items-center justify-between">
-              <label className="font-black text-slate-900 text-sm uppercase tracking-wider mb-1 cursor-pointer select-none">Freelance Expert</label>
-              <button
-                onClick={() => handleUtilizationToggle("Hire Expert")}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none shadow-inner flex-shrink-0 ${preferences.utilization.includes("Hire Expert") ? 'bg-cyan-500' : 'bg-slate-200'
-                  }`}
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${preferences.utilization.includes("Hire Expert") ? 'translate-x-7' : 'translate-x-1'
-                    }`}
-                />
-              </button>
+              )}
             </div>
-            {preferences.utilization.includes("Hire Expert") && (
-              <div className="mt-5 animate-fade-in bg-white p-5 rounded-[1.2rem] shadow-sm border border-dark-border">
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Hourly/Project Rate</label>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400 font-black">₹</span>
+
+            {/* Expert */}
+            <div className="bg-white p-3 rounded-xl border border-dark-border">
+              <div className="flex items-center justify-between mb-2">
+                <label className="font-bold text-slate-700 text-xs uppercase tracking-wider cursor-pointer">Freelance Expert</label>
+                <button
+                  onClick={() => handleUtilizationToggle("Hire Expert")}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shadow-inner ${preferences.utilization.includes("Hire Expert") ? 'bg-cyan-500' : 'bg-slate-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${preferences.utilization.includes("Hire Expert") ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+              {preferences.utilization.includes("Hire Expert") && (
+                <div className="flex items-center gap-2 mt-2 bg-slate-50 p-2 rounded-lg">
+                  <span className="flex-shrink-0 whitespace-nowrap text-[10px] uppercase font-black text-slate-400">Hourly/Proj: ₹</span>
                   <input
-                    type="number" min="0"
-                    value={preferences.rates.freelance}
-                    onChange={(e) => handleRateChange('freelance', e.target.value)}
-                    className="w-32 px-4 py-3 bg-dark-bg border border-dark-border rounded-xl focus:bg-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all shadow-inner font-bold text-slate-900"
+                    type="number" min="0" value={preferences.rates.freelance} onChange={(e) => handleRateChange('freelance', e.target.value)}
+                    className="flex-1 min-w-0 bg-transparent outline-none font-bold text-slate-900 text-xs"
                   />
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
           </div>
         </div>
 

@@ -26,7 +26,7 @@ const RatingModal = ({ isOpen, onClose, targetUsername, onRatingSuccess }) => {
             const { data } = await axios.post(`/rating/rateUser`, {
                 rating,
                 description,
-                username: targetUsername,
+                targetUsername: targetUsername,
             });
             toast.success("Review submitted successfully!");
             if (onRatingSuccess) onRatingSuccess();

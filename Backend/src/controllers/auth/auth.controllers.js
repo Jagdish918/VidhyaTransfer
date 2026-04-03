@@ -117,21 +117,24 @@ export const handleGoogleLoginCallback = asyncHandler(async (req, res) => {
 
 export const registerWithEmailPassword = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
+  const safeName = String(name);
+  const safeEmail = String(email);
+  const safePassword = String(password);
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: safeEmail });
   if (existingUser) {
     throw new ApiError(409, "User with this email already exists");
   }
 
-  let unregisteredUser = await UnRegisteredUser.findOne({ email });
+  let unregisteredUser = await UnRegisteredUser.findOne({ email: safeEmail });
   if (!unregisteredUser) {
     unregisteredUser = await UnRegisteredUser.create({
-      name,
-      email,
-      password: await hashPassword(password),
+      name: safeName,
+      email: safeEmail,
+      password: await hashPassword(safePassword),
     });
   } else {
-    unregisteredUser.password = await hashPassword(password);
+    unregisteredUser.password = await hashPassword(safePassword);
     await unregisteredUser.save();
   }
 
@@ -152,8 +155,10 @@ export const registerWithEmailPassword = asyncHandler(async (req, res) => {
 
 export const loginWithEmailPassword = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  const safeEmail = String(email);
+  const safePassword = String(password);
 
-  const registeredUser = await User.findOne({ email });
+  const registeredUser = await User.findOne({ email: safeEmail });
   if (registeredUser && registeredUser.password) {
     if (registeredUser.role === "admin") {
       throw new ApiError(403, "Admins must use the Admin Portal");
@@ -161,11 +166,15 @@ export const loginWithEmailPassword = asyncHandler(async (req, res) => {
     if (registeredUser.status === "banned") throw new ApiError(403, "Account suspended");
     if (registeredUser.isDeleted) throw new ApiError(403, "Account deleted");
 
-    if (registeredUser.lockUntil && registeredUser.lockUntil > Date.now()) {
+    if (registeredUser.lockUntil && registeredUser.lockUntil <= Date.now()) {
+      registeredUser.loginAttempts = 0;
+      registeredUser.lockUntil = undefined;
+      await registeredUser.save();
+    } else if (registeredUser.lockUntil && registeredUser.lockUntil > Date.now()) {
       throw new ApiError(429, `Account locked. Try again after ${new Date(registeredUser.lockUntil).toLocaleTimeString()}`);
     }
 
-    if (await verifyPassword(password, registeredUser.password)) {
+    if (await verifyPassword(safePassword, registeredUser.password)) {
       registeredUser.loginAttempts = 0;
       registeredUser.lockUntil = undefined;
       registeredUser.lastLogin = Date.now();
@@ -189,13 +198,13 @@ export const loginWithEmailPassword = asyncHandler(async (req, res) => {
     }
   }
 
-  const unregisteredUser = await UnRegisteredUser.findOne({ email });
+  const unregisteredUser = await UnRegisteredUser.findOne({ email: safeEmail });
   if (unregisteredUser && unregisteredUser.password) {
     if (unregisteredUser.otp) {
       throw new ApiError(403, "Please complete email verification first");
     }
 
-    if (await verifyPassword(password, unregisteredUser.password)) {
+    if (await verifyPassword(safePassword, unregisteredUser.password)) {
       const jwtToken = generateJWTToken_email(unregisteredUser);
       const expiryDate = new Date(Date.now() + 1 * 60 * 60 * 1000);
       res.cookie("accessTokenRegistration", jwtToken, cookieOptions(expiryDate));
@@ -216,8 +225,10 @@ export const loginWithEmailPassword = asyncHandler(async (req, res) => {
 
 export const loginAdmin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  const safeEmail = String(email);
+  const safePassword = String(password);
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: safeEmail });
 
   if (!user || !user.password) {
     throw new ApiError(401, "Invalid admin credentials");
@@ -228,11 +239,15 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   }
 
   // ✅ FIX: Admin also gets brute-force lockout protection
-  if (user.lockUntil && user.lockUntil > Date.now()) {
+  if (user.lockUntil && user.lockUntil <= Date.now()) {
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    await user.save();
+  } else if (user.lockUntil && user.lockUntil > Date.now()) {
     throw new ApiError(429, `Account locked. Try again after ${new Date(user.lockUntil).toLocaleTimeString()}`);
   }
 
-  if (await verifyPassword(password, user.password)) {
+  if (await verifyPassword(safePassword, user.password)) {
     // Reset lockout on success
     user.loginAttempts = 0;
     user.lockUntil = undefined;
@@ -293,17 +308,19 @@ export const handleLogout = asyncHandler(async (req, res) => {
 
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
+  const safeEmail = String(email);
 
   // ✅ FIX: No longer throws 404 if user not found — prevents email enumeration
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: safeEmail });
 
   if (user) {
-    const token = crypto.randomBytes(32).toString("hex");
-    user.resetPasswordToken = token;
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    user.resetPasswordToken = hashedToken;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const resetUrl = `${FRONTEND_URL}/reset-password/${token}`;
+    const resetUrl = `${FRONTEND_URL}/reset-password/${rawToken}`;
     const message = `
       <h1>Password Reset Request</h1>
       <p>You have requested a password reset. Click the link below to reset your password:</p>
@@ -329,19 +346,23 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
 export const resetPassword = asyncHandler(async (req, res) => {
   const { resetToken, newPassword } = req.body;
+  const safeToken = String(resetToken);
+  const safePassword = String(newPassword);
 
-  if (newPassword.length < 8) {
+  if (safePassword.length < 8) {
     throw new ApiError(400, "Password must be at least 8 characters long");
   }
 
+  const hashedToken = crypto.createHash("sha256").update(safeToken).digest("hex");
+
   const user = await User.findOne({
-    resetPasswordToken: resetToken,
+    resetPasswordToken: hashedToken,
     resetPasswordExpires: { $gt: Date.now() },
   });
 
   if (!user) throw new ApiError(400, "Invalid or expired reset token");
 
-  user.password = await hashPassword(newPassword);
+  user.password = await hashPassword(safePassword);
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;
   user.loginAttempts = 0;
@@ -358,8 +379,10 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
 export const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+  const safeCurrent = String(currentPassword);
+  const safeNew = String(newPassword);
 
-  if (newPassword.length < 8) {
+  if (safeNew.length < 8) {
     throw new ApiError(400, "New password must be at least 8 characters long");
   }
 
@@ -370,13 +393,13 @@ export const changePassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "User not found or password not set");
   }
 
-  const isPasswordValid = await verifyPassword(currentPassword, user.password);
+  const isPasswordValid = await verifyPassword(safeCurrent, user.password);
 
   if (!isPasswordValid) {
     throw new ApiError(400, "Invalid current password");
   }
 
-  user.password = await hashPassword(newPassword);
+  user.password = await hashPassword(safeNew);
   user.passwordChangedAt = new Date();
 
   // Optionally revoke tokens here, but keeping session alive is often user preference on change.
@@ -389,8 +412,11 @@ export const changePassword = asyncHandler(async (req, res) => {
 
 export const sendRegistrationOtp = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
+  const safeName = String(name);
+  const safeEmail = String(email);
+  const safePassword = String(password);
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: safeEmail });
   if (existingUser) {
     throw new ApiError(409, "User with this email already exists");
   }
@@ -398,19 +424,19 @@ export const sendRegistrationOtp = asyncHandler(async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-  let unregisteredUser = await UnRegisteredUser.findOne({ email });
+  let unregisteredUser = await UnRegisteredUser.findOne({ email: safeEmail });
   if (!unregisteredUser) {
     unregisteredUser = await UnRegisteredUser.create({
-      name,
-      email,
-      password: await hashPassword(password),
+      name: safeName,
+      email: safeEmail,
+      password: await hashPassword(safePassword),
       otp: await bcrypt.hash(otp, 10),  // ✅ FIX: Hash the OTP before saving
       otpExpires,
       otpAttempts: 0,
     });
   } else {
-    unregisteredUser.name = name;
-    unregisteredUser.password = await hashPassword(password);
+    unregisteredUser.name = safeName;
+    unregisteredUser.password = await hashPassword(safePassword);
     unregisteredUser.otp = await bcrypt.hash(otp, 10);  // ✅ FIX: Hash the OTP
     unregisteredUser.otpExpires = otpExpires;
     unregisteredUser.otpAttempts = 0;
@@ -424,7 +450,7 @@ export const sendRegistrationOtp = asyncHandler(async (req, res) => {
   `;
 
   try {
-    await sendMail(email, "Registration OTP - SkillSwap", message);
+    await sendMail(safeEmail, "Registration OTP - SkillSwap", message);
     return res.status(200).json(new ApiResponse(200, null, "OTP sent successfully"));
   } catch (error) {
     throw new ApiError(500, "Failed to send OTP email");
@@ -433,27 +459,28 @@ export const sendRegistrationOtp = asyncHandler(async (req, res) => {
 
 export const verifyRegistrationOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
+  const safeEmail = String(email);
+  const safeOtp = String(otp);
 
-  const unregisteredUser = await UnRegisteredUser.findOne({ email });
+  // ✅ FIX: Use atomic findOneAndUpdate to prevent TOCTOU race conditions
+  const unregisteredUser = await UnRegisteredUser.findOneAndUpdate(
+    { email: safeEmail, otpExpires: { $gt: Date.now() } },
+    { $inc: { otpAttempts: 1 } },
+    { new: true }
+  );
 
   if (!unregisteredUser) {
-    throw new ApiError(400, "User not found or registration session expired");
+    throw new ApiError(400, "User not found or OTP expired");
   }
 
-  // ✅ FIX: Brute-force protection — lock after 5 wrong OTP attempts
-  if (unregisteredUser.otpAttempts >= 5) {
+  // ✅ FIX: Brute-force protection — limit after 5 wrong OTP attempts natively
+  if (unregisteredUser.otpAttempts > 5) {
     throw new ApiError(429, "Too many failed OTP attempts. Please request a new OTP.");
   }
 
-  if (unregisteredUser.otpExpires < Date.now()) {
-    throw new ApiError(400, "OTP has expired. Please request a new one.");
-  }
-
   // ✅ FIX: Compare against hashed OTP
-  const isOtpValid = await bcrypt.compare(otp, unregisteredUser.otp);
+  const isOtpValid = await bcrypt.compare(safeOtp, unregisteredUser.otp);
   if (!isOtpValid) {
-    unregisteredUser.otpAttempts = (unregisteredUser.otpAttempts || 0) + 1;
-    await unregisteredUser.save();
     throw new ApiError(400, "Invalid OTP");
   }
 
@@ -484,8 +511,9 @@ export const verifyRegistrationOtp = asyncHandler(async (req, res) => {
 export const sendLoginOtp = asyncHandler(async (req, res) => {
   const { email } = req.body;
   if (!email) throw new ApiError(400, "Email is required");
+  const safeEmail = String(email);
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: safeEmail });
 
   // ✅ FIX: Don't reveal whether the email is registered — prevents email enumeration
   if (!user) {
@@ -501,7 +529,7 @@ export const sendLoginOtp = asyncHandler(async (req, res) => {
   await user.save();
 
   try {
-    await sendMail(email, "Login OTP - SkillSwap", `<p>Your login OTP is: <strong>${otp}</strong>. Valid for 10 minutes.</p>`);
+    await sendMail(safeEmail, "Login OTP - SkillSwap", `<p>Your login OTP is: <strong>${otp}</strong>. Valid for 10 minutes.</p>`);
     return res.status(200).json(new ApiResponse(200, null, "OTP sent successfully"));
   } catch (err) {
     user.otp = undefined;
@@ -514,11 +542,15 @@ export const sendLoginOtp = asyncHandler(async (req, res) => {
 export const loginWithOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) throw new ApiError(400, "Email and OTP are required");
+  const safeEmail = String(email);
+  const safeOtp = String(otp);
 
-  const user = await User.findOne({
-    email,
-    otpExpires: { $gt: Date.now() },
-  });
+  // ✅ FIX: Atomic findOneAndUpdate mitigates the concurrency TOCTOU exploit entirely
+  const user = await User.findOneAndUpdate(
+    { email: safeEmail, otpExpires: { $gt: Date.now() } },
+    { $inc: { otpAttempts: 1 } },
+    { new: true }
+  );
 
   if (!user || !user.otp) throw new ApiError(400, "Invalid or expired OTP");
 
@@ -526,16 +558,14 @@ export const loginWithOtp = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Admins must use the Admin Portal");
   }
 
-  // ✅ Brute-force protection for login OTP
-  if ((user.otpAttempts || 0) >= 5) {
+  // ✅ Brute-force protection natively supported
+  if (user.otpAttempts > 5) {
     throw new ApiError(429, "Too many failed OTP attempts. Please request a new OTP.");
   }
 
-  const isOtpValid = await bcrypt.compare(otp, user.otp);
+  const isOtpValid = await bcrypt.compare(safeOtp, user.otp);
 
   if (!isOtpValid) {
-    user.otpAttempts = (user.otpAttempts || 0) + 1;
-    await user.save();
     throw new ApiError(400, "Invalid or expired OTP");
   }
 

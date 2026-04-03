@@ -164,7 +164,7 @@ const Navbar = () => {
                   className="flex items-center gap-2 bg-transparent border-none cursor-pointer focus:outline-none hover:opacity-80 transition-opacity"
                 >
                   <img
-                    src={user.picture || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcToK4qEfbnd-RN82wdL2awn_PMviy_pelocqQ"}
+                    src={user.picture || "https://ui-avatars.com/api/?name=" + (user.name || "Me") + "&background=random&size=100"}
                     alt="Profile"
                     className="w-9 h-9 rounded-full object-cover ring-2 ring-dark-border shadow-sm"
                   />

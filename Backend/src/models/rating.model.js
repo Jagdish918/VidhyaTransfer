@@ -22,4 +22,7 @@ const ratingSchema = new Schema(
   { timestamps: true }
 );
 
+// Add unique index to prevent duplicate ratings from the same user to the same target
+ratingSchema.index({ rater: 1, username: 1 }, { unique: true });
+
 export const Rating = mongoose.model("Rating", ratingSchema);

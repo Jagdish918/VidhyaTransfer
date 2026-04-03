@@ -118,7 +118,7 @@ const GlobalInstantHelpNotification = () => {
                             <div className="relative">
                                 <div className="absolute inset-0 rounded-full animate-ping bg-cyan-500/20"></div>
                                 <img
-                                    src={incomingInstantHelp.learner?.picture || 'https://ui-avatars.com/api/?background=random'}
+                                    src={incomingInstantHelp.learner?.picture || "https://ui-avatars.com/api/?name=" + (incomingInstantHelp.learner?.name || "U") + "&background=random&size=100"}
                                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md relative z-10"
                                     alt=""
                                 />

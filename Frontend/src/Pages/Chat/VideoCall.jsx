@@ -400,7 +400,7 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                         <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500">
                             <div className="w-40 h-40 md:w-56 md:h-56 bg-blue-600 rounded-full flex items-center justify-center relative shadow-2xl shadow-blue-500/20">
                                 <img
-                                    src={partner?.avatar || "https://ui-avatars.com/api/?background=random"}
+                                    src={partner?.avatar || "https://ui-avatars.com/api/?name=" + (partner?.name || "U") + "&background=random&size=200"}
                                     alt={partner?.name}
                                     className="w-full h-full rounded-full object-cover border-4 border-[#3c4043]"
                                 />
@@ -668,7 +668,7 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                                 <div className="absolute inset-0 rounded-full animate-ping bg-blue-500/20"></div>
                                 <div className="absolute inset-[-10px] rounded-full animate-pulse bg-blue-500/10 scale-110"></div>
                                 <img
-                                    src={partner?.avatar || "https://ui-avatars.com/api/?background=random"}
+                                    src={partner?.avatar || "https://ui-avatars.com/api/?name=" + (partner?.name || "U") + "&background=random&size=200"}
                                     className="w-32 h-32 rounded-full object-cover border-4 border-white/10 relative"
                                     alt=""
                                 />

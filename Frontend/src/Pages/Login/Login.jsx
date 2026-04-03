@@ -308,7 +308,7 @@ const Login = () => {
                 </div>
               )}
 
-               <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-slate-700">Email Address</label>
                 <input
                   type="email"
@@ -402,7 +402,7 @@ const Login = () => {
                         disabled={loading}
                       />
                       <div className="w-4 h-4 rounded border border-dark-border bg-dark-bg peer-checked:bg-cyan-500 peer-checked:border-cyan-500 transition-all flex items-center justify-center">
-                         {rememberMe && <span className="text-dark-bg text-[10px] font-black">✓</span>}
+                        {rememberMe && <span className="text-dark-bg text-[10px] font-black">✓</span>}
                       </div>
                     </div>
                     <span className="text-xs font-bold text-slate-600">Remember me</span>
@@ -456,7 +456,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-      
+
       {/* OTP Modal */}
       {showRegOtpModal && (
         <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4">

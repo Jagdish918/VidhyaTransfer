@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { FaHeart, FaRegHeart, FaComment, FaShare, FaBookmark, FaRegBookmark, FaEllipsisH, FaTrash, FaExclamationTriangle } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaComment, FaShare, FaBookmark, FaRegBookmark, FaFlag, FaTrash } from "react-icons/fa";
 import { useUser } from "../../util/UserContext";
 
-const PostCard = ({ post }) => {
+const PostCard = ({ post, onDelete, onUpdateConnection }) => {
   const { user } = useUser();
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
@@ -14,36 +14,27 @@ const PostCard = ({ post }) => {
   const [newComment, setNewComment] = useState("");
   const [comments, setComments] = useState(post.comments || []);
   const [loading, setLoading] = useState(false);
-  // 'Connect' | 'Pending' | 'Connected'
-  const [connectStatus, setConnectStatus] = useState("Connect");
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [commentLikeLoading, setCommentLikeLoading] = useState({});
+  const [replyLikeLoading, setReplyLikeLoading] = useState({});
+  const connectStatus = post.author?.status || "Connect";
 
   // Per-comment reply state: { [commentId]: { show: bool, input: string, loading: bool } }
   const [replyState, setReplyState] = useState({});
   const [showFullContent, setShowFullContent] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
 
   useEffect(() => {
     setIsLiked(post.likes?.some((like) => (like._id || like) === user?._id) || false);
     setLikesCount(post.likesCount ?? (post.likes?.length || 0));
     setCommentsCount(post.commentsCount ?? (post.comments?.length || 0));
     setComments(post.comments || []);
-
-    const checkConnectionStatus = async () => {
-      if (user && post.author?._id && user._id !== post.author._id) {
-        try {
-          const { data } = await axios.get(`/user/registered/getDetails/${post.author._id}`);
-          if (data.success) {
-            const status = data.data.status; // 'Connect' | 'Pending' | 'Connected'
-            setConnectStatus(status || "Connect");
-          }
-        } catch (error) { /* ignore */ }
-      }
-    };
-    checkConnectionStatus();
+    setComments(post.comments || []);
   }, [post, user]);
 
   const handleLike = async () => {
+    if (likeLoading) return;
     try {
+      setLikeLoading(true);
       const { data } = await axios.post(`/post/${post._id}/like`);
       if (data.success) {
         setIsLiked(data.data.isLiked);
@@ -51,6 +42,8 @@ const PostCard = ({ post }) => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Error liking post");
+    } finally {
+      setLikeLoading(false);
     }
   };
 
@@ -74,7 +67,9 @@ const PostCard = ({ post }) => {
 
   // --- Comment Like ---
   const handleCommentLike = async (commentId) => {
+    if (commentLikeLoading[commentId]) return;
     try {
+      setCommentLikeLoading(prev => ({ ...prev, [commentId]: true }));
       const { data } = await axios.post(`/post/${post._id}/comment/${commentId}/like`);
       if (data.success) {
         setComments(prev => prev.map(c =>
@@ -91,6 +86,8 @@ const PostCard = ({ post }) => {
       }
     } catch (error) {
       toast.error("Error liking comment");
+    } finally {
+      setCommentLikeLoading(prev => ({ ...prev, [commentId]: false }));
     }
   };
 
@@ -129,9 +126,37 @@ const PostCard = ({ post }) => {
     }
   };
 
+  const handleReport = async () => {
+    if (!window.confirm("Are you sure you want to report this post?")) return;
+    try {
+      const { data } = await axios.post(`/post/${post._id}/report`, { reason: "Reported by user" });
+      if (data.success) {
+        toast.success("Post reported successfully");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error reporting post");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) return;
+    try {
+      const { data } = await axios.delete(`/post/${post._id}`);
+      if (data.success) {
+        toast.success("Post deleted successfully");
+        if (onDelete) onDelete(post._id);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error deleting post");
+    }
+  };
+
+
   // --- Reply Like ---
   const handleReplyLike = async (commentId, replyId) => {
+    if (replyLikeLoading[replyId]) return;
     try {
+      setReplyLikeLoading(prev => ({ ...prev, [replyId]: true }));
       const { data } = await axios.post(`/post/${post._id}/comment/${commentId}/reply/${replyId}/like`);
       if (data.success) {
         setComments(prev => prev.map(c =>
@@ -155,63 +180,40 @@ const PostCard = ({ post }) => {
       }
     } catch (error) {
       toast.error("Error liking reply");
+    } finally {
+      setReplyLikeLoading(prev => ({ ...prev, [replyId]: false }));
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-    try {
-      const { data } = await axios.delete(`/post/${post._id}`);
-      if (data.success) { toast.success("Post deleted"); window.location.reload(); }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Error deleting post");
-    }
-  };
-
-  const handleReport = async () => {
-    if (isAuthor) {
-      toast.error("You cannot report your own post");
-      return;
-    }
-    if (!window.confirm("Are you sure you want to report this post?")) return;
-    try {
-      const { data } = await axios.post(`/post/${post._id}/report`, { reason: "Inappropriate content" });
-      if (data.success) {
-        toast.success("Post reported. Our moderators will review it.");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Error reporting post");
-    }
-  };
 
   const handleConnect = async () => {
-    setConnectStatus("Pending"); // optimistic update
+    if (onUpdateConnection) onUpdateConnection(post.author._id, "Pending"); // optimistic update
     try {
       await axios.post("/request/create", { receiverID: post.author._id }, { withCredentials: true });
       toast.success(`Connection request sent to ${post.author?.name}`);
     } catch (error) {
       if (error.response?.status === 400 && error.response.data.message.includes("Request already exists")) {
         toast.info("Connection request already sent.");
-        setConnectStatus("Pending"); // keep as pending
+        if (onUpdateConnection) onUpdateConnection(post.author._id, "Pending"); // keep as pending
       } else {
         toast.error("Failed to connect.");
-        setConnectStatus("Connect"); // revert
+        if (onUpdateConnection) onUpdateConnection(post.author._id, "Connect"); // revert
       }
     }
   };
 
   const handleCancelRequest = async () => {
-    setConnectStatus("Connect"); // optimistic revert
+    if (onUpdateConnection) onUpdateConnection(post.author._id, "Connect"); // optimistic revert
     try {
       await axios.post("/request/cancel", { receiverID: post.author._id }, { withCredentials: true });
       toast.success("Request cancelled");
     } catch (error) {
       toast.error("Failed to cancel request");
-      setConnectStatus("Pending"); // revert on error
+      if (onUpdateConnection) onUpdateConnection(post.author._id, "Pending"); // revert on error
     }
   };
 
-  const formatTime = (date) => {
+  const formatTime = useCallback((date) => {
     const now = new Date();
     const postDate = new Date(date);
     const diffInSeconds = Math.floor((now - postDate) / 1000);
@@ -219,7 +221,7 @@ const PostCard = ({ post }) => {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  };
+  }, []);
 
   const isCommentLiked = (comment) => {
     if (!user || !comment.likes) return false;
@@ -242,7 +244,7 @@ const PostCard = ({ post }) => {
           <Link to={`/profile/${post.author?.username || post.author?._id}`} className="relative group/avatar">
             <div className="absolute inset-0 bg-cyan-500 rounded-2xl blur opacity-0 group-hover/avatar:opacity-20 transition-opacity"></div>
             <img
-              src={post.author?.picture || "/default-avatar.png"}
+              src={post.author?.picture || "https://ui-avatars.com/api/?name=" + (post.author?.name || "Anonymous") + "&background=random&size=100"}
               alt={post.author?.name}
               className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-50 group-hover/avatar:ring-white transition-all relative z-10"
             />
@@ -262,7 +264,7 @@ const PostCard = ({ post }) => {
                           : undefined
                     }
                     className={`text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-lg transition-all ${connectStatus === "Connect" ? "text-cyan-600 bg-cyan-50 hover:bg-cyan-600 hover:text-white" :
-                        connectStatus === "Pending" ? "text-amber-600 bg-amber-50 hover:bg-red-50 hover:text-red-600" : "text-slate-400 bg-slate-50"
+                      connectStatus === "Pending" ? "text-amber-600 bg-amber-50 hover:bg-red-50 hover:text-red-600" : "text-slate-400 bg-slate-50"
                       }`}
                   >
                     {connectStatus === "Connect" ? "Connect" : connectStatus === "Pending" ? "Sent" : "Connected"}
@@ -273,38 +275,15 @@ const PostCard = ({ post }) => {
             <span className="text-xs text-slate-400 font-semibold mt-1">{formatTime(post.createdAt)}</span>
           </div>
         </div>
-        <div className="relative">
+        {isAuthor && (
           <button
-            onClick={() => setShowOptions(!showOptions)}
-            className="p-2 text-slate-600 hover:bg-dark-hover hover:text-slate-900 rounded-full transition-colors"
+            onClick={handleDelete}
+            className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all duration-300"
+            title="Delete Post"
           >
-            <FaEllipsisH />
+            <FaTrash size={16} />
           </button>
-          {showOptions && (
-            <div className="absolute right-0 mt-2 w-40 bg-dark-card border border-dark-border rounded-xl shadow-card z-20 overflow-hidden py-1">
-              {isAuthor && (
-                <button
-                  onClick={() => { handleDelete(); setShowOptions(false); }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                >
-                  <FaTrash size={12} /> Delete Post
-                </button>
-              )}
-              <button
-                onClick={() => { handleReport(); setShowOptions(false); }}
-                className="w-full text-left px-4 py-2.5 text-xs font-semibold text-amber-600 hover:bg-amber-50 flex items-center gap-2 transition-colors"
-              >
-                <FaExclamationTriangle size={12} /> Report Post
-              </button>
-              <button
-                onClick={() => setShowOptions(false)}
-                className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-dark-hover hover:text-slate-900 transition-colors"
-              >
-                Hide Post
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Content */}
@@ -339,7 +318,8 @@ const PostCard = ({ post }) => {
       <div className="px-4 py-2 flex items-center justify-between border-t border-slate-50 bg-white">
         <button
           onClick={handleLike}
-          className={`flex-1 py-3 rounded-2xl flex items-center justify-center gap-2.5 transition-all hover:bg-slate-50 group/btn ${isLiked ? "text-red-500" : "text-slate-500 hover:text-slate-900"}`}
+          disabled={likeLoading}
+          className={`flex-1 py-3 rounded-2xl flex items-center justify-center gap-2.5 transition-all hover:bg-slate-50 group/btn ${isLiked ? "text-red-500" : "text-slate-500 hover:text-slate-900"} ${likeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           <div className="flex items-center gap-2">
             {isLiked ? <FaHeart size={18} /> : <FaRegHeart size={18} className="group-hover/btn:scale-110 transition-transform" />}
@@ -370,13 +350,22 @@ const PostCard = ({ post }) => {
           <FaShare size={18} className="group-hover/btn:scale-110 transition-transform" />
           <span className="text-[13px] font-bold">Share</span>
         </button>
+        {!isAuthor && (
+          <button
+            onClick={handleReport}
+            className="flex-1 py-3 rounded-2xl flex items-center justify-center gap-2.5 text-slate-500 hover:text-red-500 transition-all hover:bg-red-50 group/btn"
+          >
+            <FaFlag size={16} className="group-hover/btn:scale-110 transition-transform" />
+            <span className="text-[13px] font-bold">Report</span>
+          </button>
+        )}
       </div>
 
 
       {/* ── Comments Section ── */}
       {showComments && (
         <div className="bg-slate-50 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="px-6 py-6 space-y-6">
+          <div className="px-3 py-3 space-y-3 max-h-[180px] overflow-y-auto w-full custom-scrollbar">
             {comments.map((comment) => {
               const commentLiked = isCommentLiked(comment);
               const commentLikesCount = comment._likesCount ?? (comment.likes?.length || 0);
@@ -384,19 +373,19 @@ const PostCard = ({ post }) => {
 
               return (
                 <div key={comment._id} className="group/comment">
-                  <div className="flex gap-4">
+                  <div className="flex gap-3">
                     <img
-                      src={comment.user?.picture || "/default-avatar.png"}
+                      src={comment.user?.picture || "https://ui-avatars.com/api/?name=" + (comment.user?.name || "U") + "&background=random&size=100"}
                       alt={comment.user?.name}
-                      className="w-10 h-10 rounded-2xl object-cover flex-shrink-0 mt-0.5 border border-white shadow-sm"
+                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5 border border-white shadow-sm"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm inline-block max-w-full">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-bold text-slate-900">{comment.user?.name}</span>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{formatTime(comment.createdAt)}</span>
+                      <div className="bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-sm inline-block max-w-full">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[13px] font-bold text-slate-900">{comment.user?.name}</span>
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{formatTime(comment.createdAt)}</span>
                         </div>
-                        <p className="text-[13px] text-slate-600 leading-relaxed break-words font-medium">
+                        <p className="text-[12px] text-slate-600 leading-snug break-words font-medium">
                           {comment.content}
                         </p>
                       </div>
@@ -405,7 +394,8 @@ const PostCard = ({ post }) => {
                       <div className="flex items-center gap-6 mt-3 ml-1">
                         <button
                           onClick={() => handleCommentLike(comment._id)}
-                          className={`flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-widest transition-colors ${commentLiked ? "text-red-500" : "text-slate-400 hover:text-slate-900"}`}
+                          disabled={commentLikeLoading[comment._id]}
+                          className={`flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-widest transition-colors ${commentLiked ? "text-red-500" : "text-slate-400 hover:text-slate-900"} ${commentLikeLoading[comment._id] ? "opacity-50" : ""}`}
                         >
                           <FaHeart size={12} className={commentLiked ? "fill-current" : ""} />
                           {commentLikesCount > 0 && <span>{commentLikesCount}</span>}
@@ -431,7 +421,7 @@ const PostCard = ({ post }) => {
                       {rs.show && (
                         <form onSubmit={(e) => handleReply(e, comment._id)} className="flex gap-3 mt-4">
                           <img
-                            src={user?.picture || "/default-avatar.png"}
+                            src={user?.picture || "https://ui-avatars.com/api/?name=" + (user?.name || "U") + "&background=random&size=100"}
                             alt="Your avatar"
                             className="w-8 h-8 rounded-xl object-cover border border-white shadow-sm"
                           />
@@ -461,26 +451,27 @@ const PostCard = ({ post }) => {
                             const replyLiked = isReplyLiked(reply);
                             const replyLikesCount = reply._likesCount ?? (reply.likes?.length || 0);
                             return (
-                              <div key={reply._id} className="flex gap-4">
+                              <div key={reply._id} className="flex gap-2.5">
                                 <img
-                                  src={reply.user?.picture || "/default-avatar.png"}
+                                  src={reply.user?.picture || "https://ui-avatars.com/api/?name=" + (reply.user?.name || "U") + "&background=random&size=100"}
                                   alt={reply.user?.name}
-                                  className="w-8 h-8 rounded-xl object-cover flex-shrink-0 mt-0.5 border border-white shadow-sm"
+                                  className="w-6 h-6 rounded-full object-cover flex-shrink-0 mt-0.5 border border-white shadow-sm"
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <div className="bg-white border border-slate-100 rounded-2xl px-4 py-2.5 shadow-sm inline-block max-w-full">
+                                  <div className="bg-white border border-slate-100 rounded-xl px-3 py-1.5 shadow-sm inline-block max-w-full">
                                     <div className="flex items-center gap-2 mb-0.5">
-                                      <span className="text-sm font-bold text-slate-900">{reply.user?.name}</span>
-                                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{formatTime(reply.createdAt)}</span>
+                                      <span className="text-[12px] font-bold text-slate-900">{reply.user?.name}</span>
+                                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{formatTime(reply.createdAt)}</span>
                                     </div>
-                                    <p className="text-[13px] text-slate-600 leading-relaxed break-words font-medium">
+                                    <p className="text-[12px] text-slate-600 leading-snug break-words font-medium">
                                       {reply.content}
                                     </p>
                                   </div>
                                   <div className="mt-2 ml-1">
                                     <button
                                       onClick={() => handleReplyLike(comment._id, reply._id)}
-                                      className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest transition-colors ${replyLiked ? "text-red-500" : "text-slate-400 hover:text-slate-900"}`}
+                                      disabled={replyLikeLoading[reply._id]}
+                                      className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest transition-colors ${replyLiked ? "text-red-500" : "text-slate-400 hover:text-slate-900"} ${replyLikeLoading[reply._id] ? "opacity-50" : ""}`}
                                     >
                                       <FaHeart size={10} className={replyLiked ? "fill-current" : ""} />
                                       {replyLikesCount > 0 && <span>{replyLikesCount}</span>}
@@ -501,10 +492,10 @@ const PostCard = ({ post }) => {
           </div>
 
           {/* New Comment Input */}
-          <div className="p-6 border-t border-slate-100 bg-white">
-            <form onSubmit={handleComment} className="flex items-center gap-4">
+          <div className="p-3 border-t border-slate-100 bg-white">
+            <form onSubmit={handleComment} className="flex items-center gap-3">
               <img
-                src={user?.picture || "/default-avatar.png"}
+                src={user?.picture || "https://ui-avatars.com/api/?name=" + (user?.name || "Me") + "&background=random&size=100"}
                 alt="My avatar"
                 className="w-10 h-10 rounded-2xl object-cover border border-slate-100"
               />

@@ -272,24 +272,16 @@ const Profile = () => {
                 {/* Profile Header */}
                 <div className="flex flex-col items-center text-center relative z-10">
                   <img
-                    src={profileUser.picture || "/default-avatar.png"}
+                    src={profileUser.picture || "https://ui-avatars.com/api/?name=" + (profileUser.name || profileUser.username || "U") + "&background=random&size=200"}
                     alt={profileUser.name}
                     className={`w-20 h-20 rounded-2xl object-cover border-4 shadow-sm mb-3 ${isCustomCard ? 'border-white/20' : 'border-dark-card ring-2 ring-dark-border'} ${getAvatarFrameClass(profileUser?.profileDecoration?.avatarFrame)}`}
                   />
                   <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2 justify-center">
                     {profileUser.name}
-                    {profileUser.isOnline !== undefined && (
-                      <span className={`w-3 h-3 rounded-full ${profileUser.isOnline ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] animate-pulse' : 'bg-slate-300'}`} title={profileUser.isOnline ? 'Online' : 'Offline'}></span>
-                    )}
+
                   </h1>
                   <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-0.5">@{profileUser.username || "username"}</p>
 
-                  {/* last seen message */}
-                  {profileUser.isOnline !== undefined && !profileUser.isOnline && (
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-                      Offline
-                    </p>
-                  )}
 
                   {/* Bio */}
                   {profileUser.bio && <p className={`mt-4 leading-relaxed font-medium text-sm ${isCustomCard ? 'text-white/90' : 'text-slate-700'}`}>{profileUser.bio}</p>}
@@ -477,7 +469,7 @@ const Profile = () => {
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center">
                             <img
-                              src={r.rater?.picture || "/default-avatar.png"}
+                              src={r.rater?.picture || "https://ui-avatars.com/api/?name=" + (r.rater?.name || "U") + "&background=random&size=100"}
                               className="h-12 w-12 rounded-[1rem] object-cover mr-4 border border-dark-border"
                               alt=""
                             />

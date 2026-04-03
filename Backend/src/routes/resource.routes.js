@@ -3,6 +3,7 @@ import {
     generateUnifiedRoadmap,
     generateSubtopicNote,
     updateSubtopicProgress,
+    completeWholeTopic,
     generateFinalTest,
     submitFinalTest,
     getSavedResources
@@ -16,6 +17,7 @@ router.use(verifyJWT_any);
 router.post("/generate-roadmap", generateUnifiedRoadmap);
 router.post("/generate-subtopic-note", generateSubtopicNote);
 router.put("/update-progress", updateSubtopicProgress);
+router.put("/complete-topic", completeWholeTopic);
 router.post("/generate-final-test", generateFinalTest);
 router.post("/submit-final-test", submitFinalTest);
 router.get("/saved", getSavedResources);

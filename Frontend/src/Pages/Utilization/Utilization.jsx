@@ -16,7 +16,7 @@ const PendingTimer = ({ createdAt, onExpire }) => {
             const now = Date.now();
             const elapsed = Math.floor((now - createdTime) / 1000);
             const remaining = Math.max(0, 120 - elapsed);
-            
+
             setTimeLeft(remaining);
             if (remaining === 0 && onExpire) {
                 onExpire();
@@ -29,7 +29,7 @@ const PendingTimer = ({ createdAt, onExpire }) => {
     }, [createdAt, onExpire]);
 
     if (timeLeft <= 0) return <span className="text-red-500 font-bold ml-2">Expired</span>;
-    
+
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     return (
@@ -119,7 +119,7 @@ const Utilization = () => {
                 // Re-fetch sessions to update status
                 const sessionsRes = await axios.get("/instant-help/sessions", { withCredentials: true });
                 if (sessionsRes.data.success) setMySessions(sessionsRes.data.data?.sessions || []);
-                
+
                 // We should also theoretically open the chat, but let's let them click "Open Chat" 
                 // button now that it's in_progress.
             }
@@ -140,7 +140,7 @@ const Utilization = () => {
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to decline request');
         }
-    };    
+    };
     const handleInquire = (provider) => {
         setSelectedProvider(provider);
         setSelectedSkill(provider.skillsProficientAt?.[0]?.name || provider.skillsProficientAt?.[0] || "");
@@ -198,7 +198,7 @@ const Utilization = () => {
                 <div className="relative z-10 flex flex-col items-center text-center">
                     <div className="relative mb-4">
                         <img
-                            src={providerUser.picture || `https://ui-avatars.com/api/?name=${providerUser.name}&background=random`}
+                            src={providerUser.picture || "https://ui-avatars.com/api/?name=" + (providerUser.name || "U") + "&background=random&size=100"}
                             alt={providerUser.name}
                             className="w-14 h-14 rounded-xl object-cover ring-4 ring-white group-hover:ring-cyan-500/20 transition-all duration-300 shadow-sm"
                         />
@@ -291,21 +291,19 @@ const Utilization = () => {
                     <div className="max-w-xl mx-auto mb-6 flex bg-slate-100 p-1 rounded-2xl animate-fade-in relative z-10 shadow-inner">
                         <button
                             onClick={() => setInstantHelpMode("providers")}
-                            className={`flex-1 py-2.5 text-sm font-bold transition-all rounded-xl focus:outline-none ${
-                                instantHelpMode === "providers"
+                            className={`flex-1 py-2.5 text-sm font-bold transition-all rounded-xl focus:outline-none ${instantHelpMode === "providers"
                                     ? "bg-white text-cyan-600 shadow-md transform scale-100"
                                     : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 scale-95"
-                            }`}
+                                }`}
                         >
                             Find Providers
                         </button>
                         <button
                             onClick={() => setInstantHelpMode("sessions")}
-                            className={`flex-1 py-2.5 text-sm font-bold transition-all rounded-xl focus:outline-none ${
-                                instantHelpMode === "sessions"
+                            className={`flex-1 py-2.5 text-sm font-bold transition-all rounded-xl focus:outline-none ${instantHelpMode === "sessions"
                                     ? "bg-white text-cyan-600 shadow-md transform scale-100"
                                     : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 scale-95"
-                            }`}
+                                }`}
                         >
                             My Sessions
                         </button>
@@ -441,8 +439,8 @@ const Utilization = () => {
 
                                         return (
                                             <div key={session._id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col sm:flex-row gap-5 items-start sm:items-center hover:shadow-md transition-shadow">
-                                                <img 
-                                                    src={partner?.picture || `https://ui-avatars.com/api/?name=${partner?.name}&background=random`} 
+                                                <img
+                                                    src={partner?.picture || "https://ui-avatars.com/api/?name=" + (partner?.name || "U") + "&background=random&size=100"}
                                                     className="w-14 h-14 rounded-xl object-cover shadow-sm bg-slate-50"
                                                 />
                                                 <div className="flex-1 min-w-0">
@@ -453,12 +451,12 @@ const Utilization = () => {
                                                                 {session.status.replace("_", " ")}
                                                             </span>
                                                             {session.status === "pending" && (
-                                                                <PendingTimer 
-                                                                    createdAt={session.createdAt} 
+                                                                <PendingTimer
+                                                                    createdAt={session.createdAt}
                                                                     onExpire={() => {
                                                                         // Optimistically update to expired internally if we want to
                                                                         // or we can just let it show 0:00 until a refresh
-                                                                    }} 
+                                                                    }}
                                                                 />
                                                             )}
                                                         </div>
@@ -478,9 +476,9 @@ const Utilization = () => {
                                                         <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Credits</span>
                                                         <span className="font-black text-slate-900 text-lg">{session.creditsEscrowed}</span>
                                                     </div>
-                                                    
+
                                                     {session.status === "in_progress" && (
-                                                        <button 
+                                                        <button
                                                             onClick={() => {
                                                                 setActiveInstantHelpSession({
                                                                     sessionId: session._id,
@@ -497,17 +495,17 @@ const Utilization = () => {
                                                             Open Chat
                                                         </button>
                                                     )}
-                                                    
+
                                                     {/* Accept & Decline actions for the provider on pending sessions */}
                                                     {session.status === "pending" && !isLearner && (
                                                         <div className="flex w-full gap-2 mt-2 sm:mt-0">
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleAcceptSession(session._id)}
                                                                 className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] font-bold py-2 rounded-lg border-0 cursor-pointer shadow-sm transition-colors"
                                                             >
                                                                 Accept
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleDeclineSession(session._id)}
                                                                 className="flex-1 bg-white hover:bg-red-50 text-red-500 border border-gray-200 text-[11px] font-bold py-2 rounded-lg cursor-pointer transition-colors"
                                                             >
@@ -579,7 +577,7 @@ const Utilization = () => {
                                     </button>
                                     <div className="flex items-center gap-3">
                                         <img
-                                            src={selectedProvider.picture || `https://ui-avatars.com/api/?name=${selectedProvider.name}&background=random`}
+                                            src={selectedProvider.picture || "https://ui-avatars.com/api/?name=" + (selectedProvider.name || "U") + "&background=random&size=100"}
                                             alt={selectedProvider.name}
                                             className="w-12 h-12 rounded-xl object-cover border-2 border-white/30"
                                         />
@@ -623,11 +621,10 @@ const Utilization = () => {
                                         </div>
                                         <div className="border-t border-cyan-100 pt-2 mt-2 flex items-center justify-between">
                                             <span className="text-xs font-bold text-cyan-700 uppercase tracking-wider">Your Balance</span>
-                                            <span className={`text-sm font-bold ${
-                                                (user?.credits || 0) >= (selectedProvider.preferences?.rates?.instantHelp || 0)
+                                            <span className={`text-sm font-bold ${(user?.credits || 0) >= (selectedProvider.preferences?.rates?.instantHelp || 0)
                                                     ? "text-emerald-600"
                                                     : "text-red-600"
-                                            }`}>
+                                                }`}>
                                                 {user?.credits || 0} credits
                                             </span>
                                         </div>

@@ -34,22 +34,21 @@ export const createReport = asyncHandler(async (req, res, next) => {
     return next(new ApiError(403, "You can only file reports on your own behalf"));
   }
 
-  // ✅ FIX: Prevent duplicate reports from the same user against the same person
-  const existingReport = await Report.findOne({
-    reporter: reporter._id,
-    reported: reported._id,
-  });
-
-  if (existingReport) {
-    return next(new ApiError(429, "You have already submitted a report against this user"));
+  // The unique index in the Report model handles the race condition.
+  let report;
+  try {
+    report = await Report.create({
+      reporter: reporter._id,
+      reported: reported._id,
+      nature: issue,
+      description: issueDescription,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return next(new ApiError(429, "You have already submitted a report against this user"));
+    }
+    return next(error);
   }
-
-  const report = await Report.create({
-    reporter: reporter._id,
-    reported: reported._id,
-    nature: issue,
-    description: issueDescription,
-  });
 
   res.status(201).json(new ApiResponse(201, report, "User Reported successfully"));
 });

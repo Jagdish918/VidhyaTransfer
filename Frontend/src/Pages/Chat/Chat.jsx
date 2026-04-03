@@ -319,12 +319,12 @@ const Chat = () => {
     const activeChat = chats.find(c => c._id === selectedChatId);
 
     const getChatPartner = (chat) => {
-        if (!chat || !chat.users) return { _id: null, name: "Unknown", avatar: "/default-avatar.png", status: "Offline" };
+        if (!chat || !chat.users) return { _id: null, name: "Unknown", avatar: "https://ui-avatars.com/api/?name=U&background=random&size=100", status: "Offline" };
         const partner = chat.users.find(u => u._id !== user._id);
         return {
             _id: partner?._id,
             name: partner?.name || partner?.username || "User",
-            avatar: partner?.picture || "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+            avatar: partner?.picture || "https://ui-avatars.com/api/?name=" + (partner?.name || partner?.username || "U") + "&background=random&size=100",
             isOnline: partner?.isOnline,
             lastSeen: partner?.lastSeen
         };
@@ -585,7 +585,7 @@ const Chat = () => {
                                     className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-50 ${selectedChatId === chat._id ? 'bg-blue-50/60' : ''}`}
                                 >
                                     <div className="relative flex-shrink-0">
-                                        <img src={chatPartner.avatar} alt={chatPartner.name} className="w-10 h-10 rounded-full object-cover" />
+                                        <img src={chatPartner.avatar || "https://ui-avatars.com/api/?name=" + (chatPartner.name || "U") + "&background=random&size=100"} alt={chatPartner.name} className="w-10 h-10 rounded-full object-cover" />
                                         {chatPartner.isOnline && (
                                             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
                                         )}
@@ -631,7 +631,7 @@ const Chat = () => {
                                 <Link to={`/profile/${partner._id}`} className="flex items-center gap-3 no-underline hover:opacity-80 transition-opacity">
                                     <button className="md:hidden text-gray-500 mr-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedChatId(null); }}>←</button>
                                     <div className="relative">
-                                        <img src={partner.avatar} alt={partner.name} className="w-8 h-8 rounded-full object-cover" />
+                                        <img src={partner.avatar || "https://ui-avatars.com/api/?name=" + (partner.name || "U") + "&background=random&size=100"} alt={partner.name} className="w-8 h-8 rounded-full object-cover" />
                                         {partner.isOnline && (
                                             <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full animate-pulse"></div>
                                         )}
