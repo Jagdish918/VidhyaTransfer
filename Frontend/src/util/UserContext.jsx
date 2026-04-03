@@ -28,9 +28,10 @@ const UserContextProvider = ({ children }) => {
       const userInfoString = localStorage.getItem("userInfo");
       const hasSessionCookie = document.cookie.includes("hasSession=true");
 
-      // If we don't have a hint from localStorage OR a cookie, don't ping the server.
-      // This prevents the console from being flooded with 401 (Unauthorized) errors.
+      // 🔹 FIX: In cross-domain (Amplify -> DuckDNS), document.cookie CANNOT see the backend's cookies.
+      // We should attempt to fetch user data if we have an item in localStorage OR if the cookie hint is present.
       if (!userInfoString && !hasSessionCookie) {
+        // If we really have nothing, stop. But if we have userInfoString, we must proceed to verify it.
         setLoading(false);
         return;
       }
@@ -188,7 +189,11 @@ const UserContextProvider = ({ children }) => {
     const newSocket = io(backendUrl, {
       withCredentials: true,
       transports: ['websocket', 'polling'],
-      forceNew: true
+      forceNew: true,
+      // 🔹 FIX: Pass token in auth for cross-domain signaling
+      auth: {
+        token: document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1]
+      }
     });
 
     newSocket.on("connect", () => {

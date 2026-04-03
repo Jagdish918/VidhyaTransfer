@@ -9,7 +9,23 @@ import { ApiError } from "./utils/ApiError.js";
 const app = express();
 
 // ─── SECURITY HEADERS (Helmet) ────────────────────────────────────────────────
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://*.googleusercontent.com"],
+        mediaSrc: ["'self'", "https://res.cloudinary.com", "blob:"],
+        connectSrc: ["'self'", "https://*.duckdns.org", "wss://*.duckdns.org", "https://res.cloudinary.com"],
+        frameSrc: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = process.env.ALLOWED_ORIGINS
