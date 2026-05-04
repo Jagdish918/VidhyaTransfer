@@ -139,18 +139,29 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
     useEffect(() => {
         if (activeCall && stream && !connectionRef.current) {
             console.log("[VideoCall] Initiating call to:", partner.id);
-            const peer = new Peer({ 
-                initiator: true, 
-                trickle: false, 
+            const peer = new Peer({
+                initiator: true,
+                trickle: false,
                 stream,
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:stun3.l.google.com:19302' },
-                        { urls: 'stun:stun4.l.google.com:19302' },
-                        { urls: 'stun:stun.services.mozilla.com' }
+                        {
+                            urls: 'turn:openrelay.metered.ca:80',
+                            username: 'openrelayproject',
+                            credential: 'openrelayproject'
+                        },
+                        {
+                            urls: 'turn:openrelay.metered.ca:443',
+                            username: 'openrelayproject',
+                            credential: 'openrelayproject'
+                        },
+                        {
+                            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                            username: 'openrelayproject',
+                            credential: 'openrelayproject'
+                        }
                     ]
                 }
             });
@@ -180,18 +191,29 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
         if (!stream || !incomingCall) return;
         console.log("[VideoCall] Answering call from:", incomingCall.from);
         setCallAccepted(true);
-        const peer = new Peer({ 
-            initiator: false, 
-            trickle: false, 
+        const peer = new Peer({
+            initiator: false,
+            trickle: false,
             stream,
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
                     { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:stun3.l.google.com:19302' },
-                    { urls: 'stun:stun4.l.google.com:19302' },
-                    { urls: 'stun:stun.services.mozilla.com' }
+                    {
+                        urls: 'turn:openrelay.metered.ca:80',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
                 ]
             }
         });
@@ -618,7 +640,7 @@ const VideoCall = ({ socket, user, partner, activeCall, incomingCall, onEndCall 
                     >
                         <FaInfoCircle size={22} />
                     </button>
-                    <button 
+                    <button
                         onClick={() => { setShowParticipants(!showParticipants); setShowDetails(false); }}
                         className={`p-3 rounded-full transition-colors ${showParticipants ? 'bg-[#8ab4f8]/20 text-[#8ab4f8]' : 'text-gray-400 hover:bg-white/5'}`}
                         title="Participants"

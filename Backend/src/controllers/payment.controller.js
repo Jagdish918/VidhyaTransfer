@@ -97,33 +97,37 @@ export const verifyPayment = async (req, res) => {
             crypto.timingSafeEqual(sigBuffer, expectedBuffer);
 
         if (isAuthentic) {
-            const transaction = await Transaction.findOne({ orderId: razorpay_order_id });
+            // ✅ Fix: Use atomic findOneAndUpdate to prevent race conditions (idempotency)
+            const transaction = await Transaction.findOneAndUpdate(
+                { orderId: razorpay_order_id, status: "created", userId },
+                { status: "paid", paymentId: razorpay_payment_id },
+                { new: true }
+            );
 
             if (!transaction) {
-                return res.status(404).json({ message: "Transaction not found" });
+                // If not found, it might be already paid or invalid
+                const existing = await Transaction.findOne({ orderId: razorpay_order_id });
+                if (existing) {
+                    if (existing.userId.toString() !== userId.toString()) {
+                        return res.status(403).json({ message: "Not authorized to verify this transaction" });
+                    }
+                    if (existing.status === "paid") {
+                        return res.status(400).json({ message: "Transaction already processed" });
+                    }
+                }
+                return res.status(404).json({ message: "Transaction not found or already processed" });
             }
 
-            // ✅ Ensure transaction belongs to the requesting user (ownership check)
-            if (transaction.userId.toString() !== userId.toString()) {
-                return res.status(403).json({ message: "Not authorized to verify this transaction" });
-            }
+            // ✅ Fix: Atomic $inc to prevent balance calculation race conditions
+            const user = await User.findByIdAndUpdate(
+                userId,
+                { $inc: { credits: Number(transaction.credits) } },
+                { new: true }
+            );
 
-            if (transaction.status === "paid") {
-                return res.status(400).json({ message: "Transaction already processed" });
-            }
-
-            const user = await User.findById(userId);
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
             }
-
-            // Credits are sourced from DB transaction record — not the frontend
-            user.credits += Number(transaction.credits);
-            await user.save();
-
-            transaction.status = "paid";
-            transaction.paymentId = razorpay_payment_id;
-            await transaction.save();
 
             res.status(200).json({
                 message: "Payment successful and credits added",
@@ -180,22 +184,26 @@ export const transferCredits = async (req, res) => {
             return res.status(400).json({ message: "You cannot transfer credits to yourself" });
         }
 
-        const sender = await User.findById(senderId).session(session);
-        const receiver = await User.findById(receiverId).session(session);
+        // ✅ Fix: Use atomic findOneAndUpdate with condition to prevent overdraft race condition
+        const sender = await User.findOneAndUpdate(
+            { _id: senderId, credits: { $gte: Number(amount) } },
+            { $inc: { credits: -Number(amount) } },
+            { new: true, session }
+        );
 
-        if (!sender || !receiver) {
-            throw new Error("Sender or Receiver not found");
+        if (!sender) {
+            throw new Error("Insufficient credits or sender not found");
         }
 
-        if (sender.credits < amount) {
-            throw new Error("Insufficient credits");
+        const receiver = await User.findByIdAndUpdate(
+            receiverId,
+            { $inc: { credits: Number(amount) } },
+            { new: true, session }
+        );
+
+        if (!receiver) {
+            throw new Error("Receiver not found");
         }
-
-        sender.credits -= Number(amount);
-        receiver.credits += Number(amount);
-
-        await sender.save({ session });
-        await receiver.save({ session });
 
         await Transaction.create([{
             userId: senderId,

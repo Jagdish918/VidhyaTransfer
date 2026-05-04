@@ -27,7 +27,7 @@ const transactionSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ["created", "paid", "failed", "transfer_sent", "transfer_received"],
+            enum: ["created", "paid", "failed", "transfer_sent", "transfer_received", "roadmap_purchase", "roadmap_refund"],
             default: "created",
         },
         description: {

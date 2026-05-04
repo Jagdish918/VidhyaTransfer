@@ -208,12 +208,18 @@ export const createRequest = asyncHandler(async (req, res, next) => {
     }
   }
 
-  const connectionRequest = await Request.create({
-    sender: senderID,
-    receiver: receiverID,
-  });
-
-  if (!connectionRequest) return next(new ApiError(500, "Request not created"));
+  let connectionRequest;
+  try {
+    connectionRequest = await Request.create({
+      sender: senderID,
+      receiver: receiverID,
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      throw new ApiError(400, "A connection request is already pending between you two");
+    }
+    return next(new ApiError(500, "Request not created"));
+  }
 
   // ✅ Send email notification to receiver (non-blocking)
   try {

@@ -36,3 +36,13 @@ export const emailLimiter = rateLimit({
     legacyHeaders: false,
     message: { success: false, message: "Too many email requests. Please try again in an hour." },
 });
+
+// ─── CONTENT SPAM LIMITER ────────────────────────────────────────────────────
+// Prevents bot spamming on social posts and comments
+export const postLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: IS_PROD ? 5 : 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, message: "You are posting too fast. Please slow down." },
+});

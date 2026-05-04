@@ -1,6 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { Resource } from "../models/resource.model.js";
 import { User } from "../models/user.model.js";
+import { Transaction } from "../models/transaction.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -24,56 +25,106 @@ export const generateUnifiedRoadmap = async (req, res) => {
             return res.status(404).json({ message: "User not found." });
         }
 
+        // ✅ Architecture Fix: Charge credits based on timeframe.
+        const calculateCost = (tf) => {
+            switch(tf) {
+                case "1 week": return 10;
+                case "1 month": return 20;
+                case "3 months": return 30;
+                case "6 months": return 40;
+                case "1 year": return 50;
+                default: return 20;
+            }
+        };
+        const ROADMAP_COST = calculateCost(timeframe);
+        if (user.credits < ROADMAP_COST) {
+            return res.status(402).json({
+                message: `Insufficient credits. Generating a roadmap costs ${ROADMAP_COST} credits.`,
+                required: ROADMAP_COST,
+                current: user.credits
+            });
+        }
 
+        // Deduct credits upfront
+        user.credits -= ROADMAP_COST;
+        await user.save();
+
+        // ✅ Architecture Fix: Log to Activity Log (Transaction)
+        await Transaction.create({
+            userId,
+            amount: 0, // No fiat currency involved
+            credits: -ROADMAP_COST,
+            status: "roadmap_purchase",
+            description: `Generated roadmap for: ${skill}`
+        });
+
+
+
+        // ✅ Fix: Use Strict JSON Schema validation to eliminate hallucination risks
+        const roadmapSchema = {
+            type: SchemaType.OBJECT,
+            properties: {
+                error: { type: SchemaType.STRING, description: "Set this ONLY if the input is profanity, a random string, or not a learnable skill." },
+                roadmap: {
+                    type: SchemaType.ARRAY,
+                    items: {
+                        type: SchemaType.OBJECT,
+                        properties: {
+                            title: { type: SchemaType.STRING },
+                            subtopics: {
+                                type: SchemaType.ARRAY,
+                                items: {
+                                    type: SchemaType.OBJECT,
+                                    properties: {
+                                        title: { type: SchemaType.STRING },
+                                        completed: { type: SchemaType.BOOLEAN },
+                                        note: { type: SchemaType.STRING }
+                                    },
+                                    required: ["title", "completed", "note"]
+                                }
+                            }
+                        },
+                        required: ["title", "subtopics"]
+                    }
+                }
+            }
+        };
 
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",
-            generationConfig: { responseMimeType: "application/json" }
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: roadmapSchema
+            }
         });
 
-        const prompt = `You are an expert curriculum designer. 
-        Step 1: Analyze if the input "${skill}" is a valid skill, topic, or subject that can be learned or studied (e.g. Python, Chess, French, WWII History). If it's a random string, a specific person's name (like Virat Kohli) not related to a broader skill, nonsensical, or profanity, you MUST return an ERROR object.
-        
-        Step 2: If valid, extract a detailed, sequential learning roadmap for the skill "${skill}" to be completed in ${timeframe}.
-        
-        Return ONLY a JSON object. 
-        If invalid, return: {"error": "The topic provided is not a valid skill or path that can be learned. Please enter a valid learning topic."}
-        If valid, return a JSON array of topic objects. Each topic should have:
-        - "title": (String)
-        - "subtopics": (Array of Objects) with "title", "completed" (false), and "note" ("").
-
-        Format for valid skill (JUST the array):
-        [
-          {
-            "title": "Module 1",
-            "subtopics": [{ "title": "Sub 1", "completed": false, "note": "" }]
-          }
-        ]
-        
-        Respond only with the raw JSON.`;
+        const prompt = `You are an expert curriculum designer. Extract a sequential learning roadmap for the skill "${skill}" to be completed in ${timeframe}. If "${skill}" is not a valid learnable skill, populate the "error" field instead.`;
 
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
 
-        let roadmapData;
+        let parsedResponse;
         try {
-            roadmapData = JSON.parse(responseText);
+            parsedResponse = JSON.parse(responseText);
         } catch (e) {
             console.error("Failed to parse Gemini JSON:", responseText);
             return res.status(500).json({ message: "AI response was not valid JSON." });
         }
 
-        // Check for AI validation error
-        if (roadmapData.error) {
-            return res.status(400).json({ message: roadmapData.error });
+        // Check for AI validation error natively validated by Gemini
+        if (parsedResponse.error) {
+            return res.status(400).json({ message: parsedResponse.error });
         }
+
+        const roadmapData = parsedResponse.roadmap || [];
 
         const savedResource = await Resource.create({
             userId,
             type: "roadmap",
             skill,
             timeframe,
-            roadmapData
+            roadmapData,
+            costPaid: ROADMAP_COST // Track cost for proportional refund later
         });
 
         res.status(200).json({ data: savedResource });
@@ -328,9 +379,24 @@ export const submitFinalTest = async (req, res) => {
         const totalPossible = totalMcq + totalCoding;
         const finalScorePercent = Math.round((totalEarned / totalPossible) * 100) || 0;
 
-        const refundCredits = Math.round((finalScorePercent / 100) * 10);
+        // ✅ Architecture Fix: Refund based on total cost paid and final score percentage.
+        // If they paid 20 and got 100%, they get 20 back.
+        const costBasis = resource.costPaid || 20; // Default fallback to 20
+        const refundCredits = Math.round((finalScorePercent / 100) * costBasis);
+
         testUser.credits += refundCredits;
         await testUser.save();
+
+        // ✅ Architecture Fix: Log refund to Activity Log
+        if (refundCredits > 0) {
+            await Transaction.create({
+                userId,
+                amount: 0,
+                credits: refundCredits,
+                status: "roadmap_refund",
+                description: `Refund for ${resource.skill} assessment (${finalScorePercent}%)`
+            });
+        }
 
         let finalAnalytics = `**MCQ Score:** ${mcqCorrect}/${totalMcq}\n`;
         if (totalCoding > 0) {

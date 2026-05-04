@@ -24,21 +24,7 @@ const Feed = () => {
   const observer = useRef();
   const socketRef = useRef(null);
 
-  const [suggestedPeers, setSuggestedPeers] = useState([]);
 
-  useEffect(() => {
-    const fetchSidebarData = async () => {
-      try {
-        const { data } = await axios.get("/user/discover", { params: { limit: 5 } });
-        if (data.success) {
-          setSuggestedPeers(data.data.users.slice(0, 5));
-        }
-      } catch (err) {
-        console.warn("Could not fetch sidebar data", err);
-      }
-    };
-    fetchSidebarData();
-  }, []);
 
   useEffect(() => {
     try {
@@ -197,7 +183,7 @@ const Feed = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-[280px,1fr,300px] gap-8 items-start">
           <div className="hidden lg:flex flex-col gap-6 sticky top-24">
             {/* User Profile Card */}
@@ -338,38 +324,6 @@ const Feed = () => {
           </div>
 
           <div className="hidden lg:flex flex-col gap-6 sticky top-24">
-            {/* Discover Peers */}
-            <div className="bg-white rounded-3xl p-6 shadow-soft border border-slate-100">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Discover Peers</h3>
-                <button onClick={() => navigate('/discover')} className="text-[10px] font-bold text-cyan-500 hover:text-cyan-600 uppercase">View All</button>
-              </div>
-              <div className="flex flex-col gap-5">
-                {suggestedPeers.slice(0, 3).map((peer) => (
-                  <div key={peer._id} className="flex items-center gap-3 group">
-                    <div className="relative cursor-pointer" onClick={() => navigate(`/profile/${peer.username}`)}>
-                      <img
-                        src={peer.picture || "https://ui-avatars.com/api/?name=" + (peer.name || "U") + "&background=random&size=100"}
-                        alt={peer.name}
-                        className="w-11 h-11 rounded-2xl object-cover ring-2 ring-slate-50 group-hover:ring-cyan-100 transition-all"
-                      />
-                    </div>
-                    <div className="flex flex-col min-w-0 flex-1 cursor-pointer" onClick={() => navigate(`/profile/${peer.username}`)}>
-                      <span className="text-sm font-bold text-slate-900 truncate group-hover:text-cyan-500 transition-colors">
-                        {peer.name}
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-medium truncate">@{peer.username}</span>
-                    </div>
-                    <button
-                      onClick={() => navigate(`/profile/${peer.username}`)}
-                      className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-cyan-500 hover:text-white transition-all shadow-sm"
-                    >
-                      <FaUserPlus size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {/* Trending Tags & Notes */}
             <div className="bg-white rounded-3xl p-6 shadow-soft border border-slate-100">

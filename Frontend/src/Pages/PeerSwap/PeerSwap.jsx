@@ -259,7 +259,7 @@ const PeerSwap = () => {
 
   return (
     <div className="min-h-screen bg-dark-bg pt-6 pb-16 font-sans">
-      <div className="max-w-[1280px] mx-auto px-6">
+      <div className="max-w-[1536px] mx-auto px-6">
 
         {/* Header Content */}
         <div className="text-center mb-6 animate-fade-in">

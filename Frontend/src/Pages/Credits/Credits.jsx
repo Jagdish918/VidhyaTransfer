@@ -9,7 +9,7 @@ const Credits = () => {
     const [loading, setLoading] = useState(false);
 
     const [transactions, setTransactions] = useState([]);
-    const [activeTab, setActiveTab] = useState("all"); // 'all' means bought/payment, 'transfer' means p2p
+    const [activeTab, setActiveTab] = useState("all"); // 'all': purchases, 'transfer': peer transfers, 'activity': roadmap purchases/refunds
 
     useEffect(() => {
         const fetchTransactions = async () => {
@@ -199,7 +199,13 @@ const Credits = () => {
                                         onClick={() => setActiveTab("transfer")}
                                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === "transfer" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-slate-500 hover:bg-slate-50"}`}
                                     >
-                                        Transfers
+                                        Peer Transfers
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab("activity")}
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === "activity" ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" : "text-slate-500 hover:bg-slate-50"}`}
+                                    >
+                                        Platform Activity
                                     </button>
                                 </div>
                             </div>
@@ -208,8 +214,10 @@ const Credits = () => {
                                     const filteredTransactions = transactions.filter(tx => {
                                         if (activeTab === "all") {
                                             return ["paid", "failed", "created"].includes(tx.status);
+                                        } else if (activeTab === "transfer") {
+                                            return ["transfer_sent", "transfer_received"].includes(tx.status);
                                         }
-                                        return ["transfer_sent", "transfer_received"].includes(tx.status);
+                                        return ["roadmap_purchase", "roadmap_refund"].includes(tx.status);
                                     });
 
                                     if (filteredTransactions.length === 0) {
@@ -218,8 +226,8 @@ const Credits = () => {
                                                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-dark-border shadow-inner">
                                                     <span className="text-2xl">📋</span>
                                                 </div>
-                                                <p className="font-bold text-sm text-slate-900">No {activeTab === "all" ? "purchases" : "transfers"} found.</p>
-                                                <p className="text-xs text-slate-500 mt-1">Your activity will appear here once you perform a transaction.</p>
+                                                <p className="font-bold text-sm text-slate-900">No {activeTab === "all" ? "purchases" : activeTab === "transfer" ? "transfers" : "activity logs"} found.</p>
+                                                <p className="text-xs text-slate-500 mt-1">Your activity will appear here once you perform a transaction or interact with the platform.</p>
                                             </div>
                                         );
                                     }
@@ -257,13 +265,13 @@ const Credits = () => {
                                                             </td>
                                                             {activeTab === "all" && (
                                                                 <td className="px-5 py-4 whitespace-nowrap text-xs font-bold text-slate-900">
-                                                                    ₹{tx.amount}
+                                                                    ₹{tx.amount === 0 ? "—" : tx.amount}
                                                                 </td>
                                                             )}
                                                             <td className="px-5 py-4 whitespace-nowrap">
-                                                                <span className={`px-3 py-1 inline-flex text-[9px] font-bold uppercase tracking-widest rounded-full border ${tx.status === 'paid' || tx.status === 'transfer_received'
+                                                                <span className={`px-3 py-1 inline-flex text-[9px] font-bold uppercase tracking-widest rounded-full border ${tx.status === 'paid' || tx.status === 'transfer_received' || tx.status === 'roadmap_refund'
                                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                                                    : tx.status === 'failed' || tx.status === 'transfer_sent'
+                                                                    : tx.status === 'failed' || tx.status === 'transfer_sent' || tx.status === 'roadmap_purchase'
                                                                         ? 'bg-rose-50 text-rose-700 border-rose-100'
                                                                         : 'bg-amber-50 text-amber-700 border-amber-100'
                                                                     }`}>

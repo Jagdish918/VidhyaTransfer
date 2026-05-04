@@ -25,7 +25,12 @@ import { skills } from "../Register/Skills";
 
 const Resources = () => {
   const { user, setUser } = useUser();
-  const [activeTab, setActiveTab] = useState("roadmap"); // roadmap, history
+  const [activeTab, setActiveTab] = useState("roadmap");
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Form State
   const [selectedSkill, setSelectedSkill] = useState("");
@@ -107,6 +112,18 @@ const Resources = () => {
       return;
     }
 
+    const getCost = (tf) => {
+      switch(tf) {
+        case "1 week": return 10;
+        case "1 month": return 20;
+        case "3 months": return 30;
+        case "6 months": return 40;
+        case "1 year": return 50;
+        default: return 20;
+      }
+    };
+    const currentCost = getCost(timeframe);
+
     setLoading(true);
 
     try {
@@ -115,6 +132,11 @@ const Resources = () => {
         withCredentials: true,
       });
       setActiveResource(response.data.data);
+
+      // Update local credits immediately
+      if (user && user.credits !== undefined) {
+        setUser({ ...user, credits: user.credits - currentCost });
+      }
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || "Failed to generate roadmap. Please try again.");
@@ -393,7 +415,7 @@ const Resources = () => {
 
   return (
     <div className="min-h-screen bg-dark-bg pt-2 pb-20 font-sans">
-      <div className="max-w-[1280px] mx-auto px-5">
+      <div className="max-w-[1536px] mx-auto px-5">
         <div className="text-center mb-6">
           <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-2 leading-tight tracking-tight">
             Generate Your <span className="text-cyan-700">Roadmap</span>
@@ -405,7 +427,6 @@ const Resources = () => {
         </div>
 
         <div className="bg-dark-card rounded-[2.5rem] p-5 shadow-card border border-dark-border z-10 relative">
-          {/* Tabs */}
           <div className="flex justify-center mb-8 border-b border-gray-200">
             <button
               className={`flex items-center gap-2 px-6 py-3 font-black text-lg transition-colors border-b-2 ${activeTab === "roadmap"
@@ -486,24 +507,44 @@ const Resources = () => {
                     disabled={loading}
                   >
                     <option value="">Select timeframe...</option>
-                    <option value="1 week">1 Week</option>
-                    <option value="1 month">1 Month</option>
-                    <option value="3 months">3 Months</option>
-                    <option value="6 months">6 Months</option>
-                    <option value="1 year">1 Year</option>
+                    <option value="1 week">1 Week (10 Credits)</option>
+                    <option value="1 month">1 Month (20 Credits)</option>
+                    <option value="3 months">3 Months (30 Credits)</option>
+                    <option value="6 months">6 Months (40 Credits)</option>
+                    <option value="1 year">1 Year (50 Credits)</option>
                   </select>
                 </div>
 
-                <button
-                  onClick={handleGenerateRoadmap}
-                  disabled={loading}
-                  className="w-full md:w-auto px-6 py-3 bg-cyan-900 text-white text-[10px] font-black uppercase tracking-[0.25em] rounded-xl hover:bg-cyan-500 hover:shadow-cyan-500/30 transition-all shadow-xl shadow-cyan-900/20 disabled:opacity-50 flex flex-col items-center justify-center gap-1 min-w-[180px]"
-                >
-                  <div className="flex items-center gap-2">
-                    {loading && <FaSpinner className="animate-spin" />}
-                    <span>{loading ? "Building..." : "Build Roadmap"}</span>
-                  </div>
-                </button>
+                {(() => {
+                  const getCost = (tf) => {
+                    switch(tf) {
+                      case "1 week": return 10;
+                      case "1 month": return 20;
+                      case "3 months": return 30;
+                      case "6 months": return 40;
+                      case "1 year": return 50;
+                      default: return 20;
+                    }
+                  };
+                  const currentCost = timeframe ? getCost(timeframe) : 20;
+                  return (
+                    <button
+                      onClick={handleGenerateRoadmap}
+                      disabled={loading || !timeframe || (user && user.credits < currentCost)}
+                      className="w-full md:w-auto px-6 py-3 bg-cyan-900 text-white text-[10px] font-black uppercase tracking-[0.25em] rounded-xl hover:bg-cyan-500 hover:shadow-cyan-500/30 transition-all shadow-xl shadow-cyan-900/20 disabled:opacity-50 flex flex-col items-center justify-center gap-1 min-w-[200px]"
+                    >
+                      <div className="flex items-center gap-2">
+                        {loading && <FaSpinner className="animate-spin" />}
+                        <span>{loading ? "Building..." : "Build Roadmap"}</span>
+                      </div>
+                      {!loading && (
+                        <span className="text-[8px] opacity-70 tracking-widest flex items-center gap-1">
+                          (Cost: {currentCost} Credits)
+                        </span>
+                      )}
+                    </button>
+                  );
+                })()}
               </div>
 
               {/* Errors */}
@@ -517,8 +558,11 @@ const Resources = () => {
                   </div>
                   <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Ready to chart your path?</h3>
                   <p className="max-w-md mx-auto text-slate-500 font-semibold">
-                    Enter a topic above and let us architect a step-by-step visual learning journey complete with
-                    comprehensive notes.
+                    Enter a topic above and let us architect a step-by-step visual learning journey.
+                    <br />
+                    <span className="text-[10px] text-indigo-500 block mt-2 uppercase tracking-widest font-black">
+                      Generation Costs depend on timeframe (Refundable based on Test Score)
+                    </span>
                   </p>
                 </div>
               )}
@@ -555,28 +599,30 @@ const Resources = () => {
                 </div>
 
                 {/* Recharts Pie Chart for Progress */}
-                <div className="w-32 h-32 md:w-40 md:h-40 mt-6 md:mt-0 relative">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "Completed", value: currentProgress },
-                          { name: "Remaining", value: 100 - currentProgress },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={30}
-                        outerRadius={45}
-                        startAngle={90}
-                        endAngle={-270}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        <Cell key="cell-0" fill="#3b82f6" />
-                        <Cell key="cell-1" fill="#f3f4f6" />
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div className="w-32 h-32 md:w-40 md:h-40 mt-6 md:mt-0 relative flex items-center justify-center">
+                  {isMounted && (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Completed", value: currentProgress },
+                            { name: "Remaining", value: 100 - currentProgress },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={45}
+                          startAngle={90}
+                          endAngle={-270}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          <Cell key="cell-0" fill="#3b82f6" />
+                          <Cell key="cell-1" fill="#f3f4f6" />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                   <div className="absolute inset-0 flex items-center justify-center flex-col">
                     <span className="text-xl font-black text-slate-900">{currentProgress}%</span>
                   </div>
@@ -671,8 +717,8 @@ const Resources = () => {
                     >
                       Test your knowledge on {activeResource.skill} with a personalized AI-generated quiz.
                       {activeResource?.testData?.status === "completed"
-                        ? " You have already completed this test."
-                        : " This test is locked until you complete 100% of the roadmap."}
+                        ? `You have already completed this test and earned a refund.`
+                        : `Score high (60%+) on this test to earn a partial or full refund of your ${activeResource.costPaid || 20} roadmap credits!`}
                     </p>
 
                     {activeResource?.testData?.status === "completed" ? (

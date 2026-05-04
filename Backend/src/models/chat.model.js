@@ -17,4 +17,7 @@ const chatSchema = new Schema(
   { timestamps: true }
 );
 
+// ✅ Architecture Fix: Queries are repeatedly running find({ users: userId }).sort({ updatedAt: -1 })
+chatSchema.index({ users: 1, updatedAt: -1 });
+
 export const Chat = mongoose.model("Chat", chatSchema);

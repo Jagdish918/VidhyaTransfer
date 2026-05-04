@@ -98,7 +98,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white/80 backdrop-blur-lg border-b border-dark-border sticky top-0 z-40 transition-all">
-      <div className="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-[1536px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to={user ? "/feed" : "/"} className="flex items-center gap-3 no-underline cursor-pointer group">
           <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm group-hover:bg-indigo-100 transition-colors">

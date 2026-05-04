@@ -253,7 +253,7 @@ const Utilization = () => {
 
     return (
         <div className="min-h-screen bg-dark-bg pt-6 pb-16 font-sans">
-            <div className="max-w-[1280px] mx-auto px-6">
+            <div className="max-w-[1536px] mx-auto px-6">
 
                 {/* Header Content */}
                 <div className="text-center mb-6 animate-fade-in">
@@ -292,8 +292,8 @@ const Utilization = () => {
                         <button
                             onClick={() => setInstantHelpMode("providers")}
                             className={`flex-1 py-2.5 text-sm font-bold transition-all rounded-xl focus:outline-none ${instantHelpMode === "providers"
-                                    ? "bg-white text-cyan-600 shadow-md transform scale-100"
-                                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 scale-95"
+                                ? "bg-white text-cyan-600 shadow-md transform scale-100"
+                                : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 scale-95"
                                 }`}
                         >
                             Find Providers
@@ -301,8 +301,8 @@ const Utilization = () => {
                         <button
                             onClick={() => setInstantHelpMode("sessions")}
                             className={`flex-1 py-2.5 text-sm font-bold transition-all rounded-xl focus:outline-none ${instantHelpMode === "sessions"
-                                    ? "bg-white text-cyan-600 shadow-md transform scale-100"
-                                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 scale-95"
+                                ? "bg-white text-cyan-600 shadow-md transform scale-100"
+                                : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 scale-95"
                                 }`}
                         >
                             My Sessions
@@ -622,8 +622,8 @@ const Utilization = () => {
                                         <div className="border-t border-cyan-100 pt-2 mt-2 flex items-center justify-between">
                                             <span className="text-xs font-bold text-cyan-700 uppercase tracking-wider">Your Balance</span>
                                             <span className={`text-sm font-bold ${(user?.credits || 0) >= (selectedProvider.preferences?.rates?.instantHelp || 0)
-                                                    ? "text-emerald-600"
-                                                    : "text-red-600"
+                                                ? "text-emerald-600"
+                                                : "text-red-600"
                                                 }`}>
                                                 {user?.credits || 0} credits
                                             </span>

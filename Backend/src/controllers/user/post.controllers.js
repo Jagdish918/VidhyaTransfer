@@ -89,19 +89,35 @@ export const getFeed = asyncHandler(async (req, res) => {
     query["skills.category"] = domain;
   }
 
-  const posts = await Post.find(query)
-    .populate("author", "name picture username")
-    .populate({
-      path: "comments.user",
-      select: "name picture username"
-    })
-    .populate({
-      path: "comments.replies.user",
-      select: "name picture username"
-    })
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
+  // ✅ Feed Algorithm Fix: Compute a Reddit-style "Hot Score" (Engagement - Time Decay)
+  let rawPosts = await Post.aggregate([
+    { $match: query },
+    {
+      $addFields: {
+        hotScore: {
+          $subtract: [
+            {
+              $add: [
+                { $multiply: [{ $size: { $ifNull: ["$likes", []] } }, 2] },
+                { $multiply: [{ $size: { $ifNull: ["$comments", []] } }, 3] }
+              ]
+            },
+            { $divide: [{ $subtract: [new Date(), "$createdAt"] }, 3600000 * 2] } // 1 point penalty per 2 hours
+          ]
+        }
+      }
+    },
+    { $sort: { hotScore: -1, createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit }
+  ]);
+
+  // Native Mongoose population on aggregated objects
+  let posts = await Post.populate(rawPosts, [
+    { path: "author", select: "name picture username" },
+    { path: "comments.user", select: "name picture username" },
+    { path: "comments.replies.user", select: "name picture username" }
+  ]);
 
   const total = await Post.countDocuments(query);
 
@@ -124,12 +140,12 @@ export const getFeed = asyncHandler(async (req, res) => {
   });
 
   const postsWithStatus = posts.map(post => {
-    const postObj = post.toObject();
-    if (postObj.author) {
-      const isMe = postObj.author._id.toString() === currentUserId.toString();
-      postObj.author.status = isMe ? null : (connectionStatusMap[postObj.author._id.toString()] || "Connect");
+    // Note: post is already a plain object from aggregate
+    if (post.author) {
+      const isMe = post.author._id.toString() === currentUserId.toString();
+      post.author.status = isMe ? null : (connectionStatusMap[post.author._id.toString()] || "Connect");
     }
-    return postObj;
+    return post;
   });
 
   return res.status(200).json(

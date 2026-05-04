@@ -188,7 +188,7 @@ const SkillGain = () => {
 
   return (
     <div className="min-h-screen bg-dark-bg pt-4 pb-12 font-sans">
-      <div className="max-w-[1280px] mx-auto px-6">
+      <div className="max-w-[1536px] mx-auto px-6">
 
         {/* Header Content */}
         <div className="text-center mb-4 animate-fade-in">

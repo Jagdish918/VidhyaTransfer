@@ -26,6 +26,10 @@ const resourceSchema = new mongoose.Schema(
             type: Object,
             default: {}
         },
+        costPaid: {
+            type: Number,
+            default: 0
+        },
         testData: {
             status: {
                 type: String,

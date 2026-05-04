@@ -9,6 +9,8 @@ import cookie from "cookie";
 import { User } from "./models/user.model.js";
 import { Request } from "./models/request.model.js";
 import { Message } from "./models/message.model.js";
+import { createAdapter } from "@socket.io/redis-adapter";
+import Redis from "ioredis";
 
 // ✅ Start logic moved down helper
 const broadcastStatus = async (userId, isOnline, io) => {
@@ -51,14 +53,28 @@ connectDB()
       cors: { origin: allowedOrigins, credentials: true },
     });
 
+    // ✅ Architecture Fix: Redis Adapter for Scaling Socket.io horizontally
+    if (process.env.REDIS_URL) {
+      const pubClient = new Redis(process.env.REDIS_URL);
+      const subClient = pubClient.duplicate();
+
+      pubClient.on("error", (err) => console.log("Redis Pub Client Error:", err.message));
+      subClient.on("error", (err) => console.log("Redis Sub Client Error:", err.message));
+
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log("Socket.io Redis adapter connected.");
+    } else {
+      console.log("REDIS_URL not provided. Socket.io scaling disabled (running in local memory mode).");
+    }
+
     io.use(async (socket, next) => {
       try {
         const rawCookie = socket.handshake.headers?.cookie || "";
         const cookies = cookie.parse(rawCookie);
-        
+
         // 🔹 FIX: Support token via handshake auth/query for cross-domain environments
         const token = socket.handshake.auth?.token || socket.handshake.query?.token || cookies.accessToken;
-        
+
         if (!token) return next(new Error("No token"));
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -85,17 +101,6 @@ connectDB()
 
       socket.on("join chat", (room) => socket.join(room));
 
-      socket.on("new message", (newMessage) => {
-        const senderId = socket.user?.id || socket.user?._id;
-        const chat = newMessage.chatId;
-        if (!chat.users) return;
-
-        chat.users.forEach((user) => {
-          const targetId = user._id.toString();
-          if (targetId === senderId.toString()) return;
-          io.to(targetId).emit("message received", newMessage);
-        });
-      });
 
       socket.on("message read", async ({ messageId, chatId }) => {
         try {
@@ -113,8 +118,12 @@ connectDB()
       socket.on("disconnect", async () => {
         const userId = socket.user?.id || socket.user?._id;
         if (userId) {
-          await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: Date.now() });
-          broadcastStatus(userId, false, io);
+          // ✅ Architecture Fix: Multi-tab Ghost User prevention. If they have another tab open, length > 0.
+          const sockets = await io.in(userId.toString()).fetchSockets();
+          if (sockets.length === 0) {
+            await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: Date.now() });
+            broadcastStatus(userId, false, io);
+          }
         }
       });
 
