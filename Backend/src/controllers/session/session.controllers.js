@@ -6,6 +6,7 @@ import { User } from "../../models/user.model.js";
 import { Session } from "../../models/session.model.js";
 import { Transaction } from "../../models/transaction.model.js";
 import { Request } from "../../models/request.model.js";
+import { sendMail } from "../../utils/SendMail.js";
 
 // ─── BOOK SESSION (Learner books a mentor) ────────────────────────────────────
 export const bookSession = asyncHandler(async (req, res) => {
@@ -116,6 +117,56 @@ export const bookSession = asyncHandler(async (req, res) => {
     const populated = await Session.findById(newSession._id)
       .populate("learner", "name username picture")
       .populate("mentor", "name username picture preferences");
+
+    // ── Send email notification to mentor (fire-and-forget) ──
+    try {
+      const formattedDate = scheduledDate.toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+      const formattedTime = scheduledDate.toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+
+      const emailHtml = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; padding: 40px; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">📚 New Session Booking</h1>
+              <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">SkillGain — Someone wants to learn from you!</p>
+            </div>
+            <div style="padding: 40px;">
+              <p style="font-size: 16px; line-height: 1.6;">Hello <strong>${mentor.name}</strong>,</p>
+              <p style="font-size: 16px; line-height: 1.6;"><strong>${learner.name}</strong> (@${learner.username}) has booked a mentorship session with you on <strong>VidhyaTransfer</strong>.</p>
+              
+              <div style="background-color: #f8f9fa; border-left: 4px solid #6366f1; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                <p style="margin: 0 0 12px 0;"><strong>🎯 Skill:</strong> ${skill}</p>
+                <p style="margin: 0 0 12px 0;"><strong>🗓 Scheduled Date:</strong> ${formattedDate}</p>
+                <p style="margin: 0 0 12px 0;"><strong>⏰ Time:</strong> ${formattedTime}</p>
+                <p style="margin: 0 0 12px 0;"><strong>⏱ Duration:</strong> ${sessionDuration} minutes</p>
+                <p style="margin: 0 0 12px 0;"><strong>💰 Credits Escrowed:</strong> ${creditsRequired} credits</p>
+                <p style="margin: 0 0 12px 0;"><strong>💵 Rate:</strong> ${ratePerHour} credits/hour</p>
+                ${message ? `<p style="margin: 0;"><strong>💬 Message:</strong> ${message}</p>` : ''}
+              </div>
+              
+              <p style="font-size: 16px; line-height: 1.6;">Please log in to <strong>VidhyaTransfer</strong> to <strong>accept</strong> or <strong>decline</strong> this session request.</p>
+              
+              <p style="font-size: 14px; color: #666; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+                This is an automated notification from VidhyaTransfer SkillGain. The credits are held in escrow and will be released to you upon session completion.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      sendMail(
+        mentor.email,
+        `New Session Booking: ${skill} — ${learner.name}`,
+        emailHtml
+      );
+    } catch (emailErr) {
+      console.error("Failed to send session booking email to mentor:", emailErr);
+      // Don't fail the booking if email fails
+    }
 
     res.status(201).json(
       new ApiResponse(201, { session: populated, learnerCredits: learner.credits }, "Session booked! Credits held in escrow until mentor accepts.")
@@ -390,4 +441,26 @@ export const getSessionById = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(new ApiResponse(200, { session }, "Session details"));
+});
+
+// ─── GET SESSION REVIEWS FOR A USER (Public – for profile) ────────────────────
+export const getSessionReviews = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) throw new ApiError(400, "User ID is required");
+
+  // Find completed sessions where this user was the mentor AND a rating exists
+  const reviews = await Session.find({
+    mentor: userId,
+    status: { $in: ["completed", "auto_completed"] },
+    rating: { $ne: null },
+  })
+    .populate("learner", "name username picture")
+    .select("skill rating reviewNote completedAt createdAt learner duration")
+    .sort({ completedAt: -1 })
+    .limit(20);
+
+  res.status(200).json(
+    new ApiResponse(200, { reviews }, "Session reviews fetched")
+  );
 });

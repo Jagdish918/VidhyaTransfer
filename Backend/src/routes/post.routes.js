@@ -11,6 +11,9 @@ import {
   likeComment,
   replyToComment,
   likeReply,
+  getTrendingTags,
+  searchPosts,
+  getUserHashtags,
 } from "../controllers/user/post.controllers.js";
 import { postLimiter } from "../middlewares/rateLimiter.middleware.js";
 
@@ -18,6 +21,9 @@ const router = Router();
 
 router.route("/").post(verifyJWT_username, postLimiter, upload.array("attachments", 4), createPost);
 router.route("/feed").get(verifyJWT_username, getFeed);
+router.route("/trending-tags").get(verifyJWT_username, getTrendingTags);
+router.route("/my-hashtags").get(verifyJWT_username, getUserHashtags);
+router.route("/search").get(verifyJWT_username, searchPosts);
 router.route("/:postId/like").post(verifyJWT_username, toggleLike);
 router.route("/:postId/comment").post(verifyJWT_username, postLimiter, addComment);
 router.route("/:postId").delete(verifyJWT_username, deletePost);
@@ -27,5 +33,3 @@ router.route("/:postId/comment/:commentId/reply").post(verifyJWT_username, postL
 router.route("/:postId/comment/:commentId/reply/:replyId/like").post(verifyJWT_username, likeReply);
 
 export default router;
-
-

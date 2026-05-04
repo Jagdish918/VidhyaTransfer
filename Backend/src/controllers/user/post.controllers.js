@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
@@ -13,9 +14,18 @@ const moderateContent = (content) => {
   return inappropriateWords.some((word) => contentLower.includes(word));
 };
 
+// Helper: extract hashtags from content
+const extractHashtags = (content) => {
+  if (!content) return [];
+  const matches = content.match(/#([\w]+)/g);
+  if (!matches) return [];
+  // Remove '#', lowercase, and deduplicate
+  return [...new Set(matches.map(tag => tag.slice(1).toLowerCase()))];
+};
+
 // Create post
 export const createPost = asyncHandler(async (req, res) => {
-  let { content, skills } = req.body;
+  let { content, skills, hashtags: bodyHashtags } = req.body;
   const userId = req.user._id || req.user.id;
   const io = req.app.get("io");
 
@@ -28,12 +38,31 @@ export const createPost = asyncHandler(async (req, res) => {
     }
   }
 
+  // Parse hashtags from body if it comes as a string (from FormData)
+  if (typeof bodyHashtags === 'string') {
+    try {
+      bodyHashtags = JSON.parse(bodyHashtags);
+    } catch (e) {
+      bodyHashtags = [];
+    }
+  }
+
   if (!content || content.trim().length === 0) {
     if ((!req.files || req.files.length === 0)) {
       throw new ApiError(400, "Post content is required");
     }
-    // Allow empty content if there are attachments, but set content to empty string
     content = "";
+  }
+
+  // Extract hashtags from content and merge with the dedicated hashtags field
+  const contentHashtags = extractHashtags(content);
+  const manualHashtags = Array.isArray(bodyHashtags)
+    ? bodyHashtags.map(t => t.replace(/^#/, '').toLowerCase().trim()).filter(Boolean)
+    : [];
+  const hashtags = [...new Set([...contentHashtags, ...manualHashtags])];
+
+  if (hashtags.length === 0) {
+    throw new ApiError(400, "At least one hashtag is required. Add tags using the hashtag field or include #tags in your content.");
   }
 
   if (content.length > 1000) {
@@ -61,6 +90,7 @@ export const createPost = asyncHandler(async (req, res) => {
     skills: skills || [],
     attachments: attachments,
     isModerated: hasInappropriateContent,
+    hashtags: hashtags,
   });
 
   await post.populate("author", "name picture username");
@@ -443,5 +473,126 @@ export const likeReply = asyncHandler(async (req, res) => {
       isLiked: !alreadyLiked,
       likesCount: updatedReply.likes.length
     }, "Reply like toggled")
+  );
+});
+
+// Get trending hashtags (aggregated from posts)
+export const getTrendingTags = asyncHandler(async (req, res) => {
+  const tags = await Post.aggregate([
+    { $match: { isDeleted: false, isModerated: false, hashtags: { $exists: true, $ne: [] } } },
+    { $unwind: "$hashtags" },
+    { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: 10 },
+    { $project: { _id: 0, tag: "$_id", count: 1 } }
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(200, tags, "Trending tags retrieved")
+  );
+});
+
+// Search posts by hashtag or username
+export const searchPosts = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+  const page = parseInt(req.query.page) || 1;
+  const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+  const skip = (page - 1) * limit;
+  const currentUserId = req.user._id || req.user.id;
+
+  if (!q || q.trim().length === 0) {
+    throw new ApiError(400, "Search query is required");
+  }
+
+  const query = q.trim().toLowerCase();
+  let matchStage = { isDeleted: false, isModerated: false };
+
+  if (query.startsWith("#")) {
+    // Search by hashtag
+    const tag = query.slice(1);
+    matchStage.hashtags = { $regex: tag, $options: "i" };
+  } else if (query.startsWith("@")) {
+    // Search by username — we'll need to resolve user IDs first
+    const username = query.slice(1);
+    const users = await User.find({ username: { $regex: username, $options: "i" } }).select("_id").limit(20);
+    const userIds = users.map(u => u._id);
+    matchStage.author = { $in: userIds };
+  } else {
+    // General search — check hashtags, content, or username
+    const users = await User.find({ 
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        { name: { $regex: query, $options: "i" } }
+      ]
+    }).select("_id").limit(20);
+    const userIds = users.map(u => u._id);
+
+    matchStage.$or = [
+      { hashtags: { $regex: query, $options: "i" } },
+      { content: { $regex: query, $options: "i" } },
+      { author: { $in: userIds } }
+    ];
+  }
+
+  const posts = await Post.find(matchStage)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .populate("author", "name picture username")
+    .populate("comments.user", "name picture username")
+    .populate("comments.replies.user", "name picture username");
+
+  const total = await Post.countDocuments(matchStage);
+
+  // Attach connection status
+  const authorIds = [...new Set(posts.filter(p => p.author?._id).map(p => p.author._id.toString()))];
+  const requests = await Request.find({
+    $or: [
+      { sender: currentUserId, receiver: { $in: authorIds } },
+      { sender: { $in: authorIds }, receiver: currentUserId }
+    ]
+  });
+
+  const connectionStatusMap = {};
+  requests.forEach(r => {
+    const otherId = r.sender.toString() === currentUserId.toString() ? r.receiver.toString() : r.sender.toString();
+    connectionStatusMap[otherId] = r.status;
+  });
+
+  const postsWithStatus = posts.map(post => {
+    const postObj = post.toObject();
+    if (postObj.author) {
+      const isMe = postObj.author._id.toString() === currentUserId.toString();
+      postObj.author.status = isMe ? null : (connectionStatusMap[postObj.author._id.toString()] || "Connect");
+    }
+    return postObj;
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      posts: postsWithStatus,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      hasMore: skip + posts.length < total,
+    }, "Search results")
+  );
+});
+
+// Get current user's previously used hashtags
+export const getUserHashtags = asyncHandler(async (req, res) => {
+  const userId = req.user._id || req.user.id;
+  const authorId = new mongoose.Types.ObjectId(userId);
+
+  const tags = await Post.aggregate([
+    { $match: { author: authorId, isDeleted: false, hashtags: { $exists: true, $ne: [] } } },
+    { $unwind: "$hashtags" },
+    { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: 20 },
+    { $project: { _id: 0, tag: "$_id", count: 1 } }
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(200, tags, "User hashtags retrieved")
   );
 });

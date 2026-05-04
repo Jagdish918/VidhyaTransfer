@@ -289,7 +289,17 @@ const PostCard = ({ post, onDelete, onUpdateConnection }) => {
       {/* Content */}
       <div className="px-6 pb-6 mt-[-8px]">
         <p className="text-[15px] text-slate-600 leading-[1.6] whitespace-pre-wrap font-medium">
-          {showFullContent ? post.content : contentExcerpt}
+          {(() => {
+            const text = showFullContent ? post.content : contentExcerpt;
+            if (!text) return null;
+            // Split text by hashtags and render them styled
+            const parts = text.split(/(#[\w]+)/g);
+            return parts.map((part, i) =>
+              part.match(/^#[\w]+$/)
+                ? <span key={i} className="text-cyan-600 font-bold hover:underline cursor-pointer">{part}</span>
+                : part
+            );
+          })()}
           {post.content?.length > 150 && !showFullContent && (
             <button
               onClick={() => setShowFullContent(true)}

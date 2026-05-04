@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUser } from "../../util/UserContext";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { FaGithub, FaLinkedin, FaLink, FaEdit, FaStar, FaUserPlus, FaCheck, FaExclamationTriangle, FaUserMinus, FaTimes, FaCalendarAlt } from "react-icons/fa";
+import { FaGithub, FaLinkedin, FaLink, FaEdit, FaStar, FaUserPlus, FaCheck, FaExclamationTriangle, FaUserMinus, FaTimes, FaCalendarAlt, FaChalkboardTeacher } from "react-icons/fa";
 import Box from "./Box";
 import { storeSanitizedUserData } from "../../util/sanitizeUserData";
 import ReportModal from "../Report/Report";
@@ -22,6 +22,8 @@ const Profile = () => {
   const [ratings, setRatings] = useState([]);
   const [myEvents, setMyEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(false);
+  const [sessionReviews, setSessionReviews] = useState([]);
+  const [sessionReviewsLoading, setSessionReviewsLoading] = useState(false);
   const navigate = useNavigate();
 
   const isOwnProfile = (user && (user.username === id || user._id === id)) || (!id && user);
@@ -109,6 +111,9 @@ const Profile = () => {
       fetchRatings();
       if (isOwnProfile) fetchMyEvents();
     }
+    if (profileUser?._id) {
+      fetchSessionReviews();
+    }
   }, [profileUser]);
 
   const fetchRatings = async () => {
@@ -134,6 +139,21 @@ const Profile = () => {
       console.error("Error fetching my events", error);
     } finally {
       setEventsLoading(false);
+    }
+  };
+
+  const fetchSessionReviews = async () => {
+    if (!profileUser?._id) return;
+    setSessionReviewsLoading(true);
+    try {
+      const { data } = await axios.get(`/sessions/reviews/${profileUser._id}`);
+      if (data.success) {
+        setSessionReviews(data.data.reviews || []);
+      }
+    } catch (error) {
+      console.error("Error fetching session reviews", error);
+    } finally {
+      setSessionReviewsLoading(false);
     }
   };
 
@@ -498,7 +518,60 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Video Section */}
+              {/* ── Session Reviews (SkillGain) ── */}
+              {sessionReviews.length > 0 && (
+                <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                        <FaChalkboardTeacher className="text-cyan-500" />
+                        Session Reviews
+                      </h2>
+                      <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-0.5">
+                        {sessionReviews.length} SkillGain session review{sessionReviews.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {sessionReviews.map((review, i) => (
+                      <div key={review._id || i} className="bg-dark-bg p-4 rounded-xl border border-dark-border transition-all hover:border-cyan-500/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={review.learner?.picture || "https://ui-avatars.com/api/?name=" + (review.learner?.name || "U") + "&background=random&size=100"}
+                              alt=""
+                              className="h-10 w-10 rounded-xl object-cover border border-dark-border"
+                            />
+                            <div>
+                              <span className="font-bold text-sm text-slate-900 block">{review.learner?.name || "Anonymous"}</span>
+                              <span className="text-[9px] uppercase tracking-widest font-bold text-slate-500">
+                                @{review.learner?.username} • {new Date(review.completedAt || review.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-1 bg-cyan-500/10 text-cyan-600 text-[9px] font-bold uppercase tracking-widest rounded-lg border border-cyan-500/20">
+                              {review.skill}
+                            </span>
+                            <div className="flex text-amber-400 text-xs gap-0.5 bg-dark-card px-2.5 py-1.5 rounded-lg border border-dark-border shadow-sm">
+                              {[...Array(5)].map((_, j) => (
+                                <FaStar key={j} className={j < review.rating ? "text-amber-400" : "text-slate-300"} size={10} />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        {review.reviewNote && (
+                          <p className="text-slate-700 text-sm leading-relaxed font-medium bg-dark-card p-3 rounded-lg border border-dark-border">
+                            "{review.reviewNote}"
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-dark-card rounded-2xl shadow-card border border-dark-border p-4">
                 <h2 className="text-xl font-bold text-slate-900 mb-4 tracking-tight">Introduction Video</h2>
                 {profileUser.tutorialVideo ? (

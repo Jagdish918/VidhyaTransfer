@@ -6,14 +6,14 @@ import { FaCalendarAlt, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, 
 import { Link } from "react-router-dom";
 
 const STATUS_CONFIG = {
-  pending:        { label: "Pending",    color: "bg-amber-50 text-amber-700 border-amber-200",   icon: FaHourglassHalf },
-  accepted:       { label: "Accepted",   color: "bg-blue-50 text-blue-700 border-blue-200",      icon: FaCheckCircle },
-  declined:       { label: "Declined",   color: "bg-red-50 text-red-600 border-red-200",         icon: FaTimesCircle },
-  completed:      { label: "Completed",  color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: FaCheckCircle },
+  pending: { label: "Pending", color: "bg-amber-50 text-amber-700 border-amber-200", icon: FaHourglassHalf },
+  accepted: { label: "Accepted", color: "bg-blue-50 text-blue-700 border-blue-200", icon: FaCheckCircle },
+  declined: { label: "Declined", color: "bg-red-50 text-red-600 border-red-200", icon: FaTimesCircle },
+  completed: { label: "Completed", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: FaCheckCircle },
   auto_completed: { label: "Auto-Completed", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: FaCheckCircle },
-  cancelled:      { label: "Cancelled",  color: "bg-slate-100 text-slate-600 border-slate-200",  icon: FaTimesCircle },
-  disputed:       { label: "Disputed",   color: "bg-orange-50 text-orange-700 border-orange-200", icon: FaHourglassHalf },
-  in_progress:    { label: "In Progress", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: FaClock },
+  cancelled: { label: "Cancelled", color: "bg-slate-100 text-slate-600 border-slate-200", icon: FaTimesCircle },
+  disputed: { label: "Disputed", color: "bg-orange-50 text-orange-700 border-orange-200", icon: FaHourglassHalf },
+  in_progress: { label: "In Progress", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: FaClock },
 };
 
 const Sessions = () => {
@@ -164,11 +164,10 @@ const Sessions = () => {
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`px-5 py-2 rounded-lg text-xs font-semibold transition-all ${
-                filter === f.key
+              className={`px-5 py-2 rounded-lg text-xs font-semibold transition-all ${filter === f.key
                   ? "bg-white text-slate-900 shadow-sm border border-dark-border"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               {f.label}
             </button>
@@ -338,15 +337,7 @@ const Sessions = () => {
                     )}
 
                     {/* Cancel: pending → either party, accepted → only mentor */}
-                    {session.status === "pending" && (
-                      <button
-                        onClick={() => handleCancel(session._id)}
-                        disabled={actionLoading === session._id}
-                        className="px-4 py-2 bg-white text-slate-600 border border-dark-border text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 ml-auto"
-                      >
-                        Cancel Session
-                      </button>
-                    )}
+
                     {session.status === "accepted" && iAmMentor && (
                       <button
                         onClick={() => handleCancel(session._id)}

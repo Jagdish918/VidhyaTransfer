@@ -8,6 +8,7 @@ import {
   cancelSession,
   getMySessions,
   getSessionById,
+  getSessionReviews,
 } from "../controllers/session/session.controllers.js";
 
 const router = Router();
@@ -15,6 +16,7 @@ const router = Router();
 // All routes require authentication
 router.route("/book").post(verifyJWT, bookSession);
 router.route("/my").get(verifyJWT, getMySessions);
+router.route("/reviews/:userId").get(verifyJWT, getSessionReviews);
 router.route("/:sessionId").get(verifyJWT, getSessionById);
 router.route("/:sessionId/accept").patch(verifyJWT, acceptSession);
 router.route("/:sessionId/decline").patch(verifyJWT, declineSession);

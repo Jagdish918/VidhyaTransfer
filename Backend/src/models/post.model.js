@@ -96,6 +96,13 @@ const postSchema = new Schema(
         ref: "User",
       },
     ],
+    hashtags: [
+      {
+        type: String,
+        lowercase: true,
+        trim: true,
+      },
+    ],
   },
   { timestamps: true }
 );
@@ -103,6 +110,7 @@ const postSchema = new Schema(
 // ✅ Indexes for high-traffic feed queries
 postSchema.index({ isDeleted: 1, isModerated: 1, createdAt: -1 });
 postSchema.index({ author: 1 });
+postSchema.index({ hashtags: 1 });
 
 export const Post = mongoose.model("Post", postSchema);
 

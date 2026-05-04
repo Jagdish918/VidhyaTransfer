@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
+import axios from "axios";
 import { skills } from "../Register/Skills";
-import { FaImage, FaVideo, FaLink, FaPaperclip, FaTimes, FaCamera } from "react-icons/fa";
+import { FaImage, FaVideo, FaLink, FaPaperclip, FaTimes, FaCamera, FaHashtag, FaPlus } from "react-icons/fa";
 
 const CreatePostModal = ({ onClose, onSubmit }) => {
   const [content, setContent] = useState("");
@@ -14,6 +15,12 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
+  // Hashtag state
+  const [hashtags, setHashtags] = useState([]);
+  const [hashtagInput, setHashtagInput] = useState("");
+  const [previousHashtags, setPreviousHashtags] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const categories = ["Programming", "Design", "Business", "Marketing", "Writing"];
   const postTypes = [
     "Learning Progress",
@@ -25,6 +32,60 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
     "VidhyaTransfer Request",
     "Skill Offer"
   ];
+
+  // Fetch user's previous hashtags on mount
+  useEffect(() => {
+    const fetchPreviousHashtags = async () => {
+      try {
+        const { data } = await axios.get("/post/my-hashtags");
+        if (data.success) {
+          setPreviousHashtags(data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching previous hashtags:", error);
+      }
+    };
+    fetchPreviousHashtags();
+  }, []);
+
+  const handleAddHashtag = (tag) => {
+    if (!tag) return;
+    let cleanTag = tag.trim().toLowerCase().replace(/^#+/, '').replace(/[^a-z0-9_]/g, '');
+    if (!cleanTag) {
+      toast.error("Invalid hashtag");
+      return;
+    }
+    if (hashtags.includes(cleanTag)) {
+      toast.error("Hashtag already added");
+      return;
+    }
+    if (hashtags.length >= 10) {
+      toast.error("Maximum 10 hashtags allowed");
+      return;
+    }
+    setHashtags([...hashtags, cleanTag]);
+    setHashtagInput("");
+    setShowSuggestions(false);
+  };
+
+  const handleHashtagInputKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      handleAddHashtag(hashtagInput);
+    }
+    if (e.key === 'Backspace' && !hashtagInput && hashtags.length > 0) {
+      setHashtags(hashtags.slice(0, -1));
+    }
+  };
+
+  const removeHashtag = (index) => {
+    setHashtags(hashtags.filter((_, i) => i !== index));
+  };
+
+  // Filter suggestions based on input
+  const filteredSuggestions = previousHashtags.filter(
+    (t) => !hashtags.includes(t.tag) && t.tag.includes(hashtagInput.toLowerCase().replace(/^#+/, ''))
+  );
 
   const handleAddSkill = () => {
     if (!selectedSkill || selectedSkill === "Select a skill") {
@@ -70,6 +131,16 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
       return;
     }
 
+    // Combine inline hashtags from content + dedicated hashtag field
+    const contentTags = content.match(/#[\w]+/g);
+    const inlineTags = contentTags ? contentTags.map(t => t.slice(1).toLowerCase()) : [];
+    const allTags = [...new Set([...hashtags, ...inlineTags])];
+
+    if (allTags.length === 0) {
+      toast.error("Add at least one hashtag using the tag field or include #tags in your content");
+      return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -79,16 +150,20 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
       // Skills need to be stringified for FormData if it's an array of objects
       formData.append("skills", JSON.stringify(selectedSkills));
 
+      // Send hashtags from the dedicated field
+      formData.append("hashtags", JSON.stringify(hashtags));
+
       // Append files
       attachments.forEach((file) => {
         formData.append("attachments", file);
       });
 
-      await onSubmit(formData); // onSubmit (in Feed.jsx) will need to handle this being a FormData object
+      await onSubmit(formData);
 
       setContent("");
       setSelectedSkills([]);
       setAttachments([]);
+      setHashtags([]);
       setPostType("Learning Progress");
     } catch (error) {
       console.error("Error creating post:", error);
@@ -101,6 +176,11 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
   const removeAttachment = (index) => {
     setAttachments(attachments.filter((_, i) => i !== index));
   };
+
+  // All tags combined (for preview)
+  const contentTags = content.match(/#[\w]+/g);
+  const inlineTags = contentTags ? [...new Set(contentTags.map(t => t.slice(1).toLowerCase()))] : [];
+  const allTagsPreview = [...new Set([...hashtags, ...inlineTags])];
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-gray-900/80 backdrop-blur-md p-4 transition-all duration-300" onClick={onClose}>
@@ -140,12 +220,13 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
               </div>
             </div>
 
-            <div className="mb-6 relative flex-1 min-h-[140px]">
+            {/* Content Textarea */}
+            <div className="mb-5 relative min-h-[120px]">
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Share what's on your mind..."
-                rows="5"
+                rows="4"
                 maxLength={1000}
                 className="w-full text-base placeholder-slate-500 text-slate-900 bg-white border border-dark-border rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 p-4 resize-none outline-none leading-relaxed transition-all"
               />
@@ -176,6 +257,112 @@ const CreatePostModal = ({ onClose, onSubmit }) => {
               )}
             </div>
 
+            {/* ── Hashtag Field ────────────────────────── */}
+            <div className="mb-5">
+              <label className="flex items-center gap-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">
+                <FaHashtag size={10} className="text-cyan-500" />
+                Hashtags <span className="text-red-400">*</span>
+              </label>
+
+              {/* Selected hashtags */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {hashtags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1.5 bg-cyan-50 text-cyan-700 pl-3 pr-1.5 py-1.5 rounded-lg text-xs font-bold border border-cyan-200 group hover:bg-cyan-100 transition-all"
+                  >
+                    #{tag}
+                    <button
+                      type="button"
+                      onClick={() => removeHashtag(i)}
+                      className="p-0.5 rounded-full hover:bg-cyan-200 text-cyan-400 hover:text-red-500 transition-colors"
+                    >
+                      <FaTimes size={8} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              {/* Input */}
+              <div className="relative">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">#</span>
+                    <input
+                      type="text"
+                      value={hashtagInput}
+                      onChange={(e) => {
+                        setHashtagInput(e.target.value.replace(/\s/g, ''));
+                        setShowSuggestions(true);
+                      }}
+                      onKeyDown={handleHashtagInputKeyDown}
+                      onFocus={() => setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      placeholder="Type a tag and press Enter"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-4 py-2.5 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddHashtag(hashtagInput)}
+                    disabled={!hashtagInput.trim()}
+                    className="px-3.5 py-2.5 bg-cyan-500 text-white rounded-xl hover:bg-cyan-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-1.5 text-xs font-bold"
+                  >
+                    <FaPlus size={10} /> Add
+                  </button>
+                </div>
+
+                {/* Suggestions dropdown */}
+                {showSuggestions && filteredSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-[150px] overflow-y-auto">
+                    <div className="p-2">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 py-1 mb-1">Your previous tags</p>
+                      {filteredSuggestions.map((t, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); handleAddHashtag(t.tag); }}
+                          className="w-full text-left px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 rounded-lg transition-colors flex items-center justify-between group"
+                        >
+                          <span>#{t.tag}</span>
+                          <span className="text-[10px] text-slate-400 group-hover:text-cyan-500">{t.count}×</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Previous hashtags quick-add (always visible if no input focus) */}
+              {previousHashtags.length > 0 && hashtags.length === 0 && !hashtagInput && (
+                <div className="mt-3">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Quick add from previous posts</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {previousHashtags.slice(0, 8).map((t, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleAddHashtag(t.tag)}
+                        className="px-2.5 py-1 bg-slate-50 text-slate-600 text-[11px] font-bold rounded-lg border border-slate-200 hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-200 transition-all"
+                      >
+                        #{t.tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tag count / status indicator */}
+              <div className={`mt-2 text-[10px] font-bold flex items-center gap-1.5 ${
+                allTagsPreview.length > 0 ? 'text-cyan-600' : 'text-amber-500'
+              }`}>
+                <FaHashtag size={8} />
+                {allTagsPreview.length > 0
+                  ? `${allTagsPreview.length} tag${allTagsPreview.length > 1 ? 's' : ''}: ${allTagsPreview.map(t => '#' + t).join(', ')}`
+                  : 'At least one hashtag is required'
+                }
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-4 py-4 px-6 border-t border-dark-border flex-shrink-0 bg-slate-50/50">
